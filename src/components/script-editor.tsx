@@ -27,20 +27,6 @@ interface ScriptEditorProps {
   setScriptContent: (content: string) => void;
 }
 
-function shouldComponentUpdate(prevProps: ScriptLineComponentProps, nextProps: ScriptLineComponentProps) {
-  // Don't re-render if the component is focused (being edited) and the text hasn't changed.
-  if (nextProps.isFocused) {
-    return false;
-  }
-  // Re-render if any of these props change.
-  return (
-    prevProps.isFocused !== nextProps.isFocused ||
-    prevProps.line.id !== nextProps.line.id ||
-    prevProps.line.type !== nextProps.line.type ||
-    prevProps.line.text !== nextProps.line.text
-  );
-}
-
 interface ScriptLineComponentProps {
   line: ScriptLine;
   onTextChange: (id: string, text: string) => void;
@@ -74,8 +60,8 @@ const ScriptLineComponent = React.memo(({
   // This effect ensures that if the text is changed from OUTSIDE the component
   // (e.g., undo, or some other programmatic change), the div's content is updated.
   useEffect(() => {
-    if (ref.current && line.text !== ref.current.textContent) {
-      ref.current.textContent = line.text;
+    if (ref.current && line.text !== ref.current.innerHTML) {
+      ref.current.innerHTML = line.text;
     }
   }, [line.text]);
 
@@ -99,9 +85,7 @@ const ScriptLineComponent = React.memo(({
   };
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    const newText = e.currentTarget.textContent || '';
-    // Call onTextChange to update parent state, but don't cause a re-render here.
-    onTextChange(line.id, newText);
+    onTextChange(line.id, e.currentTarget.innerHTML);
   };
   
   return (
@@ -112,19 +96,24 @@ const ScriptLineComponent = React.memo(({
       onKeyDown={(e) => onKeyDown(e, line.id)}
       onInput={handleInput}
       // Use textContent on blur for final state update.
-      onBlur={(e) => onTextChange(line.id, e.currentTarget.textContent || '')}
+      onBlur={(e) => onTextChange(line.id, e.currentTarget.innerHTML)}
       className={cn(
         'w-full outline-none focus:bg-primary/10 rounded-sm px-2 py-1',
         getElementStyling(line.type)
       )}
-      // Set initial content with textContent to avoid dangerouslySetInnerHTML re-renders
-      // and let the browser manage the inner content during editing.
-      defaultValue={line.text}
-    >
-      {line.text}
-    </div>
+      dangerouslySetInnerHTML={{ __html: line.text }}
+    />
   );
-}, shouldComponentUpdate);
+}, (prevProps, nextProps) => {
+    // Only re-render if essential props change. Crucially, ignore text changes
+    // while the component is focused, as the inner div manages its own state.
+    return (
+        prevProps.isFocused === nextProps.isFocused &&
+        prevProps.line.id === nextProps.line.id &&
+        prevProps.line.type === nextProps.line.type &&
+        (nextProps.isFocused || prevProps.line.text === nextProps.line.text)
+    );
+});
 
 ScriptLineComponent.displayName = 'ScriptLineComponent';
 
@@ -149,10 +138,13 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
   }, []);
 
   useEffect(() => {
-    const newScriptContent = lines.map(line => line.text).join('\n');
+    const newScriptContent = lines.map(line => line.text.replace(/<br>/g, '')).join('\n');
     setScriptContent(newScriptContent);
 
-    const words = newScriptContent.trim().split(/\s+/).filter(Boolean);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = newScriptContent;
+    const textOnly = tempDiv.textContent || tempDiv.innerText || '';
+    const words = textOnly.trim().split(/\s+/).filter(Boolean);
     const count = words.length;
     setWordCount(count);
     
@@ -161,7 +153,14 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
   }, [lines, setScriptContent]);
 
   const handleTextChange = (id: string, text: string) => {
-    setLines(prevLines => prevLines.map(line => (line.id === id ? { ...line, text } : line)));
+    setLines(prevLines => {
+      const newLines = [...prevLines];
+      const index = newLines.findIndex(line => line.id === id);
+      if (index !== -1) {
+        newLines[index] = { ...newLines[index], text };
+      }
+      return newLines;
+    });
   };
 
   const showPopup = (type: ScriptElement) => {
@@ -211,9 +210,16 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
 
         if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
-            const caretPos = range.startOffset;
-            beforeEnter = text.substring(0, caretPos);
-            afterEnter = text.substring(caretPos);
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = text;
+
+            const preCaretRange = document.createRange();
+            preCaretRange.setStart(tempDiv.firstChild || tempDiv, 0);
+            preCaretRange.setEnd(range.startContainer, range.startOffset);
+            
+            beforeEnter = preCaretRange.toString();
+            afterEnter = text.substring(beforeEnter.length);
         }
 
         const newLines = [...lines];
@@ -238,15 +244,13 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
         if (currentIndex < lines.length - 1) {
             setActiveLineId(lines[currentIndex + 1].id);
         }
-    } else if (e.key === 'Backspace' && lines[currentIndex].text === '' && lines.length > 1) {
+    } else if (e.key === 'Backspace' && lines[currentIndex].text.replace(/<[^>]*>?/gm, '') === '' && lines.length > 1) {
         e.preventDefault();
+        if (currentIndex === 0) return;
         const prevLine = lines[currentIndex - 1];
         if (!prevLine) return;
         
-        const newText = prevLine.text;
-        
         const newLines = lines.filter(line => line.id !== id);
-        newLines[currentIndex - 1] = { ...prevLine, text: newText };
         setLines(newLines);
 
         setTimeout(() => {
