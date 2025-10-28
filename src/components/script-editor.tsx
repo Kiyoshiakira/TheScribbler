@@ -30,13 +30,11 @@ interface ScriptEditorProps {
 const ScriptLineComponent = ({
   line,
   onTextChange,
-  onTypeChange,
   onKeyDown,
   isFocused,
 }: {
   line: ScriptLine;
   onTextChange: (id: string, text: string) => void;
-  onTypeChange: (id: string, type: ScriptElement) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>, id: string) => void;
   isFocused: boolean;
 }) => {
@@ -48,10 +46,12 @@ const ScriptLineComponent = ({
       // Move cursor to the end
       const range = document.createRange();
       const sel = window.getSelection();
-      range.selectNodeContents(ref.current);
-      range.collapse(false);
-      sel?.removeAllRanges();
-      sel?.addRange(range);
+      if (sel) {
+        range.selectNodeContents(ref.current);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     }
   }, [isFocused]);
 
@@ -80,14 +80,14 @@ const ScriptLineComponent = ({
       contentEditable
       suppressContentEditableWarning
       onKeyDown={(e) => onKeyDown(e, line.id)}
+      onInput={(e) => onTextChange(line.id, e.currentTarget.textContent || '')}
       onBlur={(e) => onTextChange(line.id, e.currentTarget.textContent || '')}
       className={cn(
         'w-full outline-none focus:bg-primary/10 rounded-sm px-2 py-1',
         getElementStyling(line.type)
       )}
-    >
-      {line.text}
-    </div>
+      dangerouslySetInnerHTML={{ __html: line.text }}
+    />
   );
 };
 
@@ -96,7 +96,7 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
   const [wordCount, setWordCount] = useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = useState(0);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
-  const [popup, setPopup] = useState<{ visible: boolean, text: string, top: number }>({ visible: false, text: '', top: 0 });
+  const [popup, setPopup] = useState<{ visible: boolean, text: string, top: number, left: number }>({ visible: false, text: '', top: 0, left: 0 });
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,7 +106,9 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
       text: text,
     }));
     setLines(parsedLines);
-    setActiveLineId(parsedLines[0]?.id);
+    if (parsedLines.length > 0) {
+      setActiveLineId(parsedLines[0].id);
+    }
   }, []);
 
   useEffect(() => {
@@ -125,24 +127,28 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
     setLines(prevLines => prevLines.map(line => (line.id === id ? { ...line, text } : line)));
   };
 
-  const showPopup = (type: ScriptElement, lineElement: HTMLElement) => {
+  const showPopup = (type: ScriptElement) => {
       if(editorRef.current) {
-        const editorRect = editorRef.current.getBoundingClientRect();
-        const lineRect = lineElement.getBoundingClientRect();
-        const top = lineRect.top - editorRect.top;
-        setPopup({ visible: true, text: type.replace('-', ' ').toUpperCase(), top });
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
 
-        setTimeout(() => setPopup(p => ({...p, visible: false})), 1500);
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const editorRect = editorRef.current.getBoundingClientRect();
+
+        const top = rect.top - editorRect.top - 28; // Position above the cursor with an offset
+        const left = rect.left - editorRect.left;
+
+        setPopup({ visible: true, text: type.replace('-', ' ').toUpperCase(), top, left });
+
+        setTimeout(() => setPopup(p => ({...p, visible: false, top: 0, left: 0})), 1500);
       }
   };
 
   const handleTypeChange = (id: string, type: ScriptElement) => {
     setLines(prevLines => prevLines.map(line => {
       if (line.id === id) {
-        const lineEl = document.querySelector(`[data-line-id="${id}"]`);
-        if (lineEl) {
-            showPopup(type, lineEl as HTMLElement);
-        }
+        showPopup(type);
         return { ...line, type };
       }
       return line;
@@ -160,16 +166,38 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
       handleTypeChange(id, nextType);
     } else if (e.key === 'Enter') {
         e.preventDefault();
+        const currentLine = lines[currentIndex];
+        const text = currentLine.text;
+        const selection = window.getSelection();
+        let beforeEnter = text;
+        let afterEnter = '';
+
+        if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const caretPos = range.startOffset;
+            beforeEnter = text.substring(0, caretPos);
+            afterEnter = text.substring(caretPos);
+        }
+
         const newLines = [...lines];
-        const newLine: ScriptLine = { id: `line-${Date.now()}`, type: 'action', text: '' };
+        newLines[currentIndex] = { ...currentLine, text: beforeEnter };
+        
+        const newLine: ScriptLine = { id: `line-${Date.now()}`, type: 'action', text: afterEnter };
         newLines.splice(currentIndex + 1, 0, newLine);
+        
         setLines(newLines);
-        setActiveLineId(newLine.id);
+
+        setTimeout(() => {
+            setActiveLineId(newLine.id);
+        }, 0)
+
     } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
         if (currentIndex > 0) {
             setActiveLineId(lines[currentIndex - 1].id);
         }
     } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
         if (currentIndex < lines.length - 1) {
             setActiveLineId(lines[currentIndex + 1].id);
         }
@@ -178,13 +206,17 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
         if(lines.length > 1) {
             const newLines = lines.filter(line => line.id !== id);
             setLines(newLines);
-            setActiveLineId(lines[Math.max(0, currentIndex - 1)].id);
+            if (currentIndex > 0) {
+              setActiveLineId(lines[currentIndex - 1].id);
+            } else if (newLines.length > 0) {
+              setActiveLineId(newLines[0].id);
+            } else {
+              setActiveLineId(null);
+            }
         }
     }
   };
   
-  const getActiveLine = () => lines.find(l => l.id === activeLineId);
-
   return (
     <Card className="h-full flex flex-col shadow-lg">
       <CardHeader>
@@ -212,7 +244,6 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
                 <ScriptLineComponent
                     line={line}
                     onTextChange={handleTextChange}
-                    onTypeChange={handleTypeChange}
                     onKeyDown={handleKeyDown}
                     isFocused={line.id === activeLineId}
                 />
@@ -221,8 +252,8 @@ export default function ScriptEditor({ scriptContent, setScriptContent }: Script
         </div>
          {popup.visible && (
             <div 
-                className="absolute left-[-120px] bg-foreground text-background text-xs font-bold py-1 px-2 rounded-md shadow-lg"
-                style={{ top: `${popup.top}px` }}
+                className="absolute bg-foreground text-background text-xs font-bold py-1 px-2 rounded-md shadow-lg pointer-events-none"
+                style={{ top: `${popup.top}px`, left: `${popup.left}px` }}
             >
                 {popup.text}
             </div>
