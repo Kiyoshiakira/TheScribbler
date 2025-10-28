@@ -30,24 +30,23 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // This is required for react-speech-recognition to work with Turbopack.
-  // See: https://github.com/JamesBrill/react-speech-recognition/issues/287
   experimental: {
     turbo: {
-      dangerouslyAllowModules: [
-          'regenerator-runtime'
-      ]
+      dangerouslyAllowModules: ['regenerator-runtime'],
     },
   },
   webpack: (config, { isServer }) => {
     // This is required for react-speech-recognition to work.
     // See: https://github.com/JamesBrill/react-speech-recognition/issues/287
     if (!isServer) {
-        // Ensures regenerator-runtime is available on the client-side
-        config.entry = [
-            'regenerator-runtime/runtime.js',
-            ...config.entry as string[]
-        ];
+        const originalEntry = config.entry as () => Promise<Record<string, string[]>>;
+        config.entry = async () => {
+            const entries = await originalEntry();
+            if (entries['main-app'] && !entries['main-app'].includes('regenerator-runtime/runtime.js')) {
+                entries['main-app'].unshift('regenerator-runtime/runtime.js');
+            }
+            return entries;
+        };
     }
     return config;
   },
