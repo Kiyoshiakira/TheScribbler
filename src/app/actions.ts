@@ -13,6 +13,11 @@ import {
   aiDeepAnalysis,
   type AiDeepAnalysisInput,
 } from '@/ai/flows/ai-deep-analysis';
+import {
+  aiAgentOrchestrator,
+  type AiAgentOrchestratorInput,
+} from '@/ai/flows/ai-agent-orchestrator';
+
 
 export async function getAiSuggestions(
   input: AiSuggestSceneImprovementsInput
@@ -55,4 +60,17 @@ export async function getAiDeepAnalysis(input: AiDeepAnalysisInput) {
       error: 'An error occurred while fetching the deep analysis.',
     };
   }
+}
+
+export async function runAiAgent(input: AiAgentOrchestratorInput) {
+    try {
+        const result = await aiAgentOrchestrator(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error(error);
+        return {
+        data: null,
+        error: 'An error occurred while running the AI agent.',
+        };
+    }
 }

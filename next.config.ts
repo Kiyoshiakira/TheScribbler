@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // This is required for react-speech-recognition to work.
+    // See: https://github.com/JamesBrill/react-speech-recognition/issues/287
+    config.externals.push({ 'regenerator-runtime': 'regeneratorRuntime' });
+    return config;
+  },
 };
 
 export default nextConfig;
