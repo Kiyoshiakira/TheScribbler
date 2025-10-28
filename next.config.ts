@@ -30,6 +30,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // This is required for react-speech-recognition to work with Turbopack.
+  // See: https://github.com/JamesBrill/react-speech-recognition/issues/287
+  turbo: {
+    dangerouslyAllowModules: [
+        'regenerator-runtime'
+    ]
+  },
   webpack: (config, { isServer }) => {
     // This is required for react-speech-recognition to work.
     // See: https://github.com/JamesBrill/react-speech-recognition/issues/287
