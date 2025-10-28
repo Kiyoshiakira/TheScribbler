@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Film } from 'lucide-react';
+import { Clock, Film, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ScriptContext } from '@/context/script-context';
 
 
 export type ScriptElement = 'scene-heading' | 'action' | 'character' | 'parenthetical' | 'dialogue' | 'transition';
@@ -25,9 +26,8 @@ interface ScriptLine {
 }
 
 interface ScriptEditorProps {
-  scriptContent: string;
-  setScriptContent: (content: string) => void;
-  onActiveLineTypeChange: (type: ScriptElement | null) => void;
+  onActiveLineTypeChange?: (type: ScriptElement | null) => void;
+  isStandalone?: boolean;
 }
 
 interface ScriptLineComponentProps {
@@ -60,15 +60,7 @@ const ScriptLineComponent = React.memo(({
         }
     }
   }, [isFocused]);
-
-  useEffect(() => {
-    // This effect ensures that if the text is changed externally (e.g., by changing type),
-    // the div's content is updated.
-    if (ref.current && ref.current.innerHTML !== line.text) {
-        ref.current.innerHTML = line.text;
-    }
-  }, [line.text]);
-
+  
   const getElementStyling = (type: ScriptElement) => {
     switch (type) {
       case 'scene-heading':
@@ -91,6 +83,19 @@ const ScriptLineComponent = React.memo(({
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     onTextChange(line.id, e.currentTarget.innerHTML);
   };
+
+  const handleBlur = (e: React.FormEvent<HTMLDivElement>) => {
+    // Only update if the content has actually changed.
+    if (line.text !== e.currentTarget.innerHTML) {
+      onTextChange(line.id, e.currentTarget.innerHTML);
+    }
+  };
+
+  useEffect(() => {
+    if (ref.current && ref.current.innerHTML !== line.text) {
+      ref.current.innerHTML = line.text;
+    }
+  }, [line.text]);
   
   return (
     <div
@@ -99,7 +104,7 @@ const ScriptLineComponent = React.memo(({
       suppressContentEditableWarning
       onKeyDown={(e) => onKeyDown(e, line.id)}
       onInput={handleInput}
-      onBlur={(e) => onTextChange(line.id, e.currentTarget.innerHTML)}
+      onBlur={handleBlur}
       onContextMenu={(e) => onContextMenu(e, line.id)}
       className={cn(
         'w-full outline-none focus:bg-primary/10 rounded-sm px-2 py-1',
@@ -109,19 +114,18 @@ const ScriptLineComponent = React.memo(({
     />
   );
 }, (prevProps, nextProps) => {
-    // Only re-render if focus changes or line ID changes.
-    // Text changes are handled by the useEffect hook to avoid cursor jumps.
     return (
         prevProps.isFocused === nextProps.isFocused &&
         prevProps.line.id === nextProps.line.id &&
-        prevProps.line.type === nextProps.line.type &&
-        prevProps.line.text === nextProps.line.text
+        prevProps.line.type === nextProps.type &&
+        prevProps.line.text === nextProps.text
     );
 });
 
 ScriptLineComponent.displayName = 'ScriptLineComponent';
 
-export default function ScriptEditor({ scriptContent, setScriptContent, onActiveLineTypeChange }: ScriptEditorProps) {
+export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = false }: ScriptEditorProps) {
+  const { scriptContent, setScriptContent } = useContext(ScriptContext);
   const [lines, setLines] = useState<ScriptLine[]>([]);
   const [wordCount, setWordCount] = useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = useState(0);
@@ -130,15 +134,19 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lineId: string } | null>(null);
 
   useEffect(() => {
-    const parsedLines = scriptContent.split('\n').map((text, index) => ({
-      id: `line-${index}-${Date.now()}`,
-      type: 'action' as ScriptElement, // Simple default
-      text: text,
-    }));
+    const parsedLines = scriptContent.split('\n').map((text, index) => {
+      // Basic logic to infer type from text, can be improved.
+      if (text.startsWith('INT.') || text.startsWith('EXT.')) return { id: `line-${index}-${Date.now()}`, type: 'scene-heading' as ScriptElement, text };
+      if (text.trim().startsWith('(') && text.trim().endsWith(')')) return { id: `line-${index}-${Date.now()}`, type: 'parenthetical' as ScriptElement, text };
+      if (text.trim().endsWith(' TO:')) return { id: `line-${index}-${Date.now()}`, type: 'transition' as ScriptElement, text };
+      if (/^[A-Z\s]+$/.test(text) && text.length > 0 && text.length < 30) return { id: `line-${index}-${Date.now()}`, type: 'character' as ScriptElement, text };
+      return { id: `line-${index}-${Date.now()}`, type: 'action' as ScriptElement, text };
+    });
     setLines(parsedLines);
-    if (parsedLines.length > 0) {
+    if (parsedLines.length > 0 && !activeLineId) {
       setActiveLineId(parsedLines[0].id);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -146,7 +154,7 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
     setScriptContent(newScriptContent);
 
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = newScriptContent;
+    tempDiv.innerHTML = newScriptContent.replace(/<br>/g, '\n');
     const textOnly = tempDiv.textContent || tempDiv.innerText || '';
     const words = textOnly.trim().split(/\s+/).filter(Boolean);
     const count = words.length;
@@ -157,7 +165,7 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
   }, [lines, setScriptContent]);
 
   useEffect(() => {
-    if (activeLineId) {
+    if (onActiveLineTypeChange && activeLineId) {
       const activeLine = lines.find(line => line.id === activeLineId);
       onActiveLineTypeChange(activeLine ? activeLine.type : null);
     }
@@ -167,7 +175,7 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
     setLines(prevLines => {
       const newLines = [...prevLines];
       const index = newLines.findIndex(line => line.id === id);
-      if (index !== -1 && newLines[index].text !== text) {
+      if (index !== -1) {
         newLines[index] = { ...newLines[index], text };
       }
       return newLines;
@@ -177,7 +185,7 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
   const handleTypeChange = (id: string, type: ScriptElement) => {
     setLines(prevLines => prevLines.map(line => {
       if (line.id === id) {
-        let newText = line.text;
+        let newText = line.text.replace(/<[^>]*>?/gm, '');
         // Add parenthesis for parenthetical
         if (type === 'parenthetical' && !/^\(.*\)$/.test(newText)) {
           newText = `(${newText})`;
@@ -205,29 +213,39 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
     } else if (e.key === 'Enter') {
         e.preventDefault();
         const currentLine = lines[currentIndex];
-        const text = currentLine.text;
         const selection = window.getSelection();
-        let beforeEnter = text;
+        let beforeEnter = currentLine.text;
         let afterEnter = '';
 
         if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
+            const container = range.startContainer;
             
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = text;
+            // Create a temporary div to measure the split point accurately
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = currentLine.text;
 
             const preCaretRange = document.createRange();
-            preCaretRange.setStart(tempDiv.firstChild || tempDiv, 0);
-            preCaretRange.setEnd(range.startContainer, range.startOffset);
+            preCaretRange.selectNodeContents(tempDiv);
             
+            const endContainer = (container.nodeType === Node.TEXT_NODE) ? container : tempDiv.childNodes[range.endOffset];
+            preCaretRange.setEnd(endContainer, range.endOffset);
+
             beforeEnter = preCaretRange.toString();
-            afterEnter = text.substring(beforeEnter.length);
+            afterEnter = currentLine.text.substring(beforeEnter.length).replace(/^<br>/, '');
         }
 
         const newLines = [...lines];
         newLines[currentIndex] = { ...currentLine, text: beforeEnter };
         
-        const newLine: ScriptLine = { id: `line-${Date.now()}`, type: 'action', text: afterEnter };
+        let nextType: ScriptElement = 'action';
+        const currentType = currentLine.type;
+        if (currentType === 'scene-heading') nextType = 'action';
+        if (currentType === 'character') nextType = 'dialogue';
+        if (currentType === 'dialogue') nextType = 'character';
+        if (currentType === 'transition') nextType = 'scene-heading';
+
+        const newLine: ScriptLine = { id: `line-${Date.now()}`, type: nextType, text: afterEnter };
         newLines.splice(currentIndex + 1, 0, newLine);
         
         setLines(newLines);
@@ -266,13 +284,18 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
     setActiveLineId(lineId);
     setContextMenu({ x: e.clientX, y: e.clientY, lineId });
   }
+  
+  const handlePopOut = () => {
+    window.open('/editor', '_blank', 'width=800,height=600');
+    setContextMenu(null);
+  };
 
   const formatElementName = (name: string) => {
     return name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  return (
-    <Card className="h-full flex flex-col shadow-lg">
+  const editorContent = (
+    <>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="font-headline flex items-center gap-2 text-lg">
@@ -284,18 +307,16 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
       <CardContent 
         ref={editorRef} 
         className="flex-1 flex relative"
-        onContextMenu={(e) => e.preventDefault()} // Prevent native context menu on the whole area
+        onContextMenu={(e) => e.preventDefault()}
         onClick={() => setContextMenu(null)}
       >
         <DropdownMenu open={!!contextMenu} onOpenChange={() => setContextMenu(null)}>
             <DropdownMenuTrigger asChild>
                 <div 
                     style={{ 
-                        position: 'absolute', 
+                        position: 'fixed', // Use fixed to position relative to viewport
                         left: contextMenu ? contextMenu.x : 0, 
                         top: contextMenu ? contextMenu.y : 0,
-                        width: 1,
-                        height: 1,
                     }}
                 />
             </DropdownMenuTrigger>
@@ -308,22 +329,24 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
                         {formatElementName(element)}
                     </DropdownMenuItem>
                 ))}
+                {!isStandalone && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handlePopOut}>
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        <span>Pop-out Editor</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
 
         <div
           className="flex-1 resize-none font-code text-base leading-relaxed bg-card flex flex-col gap-2"
           style={{ minHeight: '60vh' }}
-          onClick={(e) => {
-              const target = e.target as HTMLElement;
-              const lineEl = target.closest('[data-line-id]');
-              if (lineEl) {
-                  setActiveLineId(lineEl.getAttribute('data-line-id'));
-              }
-          }}
         >
           {lines.map(line => (
-              <div key={line.id} data-line-id={line.id}>
+              <div key={line.id} data-line-id={line.id} onClick={() => setActiveLineId(line.id)}>
                 <ScriptLineComponent
                     line={line}
                     onTextChange={handleTextChange}
@@ -342,6 +365,20 @@ export default function ScriptEditor({ scriptContent, setScriptContent, onActive
             <span>Approx. {estimatedMinutes} min</span>
         </div>
       </CardFooter>
+    </>
+  );
+
+  if (isStandalone) {
+    return (
+      <div className="h-screen w-screen bg-background flex flex-col p-4">
+        {editorContent}
+      </div>
+    );
+  }
+
+  return (
+    <Card className="h-full flex flex-col shadow-lg">
+      {editorContent}
     </Card>
   );
 }

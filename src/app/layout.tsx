@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { ScriptProvider } from '@/context/script-context';
 
 export const metadata: Metadata = {
   title: 'ScriptSync',
@@ -24,8 +25,10 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        {children}
-        <Toaster />
+        <ScriptProvider>
+          {children}
+          <Toaster />
+        </ScriptProvider>
       </body>
     </html>
   );

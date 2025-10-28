@@ -9,6 +9,7 @@ import ScenesView from '@/components/views/scenes-view';
 import CharactersView from '@/components/views/characters-view';
 import NotesView from '@/components/views/notes-view';
 import type { ScriptElement } from '@/components/script-editor';
+import { ScriptProvider } from '@/context/script-context';
 
 export type View = 'editor' | 'scenes' | 'characters' | 'notes';
 
