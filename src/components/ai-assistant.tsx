@@ -300,5 +300,3 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
     </Card>
   );
 }
-
-    
