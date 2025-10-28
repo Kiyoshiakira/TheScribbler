@@ -38,7 +38,7 @@ interface ScriptLineComponentProps {
   isFocused: boolean;
 }
 
-const ScriptLineComponent = React.memo(({
+const ScriptLineComponent = ({
   line,
   onTextChange,
   onKeyDown,
@@ -60,6 +60,14 @@ const ScriptLineComponent = React.memo(({
         }
     }
   }, [isFocused]);
+
+  useEffect(() => {
+    // Only update the innerHTML if it's different from the line text.
+    // This is crucial to prevent re-renders while typing.
+    if (ref.current && ref.current.innerHTML !== line.text) {
+      ref.current.innerHTML = line.text;
+    }
+  }, [line.text]);
   
   const getElementStyling = (type: ScriptElement) => {
     switch (type) {
@@ -81,21 +89,16 @@ const ScriptLineComponent = React.memo(({
   };
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    onTextChange(line.id, e.currentTarget.innerHTML);
+    // No need to call onTextChange here on every input, which was causing the issue.
+    // The change is saved on blur.
   };
 
   const handleBlur = (e: React.FormEvent<HTMLDivElement>) => {
-    // Only update if the content has actually changed.
+    // Update the parent state only when the user leaves the line.
     if (line.text !== e.currentTarget.innerHTML) {
       onTextChange(line.id, e.currentTarget.innerHTML);
     }
   };
-
-  useEffect(() => {
-    if (ref.current && ref.current.innerHTML !== line.text) {
-      ref.current.innerHTML = line.text;
-    }
-  }, [line.text]);
   
   return (
     <div
@@ -113,14 +116,7 @@ const ScriptLineComponent = React.memo(({
       dangerouslySetInnerHTML={{ __html: line.text }}
     />
   );
-}, (prevProps, nextProps) => {
-    return (
-        prevProps.isFocused === nextProps.isFocused &&
-        prevProps.line.id === nextProps.line.id &&
-        prevProps.line.type === nextProps.type &&
-        prevProps.line.text === nextProps.text
-    );
-});
+};
 
 ScriptLineComponent.displayName = 'ScriptLineComponent';
 
