@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/ai-suggest-scene-improvements.ts';
 import '@/ai/flows/ai-generate-character-profiles.ts';
+import '@/ai/flows/ai-deep-analysis.ts';
