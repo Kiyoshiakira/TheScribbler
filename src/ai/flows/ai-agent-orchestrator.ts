@@ -31,25 +31,33 @@ const CharacterProfileOutputSchema = z.object({
 const generateCharacterProfileTool = ai.defineTool(
   {
     name: 'generateCharacterProfile',
-    description: 'Generates a detailed character profile based on a brief description. Use this when the user wants to create a new character.',
+    description: 'Generates a detailed character profile based on a brief description. Use this when the user wants to create or generate a character.',
     inputSchema: CharacterProfileInputSchema,
     outputSchema: CharacterProfileOutputSchema,
   },
   async input => {
     const prompt = `You are an expert screenwriter and character creator.
 
-  Based on the provided character description, generate a plausible full name and a detailed character profile. The profile should be a rich narrative including:
+  Your task is to generate a detailed character profile based on a simple description.
 
-  - Backstory and formative experiences.
-  - Core personality traits, strengths, and flaws.
-  - Motivations, goals, and fears.
-  - Any interesting quirks or unique characteristics.
+  **Instructions:**
+  1.  Create a plausible full name for the character.
+  2.  Write a rich, narrative-style character profile that includes:
+      -   **Backstory:** Key life events and formative experiences.
+      -   **Personality:** Core traits, strengths, flaws, and contradictions.
+      -   **Motivations:** Their primary goals, desires, and what drives them.
+      -   **Fears:** What they are most afraid of, both physically and emotionally.
+      -   **Quirks:** Interesting habits or unique characteristics that make them memorable.
 
-  Character Description: ${input.characterDescription}
+  **Character Description:**
+  \`\`\`
+  ${input.characterDescription}
+  \`\`\`
   `;
 
     const { output } = await ai.generate({
       prompt: prompt,
+      model: 'googleai/gemini-2.5-flash-preview',
       output: {
         schema: CharacterProfileOutputSchema,
       },
@@ -87,34 +95,51 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     
     const llmResponse = await ai.generate({
       prompt: `You are an expert AI assistant for a screenwriting application.
-      Your goal is to help the user modify their script and other project elements.
+Your goal is to help the user modify their script and other project elements.
 
-      Analyze the user's request and the current script content.
-      Use the available tools to fulfill the user's request.
-      
-      If a tool is used, summarize the result in a friendly, conversational way.
-      If no specific tool seems appropriate, provide a helpful and informative text response.
+Analyze the user's request and the current script content.
+Decide whether to use one of the available tools or to respond directly with text.
 
-      User Request: ${input.request}
+**User Request:**
+${input.request}
 
-      Current Screenplay:
-      ---
-      ${input.script}
-      ---
-      `,
+**Current Screenplay:**
+---
+${input.script}
+---
+`,
       tools: [generateCharacterProfileTool],
       model: 'googleai/gemini-2.5-flash-preview',
     });
 
-    const toolResponse = llmResponse.toolRequest?.output;
+    const toolRequest = llmResponse.toolRequest;
 
-    if (toolResponse) {
-        // If a tool was used, format the output for the user.
-        const characterProfile = toolResponse[0].result as z.infer<typeof CharacterProfileOutputSchema>;
-        const responseText = `I've created a new character for you!\n\n**Name:** ${characterProfile.name}\n\n**Profile:**\n${characterProfile.profile}`;
-        return { response: responseText };
+    if (toolRequest) {
+      // If the LLM wants to use a tool, we need to call it and return the result.
+      const toolResponse = await toolRequest.run();
+      
+      // Now, we need to send the tool's response back to the LLM to get a final, user-friendly summary.
+      const finalResponse = await ai.generate({
+          prompt: `You have just used a tool to fulfill the user's request.
+          The user's original request was: "${input.request}"
+          The result from the tool is here:
+          ---
+          ${JSON.stringify(toolResponse)}
+          ---
+          
+          Summarize this result in a friendly, conversational way.
+          If the tool was 'generateCharacterProfile', format the response exactly like this, with no extra text before or after:
+          **Name:** [Character Name]
+          **Profile:**
+          [Character Profile]
+          `,
+          model: 'googleai/gemini-2.5-flash-preview',
+      });
+      
+      return { response: finalResponse.text };
     }
 
+    // If no tool was used, just return the direct text response.
     return { response: llmResponse.text };
   }
 );
