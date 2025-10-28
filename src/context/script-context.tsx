@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 
 const initialScript = `FADE IN:
 
@@ -86,3 +86,11 @@ export const ScriptProvider = ({ children }: { children: ReactNode }) => {
     </ScriptContext.Provider>
   );
 };
+
+export const useScript = () => {
+    const context = useContext(ScriptContext);
+    if (!context) {
+        throw new Error('useScript must be used within a ScriptProvider');
+    }
+    return context;
+}

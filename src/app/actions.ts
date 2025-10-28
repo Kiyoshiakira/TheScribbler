@@ -5,11 +5,6 @@ import {
   type AiSuggestSceneImprovementsInput,
 } from '@/ai/flows/ai-suggest-scene-improvements';
 import {
-  generateCharacterProfiles,
-  type GenerateCharacterProfilesInput,
-  type GenerateCharacterProfilesOutput,
-} from '@/ai/flows/ai-generate-character-profiles';
-import {
   aiDeepAnalysis,
   type AiDeepAnalysisInput,
 } from '@/ai/flows/ai-deep-analysis';
@@ -34,20 +29,12 @@ export async function getAiSuggestions(
   }
 }
 
-export async function getAiCharacterProfile(
-  input: GenerateCharacterProfilesInput
-): Promise<{ data: GenerateCharacterProfilesOutput | null, error: string | null }> {
-  try {
-    const result = await generateCharacterProfiles(input);
-    return { data: result, error: null };
-  } catch (error) {
-    console.error(error);
-    return {
-      data: null,
-      error: 'An error occurred while generating the character profile.',
-    };
-  }
+// This legacy function is no longer needed as the agent orchestrator handles it.
+// We will remove it in a future step.
+export async function getAiCharacterProfile() {
+  return { data: null, error: 'This function is deprecated.' };
 }
+
 
 export async function getAiDeepAnalysis(input: AiDeepAnalysisInput) {
   try {

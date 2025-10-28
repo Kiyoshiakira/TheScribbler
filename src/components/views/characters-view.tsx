@@ -18,10 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAiCharacterProfile } from '@/app/actions';
+import { runAiAgent } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
-import { cn } from '@/lib/utils';
 import React from 'react';
+import { useScript } from '@/context/script-context';
+
 
 interface Character {
   name: string;
@@ -68,6 +69,7 @@ const initialCharacters: Character[] = [
 const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id);
 
 function CharacterDialog({ character, onSave, trigger }: { character?: Character | null, onSave: (char: Character) => void, trigger: React.ReactNode }) {
+  const { scriptContent } = useScript();
   const [name, setName] = useState(character?.name || '');
   const [description, setDescription] = useState(character?.description || '');
   const [profile, setProfile] = useState(character?.profile || '');
@@ -99,17 +101,33 @@ function CharacterDialog({ character, onSave, trigger }: { character?: Character
     setIsGenerating(true);
     setProfile('');
     setName('');
-    const result = await getAiCharacterProfile({ characterDescription: description });
+
+    const result = await runAiAgent({
+      request: `Generate a character profile for: ${description}`,
+      script: scriptContent,
+    });
+    
     setIsGenerating(false);
-    if (result.error) {
+    
+    if (result.error || !result.data) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: result.error,
+        description: result.error || 'Could not generate character profile.',
       });
-    } else if (result.data) {
-      setProfile(result.data.profile);
-      setName(result.data.name);
+    } else {
+        // The response will be a formatted string, we need to parse it.
+        const responseText = result.data.response;
+        const nameMatch = responseText.match(/\*\*Name:\*\*\s*(.*)/);
+        const profileMatch = responseText.match(/\*\*Profile:\*\*\n([\s\S]*)/);
+        
+        if (nameMatch && profileMatch) {
+            setName(nameMatch[1].trim());
+            setProfile(profileMatch[1].trim());
+        } else {
+            // Fallback if parsing fails
+            setProfile(responseText);
+        }
     }
   };
 
@@ -285,7 +303,7 @@ export default function CharactersView() {
                             width={200}
                             height={200}
                             className="w-full h-full object-cover"
-                            data-ai-hint={image.imageHint}
+                            data-ai-hint={image.imageHint || 'character portrait'}
                           />
                         )}
                         {!image && <div className="w-full h-full bg-muted flex items-center justify-center"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>}
