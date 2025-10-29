@@ -22,7 +22,7 @@ export interface ScriptLine {
 interface ScriptContextType {
   script: Script | null;
   lines: ScriptLine[];
-  setLines: (lines: ScriptLine[]) => void;
+  setLines: (lines: ScriptLine[] | ((prev: ScriptLine[]) => ScriptLine[])) => void;
   setScriptTitle: (title: string) => void;
   isScriptLoading: boolean;
 }
@@ -51,22 +51,38 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   const [debouncedLines] = useDebounce(lines, 1000);
 
   // Function to parse the raw script content into lines
-  const parseContentToLines = (content: string): ScriptLine[] => {
+  const parseContentToLines = useCallback((content: string): ScriptLine[] => {
       if (typeof content !== 'string') return [];
-      return content.split('\n').map((text, index) => {
+      const lineTexts = content.split('\n');
+      
+      return lineTexts.map((text, index) => {
           let type: ScriptElement = 'action';
           const trimmedText = text.trim();
-          if (trimmedText.startsWith('INT.') || trimmedText.startsWith('EXT.')) type = 'scene-heading';
-          else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) type = 'parenthetical';
-          else if (trimmedText.endsWith(' TO:')) type = 'transition';
-          else if (/^[A-Z\s]+$/.test(trimmedText) && trimmedText.length > 0 && trimmedText.length < 35 && !trimmedText.includes('(') ) {
-              // This is a heuristic and might misidentify action lines written in all caps.
-              // A more robust solution would involve checking the previous line type.
-              type = 'character';
+
+          if (trimmedText.startsWith('INT.') || trimmedText.startsWith('EXT.')) {
+            type = 'scene-heading';
+          } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
+            type = 'parenthetical';
+          } else if (trimmedText.endsWith('TO:')) {
+            type = 'transition';
+          } else if (/^[A-Z\s]+$/.test(trimmedText) && trimmedText.length > 0 && trimmedText.length < 35 && !trimmedText.includes('(')) {
+              // Heuristic for character: ALL CAPS, short, and not a transition.
+              // Look at previous line to be more certain.
+              const prevLine = lineTexts[index - 1]?.trim() ?? '';
+              if (prevLine === '' || prevLine.endsWith('TO:')) { // Previous line was empty or a transition
+                  type = 'character';
+              }
+          } else if (index > 0) {
+              const prevLine = lineTexts[index - 1]?.trim() ?? '';
+              const prevLineIsCharacter = /^[A-Z\s]+$/.test(prevLine) && prevLine.length < 35 && !prevLine.includes('(');
+              if(prevLineIsCharacter) {
+                  type = 'dialogue';
+              }
           }
+
           return { id: `line-${index}-${Date.now()}`, type, text };
       });
-  };
+  }, []);
   
   useEffect(() => {
     if (firestoreScript) {

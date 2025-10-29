@@ -18,12 +18,9 @@ import {
 } from '@/ai/flows/ai-proofread-script';
 import {
     aiGenerateCharacterProfile,
+    type AiGenerateCharacterProfileInput,
 } from '@/ai/flows/ai-generate-character-profile';
 
-// This type is needed for the action, so we define it here.
-export interface AiGenerateCharacterProfileInput {
-    characterDescription: string;
-}
 
 export async function getAiSuggestions(
   input: AiSuggestSceneImprovementsInput

@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type { ScriptLine } from '@/components/script-editor';
+import type { ScriptLine, ScriptElement } from '@/components/script-editor';
 
 export type NoteCategory = 'Plot' | 'Character' | 'Dialogue' | 'Research' | 'Theme' | 'Scene' | 'General';
 
@@ -86,7 +86,8 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
       const sceneElements = getAsArray(sceneContainer.scene.elements);
       const heading = sceneContainer.scene.heading;
       let sceneSetting = 'Untitled Scene';
-
+      
+      // Add Scene Heading
       if (heading && heading.location && heading.moment) {
         sceneSetting = `${heading.locationType || 'INT.'} ${heading.location} - ${heading.moment}`;
         const sceneHeadingText = sceneSetting.toUpperCase();
@@ -94,45 +95,47 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
         sceneTextContent += sceneHeadingText + '\n\n';
       }
       
+      // Add Scene Elements
       if (sceneElements) {
         sceneElements.forEach((element: any) => {
             let text = parseQuillDelta(element.text || '');
-            if (!text) return; // Skip empty elements
+            if (!text && element.type !== 'Action') return; // Allow empty action lines
 
-            let type: ScriptLine['type'] = 'action';
+            let type: ScriptElement;
 
             switch(element.type) {
                 case 'Action':
                     type = 'action';
-                    scriptLines.push({ id: `line-${lineCounter++}`, type, text });
                     sceneTextContent += text + '\n\n';
                     break;
                 case 'Character':
                     type = 'character';
-                    scriptLines.push({ id: `line-${lineCounter++}`, type, text: text.toUpperCase() });
-                    sceneTextContent += text.toUpperCase() + '\n';
+                    text = text.toUpperCase();
+                    sceneTextContent += text + '\n';
                     break;
                 case 'Parenthetical':
                      type = 'parenthetical';
-                     const parentheticalText = `(${text})`;
-                     scriptLines.push({ id: `line-${lineCounter++}`, type, text: parentheticalText });
-                     sceneTextContent += parentheticalText + '\n';
+                     text = `(${text})`;
+                     sceneTextContent += text + '\n';
                     break;
                 case 'Dialogue':
                     type = 'dialogue';
-                    scriptLines.push({ id: `line-${lineCounter++}`, type, text });
                     sceneTextContent += text + '\n\n';
                     break;
                 case 'Transition':
                     type = 'transition';
-                    const transitionText = text.toUpperCase();
-                    scriptLines.push({ id: `line-${lineCounter++}`, type, text: transitionText });
-                    sceneTextContent += transitionText + '\n\n';
+                    text = text.toUpperCase();
+                    sceneTextContent += text + '\n\n';
+                    break;
+                default:
+                    // Default to action if type is unknown
+                    type = 'action';
+                    sceneTextContent += text + '\n\n';
                     break;
             }
+             scriptLines.push({ id: `line-${lineCounter++}`, type, text });
         });
       }
-
 
       const wordCount = sceneTextContent.trim().split(/\s+/).filter(Boolean).length;
       let estimatedTime = isNaN(wordCount) || wordCount === 0 ? 0 : Math.round((wordCount / 160) * 10) / 10;
