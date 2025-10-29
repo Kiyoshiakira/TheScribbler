@@ -7,15 +7,22 @@ import {
 } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFirebaseApp } from '@/firebase';
+import { useFirebase, useFirebaseApp } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const provider = new GoogleAuthProvider();
 
 export default function LoginPage() {
+  const { areServicesAvailable } = useFirebase();
   const app = useFirebaseApp();
 
   const handleSignIn = () => {
+    // This check is a safeguard, but the button's disabled state is the primary fix.
+    if (!areServicesAvailable) {
+      console.error('Firebase services not available.');
+      return;
+    }
     try {
       const auth = getAuth(app);
       // signInWithRedirect doesn't need to be awaited as it navigates the page away.
@@ -38,9 +45,13 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col space-y-4">
-            <Button onClick={handleSignIn} className="w-full">
-              Sign in with Google
-            </Button>
+            {areServicesAvailable ? (
+                <Button onClick={handleSignIn} className="w-full">
+                    Sign in with Google
+                </Button>
+            ) : (
+                <Skeleton className="h-10 w-full" />
+            )}
           </div>
         </CardContent>
       </Card>
