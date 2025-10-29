@@ -89,15 +89,14 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
 
 function MainApp() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
-  const [view, setView] = React.useState<View>('profile');
+  const [view, setView] = React.useState<View | null>(null);
   const router = useRouter();
 
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
       if (currentScriptId) {
-        // Only default to editor if the view hasn't been changed by the user.
-        // This prevents overriding navigation clicks during initial load.
-        if (view === 'profile') { // A common default before script is loaded
+        // Only default to editor if no view has been selected by the user yet.
+        if (view === null) {
           setView('editor');
         }
       } else {
@@ -107,7 +106,7 @@ function MainApp() {
   }, [currentScriptId, isCurrentScriptLoading, router, view]);
 
 
-  if (isCurrentScriptLoading) {
+  if (isCurrentScriptLoading || !view) {
      return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
