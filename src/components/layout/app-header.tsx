@@ -22,16 +22,24 @@ import {
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '../ui/sidebar';
 import { GoogleDocIcon } from '../ui/icons';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
+import { parseScriteFile } from '@/lib/scrite-parser';
+import { collection, writeBatch, getDocs } from 'firebase/firestore';
+import type { Note } from '../views/notes-view';
 
-export default function AppHeader() {
+interface AppHeaderProps {
+  setNotes: React.Dispatch<React.SetStateAction<Note[]>>;
+}
+
+export default function AppHeader({ setNotes }: AppHeaderProps) {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const { setScriptContent } = useScript();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,13 +54,47 @@ export default function AppHeader() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = e => {
-      const text = e.target?.result as string;
-      setScriptContent(text);
-      toast({
-        title: 'Import Successful',
-        description: `Successfully imported ${file.name}.`,
-      });
+    reader.onload = async (e) => {
+      try {
+        const text = e.target?.result as string;
+        const parsedData = parseScriteFile(text);
+
+        // 1. Update script content
+        setScriptContent(parsedData.script);
+
+        // 2. Update notes
+        setNotes(parsedData.notes);
+
+        // 3. Update characters in Firestore
+        if (firestore && user) {
+          const batch = writeBatch(firestore);
+          const charactersCollection = collection(firestore, 'users', user.uid, 'characters');
+
+          // Clear existing characters
+          const existingCharsSnapshot = await getDocs(charactersCollection);
+          existingCharsSnapshot.forEach(doc => batch.delete(doc.ref));
+          
+          // Add new characters
+          parsedData.characters.forEach(char => {
+             const newCharRef = collection(firestore, 'users', user.uid, 'characters').doc();
+             batch.set(newCharRef, char);
+          });
+          
+          await batch.commit();
+        }
+
+        toast({
+          title: 'Import Successful',
+          description: `Successfully imported from ${file.name}.`,
+        });
+      } catch (error) {
+         console.error('Import failed:', error);
+         toast({
+            variant: 'destructive',
+            title: 'Import Failed',
+            description: error instanceof Error ? error.message : 'An unknown error occurred during parsing.',
+        });
+      }
     };
     reader.onerror = () => {
         toast({

@@ -39,9 +39,9 @@ const NOTE_CATEGORIES = {
   General: 'bg-gray-100 border-gray-200 dark:bg-gray-900/30 dark:border-gray-800/50',
 };
 
-type NoteCategory = keyof typeof NOTE_CATEGORIES;
+export type NoteCategory = keyof typeof NOTE_CATEGORIES;
 
-interface Note {
+export interface Note {
   id: number;
   title: string;
   content: string;
@@ -191,21 +191,29 @@ function NoteDialog({ note, onSave, trigger }: { note?: Note | null, onSave: (no
     );
 }
 
+interface NotesViewProps {
+  notes: Note[];
+  setNotes: React.Dispatch<React.SetStateAction<Note[]>>;
+}
 
-export default function NotesView() {
-  const [notes, setNotes] = useState<Note[]>([]);
+export default function NotesView({ notes, setNotes }: NotesViewProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const item = window.localStorage.getItem(NOTES_STORAGE_KEY);
-      setNotes(item ? JSON.parse(item) : initialNotes);
+      if (item) {
+        setNotes(JSON.parse(item));
+      } else {
+        setNotes(initialNotes);
+      }
     } catch (error) {
       console.warn(`Error reading localStorage key “${NOTES_STORAGE_KEY}”:`, error);
       setNotes(initialNotes);
     } finally {
         setIsLoaded(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -275,5 +283,3 @@ export default function NotesView() {
     </div>
   );
 }
-
-    

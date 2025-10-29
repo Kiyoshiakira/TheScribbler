@@ -8,7 +8,7 @@ import AppHeader from '@/components/layout/app-header';
 import EditorView from '@/components/views/editor-view';
 import ScenesView from '@/components/views/scenes-view';
 import CharactersView from '@/components/views/characters-view';
-import NotesView from '@/components/views/notes-view';
+import NotesView, { type Note } from '@/components/views/notes-view';
 import type { ScriptElement } from '@/components/script-editor';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +20,8 @@ function AppLayout() {
   const [view, setView] = React.useState<View>('editor');
   const [activeScriptElement, setActiveScriptElement] =
     React.useState<ScriptElement | null>(null);
+  const [notes, setNotes] = React.useState<Note[]>([]);
+
 
   const renderView = () => {
     switch (view) {
@@ -30,7 +32,7 @@ function AppLayout() {
       case 'characters':
         return <CharactersView />;
       case 'notes':
-        return <NotesView />;
+        return <NotesView notes={notes} setNotes={setNotes} />;
       default:
         return <EditorView onActiveLineTypeChange={setActiveScriptElement} />;
     }
@@ -45,7 +47,7 @@ function AppLayout() {
           activeScriptElement={view === 'editor' ? activeScriptElement : null}
         />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <AppHeader />
+          <AppHeader setNotes={setNotes} />
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
             {renderView()}
           </main>
