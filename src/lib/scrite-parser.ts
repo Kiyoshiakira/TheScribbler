@@ -159,13 +159,18 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
   const characterList = getAsArray(structure.characters);
   
   characterList.forEach((char: any) => {
-    const description = char.summary ? parseQuillDelta(char.summary) : (char.designation || '');
-    characters.push({
-      name: char.name || 'Unnamed',
-      description: description.split('\n')[0], 
-      scenes: 0, 
-      profile: description, 
-    });
+    const summaryText = char.summary ? parseQuillDelta(char.summary) : '';
+    const designationText = char.designation || '';
+    const description = summaryText || designationText;
+
+    if (char.name) {
+        characters.push({
+            name: char.name,
+            description: description.split('\n')[0] || 'No description.', // Provide a fallback
+            scenes: 0, // This will be calculated later
+            profile: description || 'No profile available.', // Provide a fallback
+        });
+    }
   });
 
   // 3. Parse Notes
