@@ -68,19 +68,19 @@ function AppLayoutContent() {
 
 
   React.useEffect(() => {
-    // This effect ensures the correct view is shown based on script availability.
-    // It runs only when loading is complete.
+    // This effect now correctly handles the initial view state without overriding user actions.
     if (!isCurrentScriptLoading) {
       if (!currentScriptId) {
-        // If there's no script, always show the profile view.
+        // If there's no script, the only valid view is the profile.
         setView('profile');
       } else if (view === 'profile' && currentScriptId) {
-        // If a script is loaded AND the current view is profile, switch to dashboard.
-        // This handles creating a new script from the profile page.
+        // This case handles when a new script is created FROM the profile page.
+        // It correctly switches to the dashboard for that new script.
         setView('dashboard');
       }
     }
-  }, [isCurrentScriptLoading, currentScriptId, view]);
+    // This effect should only run when the loading state or script ID changes, not when the view changes.
+  }, [isCurrentScriptLoading, currentScriptId]);
 
 
   const handleSetView = (newView: View | 'settings' | 'profile-edit') => {
@@ -125,7 +125,7 @@ function AppLayoutContent() {
                 </main>
             </div>
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-            {user && userProfile && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={userProfile} />}
+            {user && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={userProfile || null} />}
         </div>
     </SidebarProvider>
   );
