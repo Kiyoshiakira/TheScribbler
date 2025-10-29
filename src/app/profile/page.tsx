@@ -8,17 +8,34 @@ import MyScriptsView from '@/components/views/my-scripts-view';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { View } from '@/app/page';
+import { useCurrentScript } from '@/context/current-script-context';
+
 
 export default function ProfilePage() {
   const [view, setView] = React.useState<View>('profile');
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const { setCurrentScriptId } = useCurrentScript();
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  const handleSetView = (newView: View) => {
+    if (newView === 'profile') {
+      // Already on profile page, or navigating to it.
+      // We can clear the active script if needed.
+      setCurrentScriptId(null);
+      router.push('/profile');
+    } else {
+      // Navigate to the main app page to see other views
+      router.push('/');
+      // The view will be set by the main app page component
+    }
+  }
+
 
   if (isUserLoading || !user) {
     return (
@@ -39,15 +56,15 @@ export default function ProfilePage() {
       <div className="flex h-screen bg-background">
         <AppSidebar
           activeView={view}
-          setActiveView={setView}
+          setActiveView={handleSetView}
           activeScriptElement={null}
           wordCount={0}
           estimatedMinutes={0}
         />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <AppHeader setView={setView} />
+          <AppHeader setView={handleSetView} />
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            <MyScriptsView setView={setView} />
+            <MyScriptsView setView={handleSetView} />
           </main>
         </div>
       </div>

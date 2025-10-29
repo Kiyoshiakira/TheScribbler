@@ -77,8 +77,13 @@ export default function AppSidebar({
     return name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  const ScriptInfo = () => (
-     <div className={cn("p-2 space-y-2 transition-opacity duration-200", activeView !== 'editor' && "hidden")}>
+  const ScriptInfo = () => {
+    // Hide this entire section if the view is not 'editor' to prevent flashing
+    if (activeView !== 'editor') {
+      return null;
+    }
+     return (
+     <div className={cn("p-2 space-y-2 transition-opacity duration-200")}>
         <SidebarSeparator />
         <div className="text-xs text-sidebar-foreground/70 px-2 font-medium [&[data-collapsed=true]]:text-center [&[data-collapsed=true]]:px-0" data-collapsed={sidebarState === 'collapsed'}>
             {sidebarState === 'collapsed' ? 'Info' : 'Script Info'}
@@ -103,6 +108,7 @@ export default function AppSidebar({
         </div>
     </div>
   );
+  }
 
   return (
     <>
@@ -117,15 +123,12 @@ export default function AppSidebar({
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
             <SidebarMenuItem>
                 <SidebarMenuButton
-                    asChild
                     isActive={activeView === 'profile'}
-                    tooltip="Profile"
+                    tooltip="My Scripts"
                     onClick={() => setActiveView('profile')}
                 >
-                    <Link href="/profile">
-                        <Library />
-                        <span>Profile</span>
-                    </Link>
+                    <Library />
+                    <span>My Scripts</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarSeparator />
@@ -180,7 +183,7 @@ export default function AppSidebar({
             </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
-        {isScriptLoading ? (
+        {isScriptLoading && activeView === 'editor' ? (
           <div className='p-2 space-y-2'><Skeleton className='h-24 w-full' /></div>
         ) : (
           <ScriptInfo />
