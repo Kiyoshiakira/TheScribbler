@@ -15,10 +15,10 @@ import LoglineView from '../views/logline-view';
 import ScenesView from '../views/scenes-view';
 import CharactersView from '../views/characters-view';
 import NotesView from '../views/notes-view';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Character } from '../views/characters-view';
-import { EditProfileDialog } from '../edit-profile-dialog';
+import { useRouter } from 'next/navigation';
 
 export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'my-scripts';
 
@@ -26,20 +26,14 @@ function AppLayoutContent() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
   const [view, setView] = React.useState<View>('dashboard');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [profileOpen, setProfileOpen] = React.useState(false);
   const { lines } = useScript();
+  const router = useRouter();
 
   const [wordCount, setWordCount] = React.useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = React.useState(0);
   
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const userProfileDoc = useMemoFirebase(
-    () => (user ? doc(firestore, 'users', user.uid) : null),
-    [firestore, user]
-  );
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileDoc);
-
 
   const charactersCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'characters') : null),
@@ -81,8 +75,9 @@ function AppLayoutContent() {
     if (newView === 'settings') {
       setSettingsOpen(true);
     } else if (newView === 'profile') {
-      setProfileOpen(true);
-    } else {
+      router.push('/profile');
+    }
+     else {
       setView(newView);
     }
   };
@@ -119,9 +114,6 @@ function AppLayoutContent() {
                 </main>
             </div>
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-            { user && !isProfileLoading && 
-              <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={userProfile} />
-            }
         </div>
     </SidebarProvider>
   );
