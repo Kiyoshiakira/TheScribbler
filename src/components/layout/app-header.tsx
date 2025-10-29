@@ -80,9 +80,86 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
     });
   };
 
-  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !firestore || !user) return;
+    if (!file) return;
+
+    if (file.name.endsWith('.scrite')) {
+      handleScriteImport(file);
+    } else if (file.name.endsWith('.scribbler')) {
+      handleScribblerImport(file);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported File Type',
+        description: 'Please select a .scrite or .scribbler file.',
+      });
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+
+  const handleScribblerImport = async (file: File) => {
+    if (!firestore || !user) return;
+    
+    try {
+        const zip = await JSZip.loadAsync(await file.arrayBuffer());
+        
+        const projectFile = zip.file('project.json');
+        if (!projectFile) throw new Error('Invalid .scribbler file: project.json not found.');
+
+        const projectData = JSON.parse(await projectFile.async('string'));
+        
+        const importedCharacters = zip.file('characters.json') ? JSON.parse(await zip.file('characters.json')!.async('string')) : [];
+        const importedScenes = zip.file('scenes.json') ? JSON.parse(await zip.file('scenes.json')!.async('string')) : [];
+        const importedNotes = zip.file('notes.json') ? JSON.parse(await zip.file('notes.json')!.async('string')) : [];
+
+        const batch = writeBatch(firestore);
+
+        const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
+        batch.set(newScriptRef, {
+            title: projectData.title || 'Untitled Scribbler Import',
+            content: projectData.content || '',
+            logline: projectData.logline || '',
+            authorId: user.uid,
+            createdAt: serverTimestamp(),
+            lastModified: serverTimestamp(),
+        });
+        
+        const charactersCol = collection(newScriptRef, 'characters');
+        importedCharacters.forEach((char: any) => batch.set(doc(charactersCol), { ...char, id: undefined }));
+        
+        const scenesCol = collection(newScriptRef, 'scenes');
+        importedScenes.forEach((scene: any) => batch.set(doc(scenesCol), { ...scene, id: undefined }));
+
+        const notesCol = collection(newScriptRef, 'notes');
+        importedNotes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
+
+        await batch.commit();
+
+        toast({
+          title: 'Import Successful',
+          description: `"${projectData.title}" has been added to My Scripts.`,
+        });
+        setView('profile');
+
+    } catch (error) {
+        console.error('Scribbler import failed:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Import Failed',
+            description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+        });
+    }
+  }
+
+
+  const handleScriteImport = (file: File) => {
+    if (!firestore || !user) return;
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -93,11 +170,9 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
         
         const batch = writeBatch(firestore);
 
-        // Create a new script document
         const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
         const scriptTitle = parsedData.title;
         
-        // 1. Set main script data
         batch.set(newScriptRef, {
             title: scriptTitle,
             content: parsedData.script,
@@ -106,22 +181,19 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
             lastModified: serverTimestamp(),
         });
         
-        // 2. Add characters
-        const charactersCollectionRef = collection(firestore, newScriptRef.path, 'characters');
+        const charactersCollectionRef = collection(newScriptRef, 'characters');
         parsedData.characters.forEach(char => {
             const newCharRef = doc(charactersCollectionRef);
             batch.set(newCharRef, { ...char, scenes: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         });
 
-        // 3. Add notes
-        const notesCollectionRef = collection(firestore, newScriptRef.path, 'notes');
+        const notesCollectionRef = collection(newScriptRef, 'notes');
         parsedData.notes.forEach(note => {
             const newNoteRef = doc(notesCollectionRef);
             batch.set(newNoteRef, note);
         });
 
-        // 4. Add scenes
-        const scenesCollectionRef = collection(firestore, newScriptRef.path, 'scenes');
+        const scenesCollectionRef = collection(newScriptRef, 'scenes');
         parsedData.scenes.forEach(scene => {
             const newSceneRef = doc(scenesCollectionRef);
             batch.set(newSceneRef, scene);
@@ -165,10 +237,6 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
         });
     }
     reader.readAsArrayBuffer(file);
-
-    if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
   };
 
   const triggerFileSelect = () => {
@@ -183,15 +251,13 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
 
     const zip = new JSZip();
 
-    // 1. Meta file
     const meta = {
       exportedAt: new Date().toISOString(),
-      appVersion: '1.0.0', // This could be dynamic in a real app
+      appVersion: '1.0.0',
       scriptTitle: script.title,
     };
     zip.file('meta.json', JSON.stringify(meta, null, 2));
 
-    // 2. Project file
     const projectData = {
       title: script.title,
       logline: script.logline || '',
@@ -199,15 +265,14 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
     };
     zip.file('project.json', JSON.stringify(projectData, null, 2));
 
-    // 3. Sub-collections
     if (characters) {
-      zip.file('characters.json', JSON.stringify(characters, null, 2));
+      zip.file('characters.json', JSON.stringify(characters.map(({ id, ...rest }) => rest), null, 2));
     }
     if (scenes) {
-      zip.file('scenes.json', JSON.stringify(scenes, null, 2));
+      zip.file('scenes.json', JSON.stringify(scenes.map(({ id, ...rest }) => rest), null, 2));
     }
     if (notes) {
-      zip.file('notes.json', JSON.stringify(notes, null, 2));
+      zip.file('notes.json', JSON.stringify(notes.map(({ id, ...rest }) => rest), null, 2));
     }
 
     try {
@@ -278,7 +343,7 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
             <Skeleton className="h-7 w-64" />
         ) : (
             <Input
-              key={script?.id} // Re-mount input when script changes
+              key={script?.id}
               defaultValue={script?.title}
               onBlur={(e) => setScriptTitle(e.target.value)}
               className="text-lg md:text-xl font-semibold border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 font-headline"
@@ -290,8 +355,8 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
             type="file"
             ref={fileInputRef}
             className="hidden"
-            onChange={handleFileImport}
-            accept=".scrite"
+            onChange={handleFileChange}
+            accept=".scrite,.scribbler"
         />
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -302,28 +367,15 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={triggerFileSelect}>
-                    <Book className="h-4 w-4 mr-2" />
-                    Import from Scrite (.scrite)
+                    <FileJson className="h-4 w-4 mr-2" />
+                    Import from file...
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem>
                     <GoogleDocIcon className="h-4 w-4 mr-2" />
                     Import from Google Docs
                 </DropdownMenuItem>
             </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <Share2 className="h-4 w-4 md:mr-2" />
-              <span className='hidden md:inline'>Share</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleCopyLink}>
-              <LinkIcon className="h-4 w-4 mr-2" />
-              Copy Link
-            </DropdownMenuItem>
-          </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
