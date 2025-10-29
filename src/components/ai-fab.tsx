@@ -284,22 +284,26 @@ export default function AiFab({
   };
   
   const handleSwitchMode = () => {
-    setBubbleMode(prev => {
-        const newMode = prev === 'ai' ? 'collab' : 'ai';
-        if (newMode === 'collab') {
-            if (isMobile) {
-                setCollabDialogOpen(true);
-                setPopoverOpen(false);
-            } else {
-                setActiveView('collab');
-                setPopoverOpen(true);
-            }
-        } else {
-            setActiveView('menu');
-        }
-        return newMode;
-    });
+    setBubbleMode(prev => prev === 'ai' ? 'collab' : 'ai');
+    setPopoverOpen(false); // Close any open popover on mode switch
+    setActiveView('menu'); // Reset view
     setShowSwitchConfirm(false);
+  };
+  
+  const handleFabClick = () => {
+    if (bubbleMode === 'ai') {
+        // AI mode: Open the AI menu
+        setActiveView('menu');
+        setPopoverOpen(true);
+    } else {
+        // Collab mode: Open the collab hub
+        if (isMobile) {
+            setCollabDialogOpen(true);
+        } else {
+            setActiveView('collab');
+            setPopoverOpen(true);
+        }
+    }
   };
   
 
@@ -527,19 +531,7 @@ export default function AiFab({
           <Button
             size="icon"
             className="rounded-full w-14 h-14 shadow-lg fixed bottom-8 right-8 z-50"
-            onClick={() => {
-                if (bubbleMode === 'collab') {
-                    if (isMobile) {
-                        setCollabDialogOpen(true);
-                    } else {
-                        setActiveView('collab');
-                        setPopoverOpen(true);
-                    }
-                } else {
-                    setActiveView('menu');
-                    setPopoverOpen(true);
-                }
-            }}
+            onClick={handleFabClick}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
@@ -550,8 +542,8 @@ export default function AiFab({
         <PopoverContent 
             className={cn(
                 "mb-2 p-0",
-                activeView === 'menu' && bubbleMode === 'ai' && "w-64",
-                activeView !== 'menu' && "w-[28rem] h-[32rem] flex flex-col"
+                bubbleMode === 'ai' && activeView === 'menu' && "w-64",
+                (bubbleMode !== 'ai' || activeView !== 'menu') && "w-[28rem] h-[32rem] flex flex-col"
             )} 
             side="top" 
             align="end"
