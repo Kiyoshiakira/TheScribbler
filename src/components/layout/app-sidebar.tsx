@@ -15,7 +15,6 @@ import {
   Users,
   NotebookPen,
   LayoutDashboard,
-  User as UserIcon,
   FileText,
   Clock
 } from 'lucide-react';
@@ -107,19 +106,7 @@ export default function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    onClick={() => setView('my-scripts')}
-                    isActive={isMyScriptsView}
-                    tooltip="My Scripts"
-                >
-                    <UserIcon />
-                    <span>My Scripts</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
             
-            <hr className="my-2 border-sidebar-border" />
-
             {scriptMenuItems.map(item => (
                 <SidebarMenuItem key={item.view}>
                     <SidebarMenuButton

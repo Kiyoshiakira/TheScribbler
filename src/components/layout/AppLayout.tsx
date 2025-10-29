@@ -82,7 +82,14 @@ function AppLayoutContent() {
     if (newView === 'settings') {
       setSettingsOpen(true);
     } else if (newView === 'profile') {
-      setProfileOpen(true);
+      // The "Profile" view from the user menu now shows the My Scripts page.
+      // If we are already on my-scripts, and they click the avatar to edit profile,
+      // it should open the dialog.
+      if (view === 'my-scripts') {
+        setProfileOpen(true);
+      } else {
+         setView('my-scripts');
+      }
     }
     else {
       setView(newView);
