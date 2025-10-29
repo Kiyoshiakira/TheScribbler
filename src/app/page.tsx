@@ -10,6 +10,7 @@ import ScenesView from '@/components/views/scenes-view';
 import CharactersView from '@/components/views/characters-view';
 import NotesView from '@/components/views/notes-view';
 import LoglineView from '@/components/views/logline-view';
+import DashboardView from '@/components/views/dashboard-view';
 import type { ScriptElement } from '@/components/script-editor';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,7 +18,7 @@ import { useCurrentScript } from '@/context/current-script-context';
 import type { AiProofreadScriptOutput } from '@/ai/flows/ai-proofread-script';
 import { ScriptProvider } from '@/context/script-context';
 
-export type View = 'editor' | 'scenes' | 'characters' | 'notes' | 'profile' | 'logline';
+export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'profile' | 'logline';
 
 export type ProofreadSuggestion = AiProofreadScriptOutput['suggestions'][0];
 
@@ -34,6 +35,8 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
 
   const renderView = () => {
     switch (view) {
+      case 'dashboard':
+        return <DashboardView setView={setView} />;
       case 'editor':
         return <EditorView 
             onActiveLineTypeChange={setActiveScriptElement}
@@ -50,12 +53,7 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
       case 'logline':
         return <LoglineView />;
       default:
-        return <EditorView 
-            onActiveLineTypeChange={setActiveScriptElement}
-            setWordCount={setWordCount}
-            setEstimatedMinutes={setEstimatedMinutes}
-            isStandalone={false}
-        />;
+        return <DashboardView setView={setView} />;
     }
   };
   
@@ -89,7 +87,7 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
 
 function MainApp() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
-  const [view, setView] = React.useState<View>('editor');
+  const [view, setView] = React.useState<View>('dashboard');
   const router = useRouter();
 
   React.useEffect(() => {

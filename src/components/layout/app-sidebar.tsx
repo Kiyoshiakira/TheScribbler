@@ -20,6 +20,7 @@ import {
   CaseSensitive,
   Clock,
   NotebookPen,
+  LayoutDashboard,
 } from 'lucide-react';
 import type { View } from '@/app/page';
 import type { ScriptElement } from '../script-editor';
@@ -117,6 +118,16 @@ export default function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
+            <SidebarMenuItem>
+            <SidebarMenuButton
+                onClick={() => setActiveView('dashboard')}
+                isActive={activeView === 'dashboard'}
+                tooltip="Dashboard"
+            >
+                <LayoutDashboard />
+                <span>Dashboard</span>
+            </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarMenuItem>
             <SidebarMenuButton
                 onClick={() => setActiveView('editor')}
