@@ -13,6 +13,7 @@ import { updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
+import { ScrollArea } from './ui/scroll-area';
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -54,19 +55,16 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
       };
       reader.readAsDataURL(file);
     }
-     // Reset the input value to allow re-uploading the same file
     if (e.target) {
         e.target.value = '';
     }
   };
 
-  
   const handleSave = async () => {
     if (!auth.currentUser || !firestore) return;
     setIsSaving(true);
     
     try {
-      // Update Firebase Auth display name and photo
       await updateProfile(auth.currentUser, {
         displayName,
         photoURL,
@@ -81,7 +79,6 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
         updatedAt: serverTimestamp() 
       };
 
-      // Update custom data in Firestore (non-blocking with error handling)
       setDoc(userDocRef, profileData, { merge: true })
         .catch(serverError => {
           const permissionError = new FirestorePermissionError({
@@ -103,7 +100,6 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
       });
       onOpenChange(false);
       
-      // A small delay and reload to ensure the UI reflects the auth changes.
       setTimeout(() => window.location.reload(), 1500);
 
     } catch (error: any) {
@@ -120,83 +116,86 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline">Edit Profile</DialogTitle>
           <DialogDescription>
             Make changes to your public profile. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-            <div className="flex flex-col items-center gap-4">
-                <Avatar className="w-24 h-24">
-                    <AvatarImage src={photoURL || undefined} alt={displayName} />
-                    <AvatarFallback>{displayName?.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => photoInputRef.current?.click()}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Photo
-                    </Button>
-                    <input
-                        type="file"
-                        ref={photoInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) => handleFileSelect(e, setPhotoURL)}
-                    />
-                </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input
-                    id="displayName"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="photoURL">Photo URL</Label>
-                <Input
-                    id="photoURL"
-                    value={photoURL}
-                    onChange={(e) => setPhotoURL(e.target.value)}
-                    placeholder="https://example.com/your-avatar.jpg"
-                />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="coverImageUrl">Cover Image URL</Label>
-                 <div className="flex gap-2">
-                    <Input
-                        id="coverImageUrl"
-                        value={coverImageUrl}
-                        onChange={(e) => setCoverImageUrl(e.target.value)}
-                        placeholder="https://example.com/your-banner.jpg"
-                    />
-                     <Button variant="outline" onClick={() => coverInputRef.current?.click()} className="flex-shrink-0">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                    </Button>
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-4 py-4">
+              <div className="flex flex-col items-center gap-4">
+                  <Avatar className="w-24 h-24">
+                      <AvatarImage src={photoURL || undefined} alt={displayName} />
+                      <AvatarFallback>{displayName?.charAt(0) || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => photoInputRef.current?.click()}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Photo
+                      </Button>
                       <input
-                        type="file"
-                        ref={coverInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) => handleFileSelect(e, setCoverImageUrl)}
-                    />
-                </div>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell us a little about yourself."
-                />
-            </div>
-        </div>
-        <DialogFooter>
+                          type="file"
+                          ref={photoInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => handleFileSelect(e, setPhotoURL)}
+                      />
+                  </div>
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                      id="displayName"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                  />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="photoURL">Photo URL</Label>
+                  <Input
+                      id="photoURL"
+                      value={photoURL}
+                      onChange={(e) => setPhotoURL(e.target.value)}
+                      placeholder="https://example.com/your-avatar.jpg"
+                  />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="coverImageUrl">Cover Image URL</Label>
+                  <div className="flex gap-2">
+                      <Input
+                          id="coverImageUrl"
+                          value={coverImageUrl}
+                          onChange={(e) => setCoverImageUrl(e.target.value)}
+                          placeholder="https://example.com/your-banner.jpg"
+                      />
+                      <Button variant="outline" onClick={() => coverInputRef.current?.click()} className="flex-shrink-0">
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload
+                      </Button>
+                      <input
+                          type="file"
+                          ref={coverInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => handleFileSelect(e, setCoverImageUrl)}
+                      />
+                  </div>
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Tell us a little about yourself."
+                      rows={5}
+                  />
+              </div>
+          </div>
+        </ScrollArea>
+        <DialogFooter className="mt-auto pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSave} disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
