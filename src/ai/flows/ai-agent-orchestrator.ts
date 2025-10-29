@@ -15,7 +15,6 @@ import {
   type AiGenerateCharacterProfileOutput,
 } from './ai-generate-character-profile';
 
-
 const AiGenerateCharacterProfileOutputSchema = z.object({
   name: z.string().describe("The character's full name."),
   profile: z
@@ -60,15 +59,25 @@ export async function aiAgentOrchestrator(
   return aiAgentOrchestratorFlow(input);
 }
 
-const aiAgentOrchestratorFlow = ai.defineFlow(
+const orchestratorPrompt = ai.definePrompt(
   {
-    name: 'aiAgentOrchestratorFlow',
-    inputSchema: AiAgentOrchestratorInputSchema,
-    outputSchema: AiAgentOrchestratorOutputSchema,
-  },
-  async input => {
-    const llmResponse = await ai.generate({
-      prompt: `You are an expert AI assistant for a screenwriting application.
+    name: 'aiAgentOrchestratorPrompt',
+    input: { schema: AiAgentOrchestratorInputSchema },
+    output: {
+      format: 'json',
+      schema: z.object({
+        response: z
+          .string()
+          .describe("The AI's friendly, conversational response to the user."),
+        modifiedScript: z
+          .string()
+          .optional()
+          .describe(
+            "If the user's request required changing the script, this is the FULL, new script content. Otherwise, this is omitted."
+          ),
+      }),
+    },
+    prompt: `You are an expert AI assistant for a screenwriting application.
 Your goal is to help the user modify their script and other project elements.
 
 Analyze the user's request and the current script content.
@@ -78,13 +87,17 @@ Analyze the user's request and the current script content.
 - If the user is asking a question or for analysis, respond directly with text.
 
 **User Request:**
-${input.request}
+${'{{{request}}}'}
 
 **Current Screenplay:**
 ---
-${input.script}
+${'{{{script}}}'}
 ---
 `,
+  },
+  async (input) => {
+    const llmResponse = await ai.generate({
+      prompt: input,
       model: 'googleai/gemini-2.5-flash',
       tools: [
         ai.defineTool(
@@ -108,30 +121,33 @@ ${input.script}
           }
         ),
       ],
-      output: {
-        schema: z.object({
-          response: z
-            .string()
-            .describe(
-              "The AI's friendly, conversational response to the user."
-            ),
-          modifiedScript: z
-            .string()
-            .optional()
-            .describe(
-              "If the user's request required changing the script, this is the FULL, new script content. Otherwise, this is omitted."
-            ),
-        }),
-      },
     });
+    return llmResponse.output();
+  }
+);
 
-    const output = llmResponse.output;
+
+const aiAgentOrchestratorFlow = ai.defineFlow(
+  {
+    name: 'aiAgentOrchestratorFlow',
+    inputSchema: AiAgentOrchestratorInputSchema,
+    outputSchema: AiAgentOrchestratorOutputSchema,
+  },
+  async input => {
+    const structuredOutput = await orchestratorPrompt(input);
+
+    if (!structuredOutput) {
+      return { response: "I'm sorry, I wasn't able to process that request." };
+    }
+
+    const output = structuredOutput.output;
     if (!output) {
       return { response: "I'm sorry, I wasn't able to process that request." };
     }
 
+
     let toolResult: any = null;
-    const toolCalls = llmResponse.toolCalls();
+    const toolCalls = structuredOutput.toolCalls();
 
     if (toolCalls.length > 0) {
       const toolCall = toolCalls[0];
