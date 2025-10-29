@@ -71,7 +71,7 @@ export default function AppSidebar({ activeView, setActiveView, activeScriptElem
             <h1 className="text-xl font-bold font-headline">ScriptSync</h1>
         </div>
       </SidebarHeader>
-      <SidebarMenu className="flex-1 p-2">
+      <SidebarMenu className="flex-1 overflow-y-auto p-2">
         <SidebarMenuItem>
           <SidebarMenuButton
             onClick={() => setActiveView('editor')}
