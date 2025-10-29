@@ -79,9 +79,9 @@ const ScriptLineComponent = ({
     }
     switch (type) {
         case 'scene-heading':
-            return 'uppercase font-bold';
+            return 'uppercase font-bold pl-[9rem]';
         case 'action':
-            return '';
+            return 'pl-[9rem]';
         case 'character':
             return 'uppercase pl-[22rem]';
         case 'parenthetical':
@@ -89,7 +89,7 @@ const ScriptLineComponent = ({
         case 'dialogue':
             return 'pl-[14rem] pr-[14rem]';
         case 'transition':
-            return 'uppercase text-right';
+            return 'uppercase text-right pr-12';
         default:
             return '';
     }
@@ -100,8 +100,11 @@ const ScriptLineComponent = ({
   };
 
   const handleBlur = (e: React.FormEvent<HTMLDivElement>) => {
-    if (line.text !== e.currentTarget.innerHTML) {
-      onTextChange(line.id, e.currentTarget.innerHTML);
+    let newText = e.currentTarget.innerHTML;
+    // Sanitize the text by removing trailing <br> and replacing &nbsp;
+    newText = newText.replace(/<br\s*\/?>$/i, '').replace(/&nbsp;/g, ' ').trim();
+    if (line.text !== newText) {
+      onTextChange(line.id, newText);
     }
   };
   
@@ -273,7 +276,7 @@ export default function ScriptEditor({
         if (currentIndex < lines.length - 1) {
             setActiveLineId(lines[currentIndex + 1].id);
         }
-    } else if (e.key === 'Backspace' && lines[currentIndex].text.replace(/<[^>]*>?/gm, '') === '' && lines.length > 1) {
+    } else if (e.key === 'Backspace' && (lines[currentIndex].text.replace(/<[^>]*>?/gm, '') === '' || lines[currentIndex].text === '<br>') && lines.length > 1) {
         e.preventDefault();
         if (currentIndex === 0) return;
         const prevLine = lines[currentIndex - 1];
@@ -411,5 +414,3 @@ export default function ScriptEditor({
     </Card>
   );
 }
-
-    
