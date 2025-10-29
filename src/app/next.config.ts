@@ -44,6 +44,7 @@ const nextConfig: NextConfig = {
       img-src 'self' blob: data: https://images.unsplash.com https://picsum.photos https://lh3.googleusercontent.com;
       font-src 'self' https://fonts.gstatic.com;
       connect-src 'self' https://*.google.com https://*.googleapis.com https://*.googleusercontent.com wss://*.cloudworkstations.dev;
+      frame-src 'self' https://studio-2119594896-6c18e.firebaseapp.com;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
