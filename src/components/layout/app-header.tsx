@@ -5,7 +5,7 @@ import {
   ChevronDown,
   Download,
   Link as LinkIcon,
-  PanelLeft,
+  LogOut,
   Share2,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,16 +14,58 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '../ui/sidebar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { GoogleDocIcon } from '../ui/icons';
-
-const userAvatars = PlaceHolderImages.filter(img => img.id.startsWith('user')).slice(0, 4);
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { Skeleton } from '../ui/skeleton';
 
 export default function AppHeader() {
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+  };
+
+  const UserMenu = () => {
+    if (isUserLoading) {
+      return <Skeleton className="h-10 w-10 rounded-full" />;
+    }
+
+    if (!user) {
+      return null;
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Avatar className="cursor-pointer border-2 border-transparent hover:border-primary transition-colors">
+            <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+            <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>
+            <p className="font-bold truncate">{user.displayName}</p>
+            <p className="text-xs text-muted-foreground font-normal truncate">{user.email}</p>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sign Out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="flex md:hidden" />
@@ -35,14 +77,6 @@ export default function AppHeader() {
         />
       </div>
       <div className="ml-auto flex items-center gap-2 md:gap-4">
-        <div className="hidden md:flex -space-x-2">
-          {userAvatars.map((avatar, index) => (
-            <Avatar key={index} className="border-2 border-background">
-              <AvatarImage src={avatar.imageUrl} alt={avatar.description} />
-              <AvatarFallback>{avatar.id.slice(-1)}</AvatarFallback>
-            </Avatar>
-          ))}
-        </div>
         <Button variant="outline" className="hidden sm:inline-flex">
           <GoogleDocIcon className="h-4 w-4 mr-2" />
           Import from Google Docs
@@ -79,6 +113,7 @@ export default function AppHeader() {
             <DropdownMenuItem>Export as Final Draft</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <UserMenu />
       </div>
     </header>
   );
