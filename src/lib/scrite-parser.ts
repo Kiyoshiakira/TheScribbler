@@ -19,11 +19,20 @@ export interface ParsedCharacter {
     imageUrl?: string;
 }
 
+export interface ParsedScene {
+  id?: string;
+  sceneNumber: number;
+  setting: string;
+  description: string;
+  time: number;
+}
+
+
 export interface ParsedScriteFile {
   script: string;
   characters: ParsedCharacter[];
   notes: ParsedNote[];
-  scenes: { number: number; setting: string; description: string; time: number }[];
+  scenes: ParsedScene[];
 }
 
 // A helper to safely get an array from a JSON object property
@@ -36,7 +45,7 @@ const getAsArray = (obj: any) => {
 // A helper to parse Quill Delta format to plain text
 const parseQuillDelta = (delta: any): string => {
     if (!delta || !delta.ops) return '';
-    return delta.ops.map((op: any) => op.insert || '').join('');
+    return delta.ops.map((op: any) => op.insert || '').join('').trim();
 };
 
 
@@ -57,42 +66,63 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     throw new Error('Invalid Scrite JSON structure: <structure> tag not found.');
   }
 
-  // 1. Parse Script Content
+  // 1. Parse Script Content and Scenes
   let scriptContent = '';
+  const scenes: ParsedScene[] = [];
   const scenesFromStructure = getAsArray(structure.elements);
+  let sceneCounter = 0;
+
 
   scenesFromStructure.forEach((sceneContainer: any) => {
     if (sceneContainer.scene?.elements) {
+      sceneCounter++;
+      let sceneText = '';
       const sceneElements = getAsArray(sceneContainer.scene.elements);
       const heading = sceneContainer.scene.heading;
-      if (heading) {
-        scriptContent += `${heading.locationType.toUpperCase()} ${heading.location.toUpperCase()} - ${heading.moment.toUpperCase()}\n\n`;
+      let sceneSetting = 'Untitled Scene';
+
+      if (heading && heading.location && heading.moment) {
+        sceneSetting = `${heading.locationType || 'EXT.'} ${heading.location} - ${heading.moment}`;
+        sceneText += sceneSetting.toUpperCase() + '\n\n';
       }
+      
       sceneElements.forEach((element: any) => {
         let text = element.text || '';
         text = text.replace(/<[^>]*>?/gm, ''); // Strip any HTML tags if present
 
         switch(element.type) {
             case 'Action':
-                scriptContent += text + '\n\n';
+                sceneText += text + '\n\n';
                 break;
             case 'Character':
-                scriptContent += `\t${text.toUpperCase()}\n`;
+                sceneText += `\t${text.toUpperCase()}\n`;
                 break;
 
             case 'Parenthetical':
-                scriptContent += `\t${text}\n`;
+                sceneText += `\t${text}\n`;
                 break;
             case 'Dialogue':
-                 scriptContent += `\t\t${text}\n\n`;
+                 sceneText += `\t\t${text}\n\n`;
                 break;
              case 'Transition':
-                scriptContent += `\t\t\t\t\t\t${text.toUpperCase()}\n\n`;
+                sceneText += `\t\t\t\t\t\t${text.toUpperCase()}\n\n`;
                 break;
             default:
-                scriptContent += text + '\n';
+                sceneText += text + '\n';
         }
       });
+
+      const wordCount = sceneText.trim().split(/\s+/).filter(Boolean).length;
+      const estimatedTime = Math.round((wordCount / 160) * 10) / 10; // Approx 160 words per minute
+      
+      scenes.push({
+        sceneNumber: sceneCounter,
+        setting: sceneSetting,
+        description: sceneContainer.scene.synopsis || 'No synopsis available.',
+        time: estimatedTime,
+      });
+
+      scriptContent += sceneText;
     }
   });
 
@@ -115,7 +145,7 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
   const notesList = getAsArray(jsonObj.screenplay?.notes?.['#data']);
   
   if (notesList) {
-    notesList.forEach((note: any, index: number) => {
+    notesList.forEach((note: any) => {
       if(note.type === 'TextNoteType' && note.content){
          notes.push({
             title: note.title || 'Untitled Note',
@@ -125,8 +155,6 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
       }
     });
   }
-  
-  const scenes: ParsedScriteFile['scenes'] = [];
   
   return {
     script: scriptContent.trim(),

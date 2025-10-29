@@ -29,7 +29,7 @@ import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
 import { parseScriteFile } from '@/lib/scrite-parser';
-import { collection, writeBatch, doc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import type { View } from '@/app/page';
 
 interface AppHeaderProps {
@@ -59,16 +59,19 @@ export default function AppHeader({ setView }: AppHeaderProps) {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const arrayBuffer = e.target?.result as ArrayBuffer;
+      console.log("--- DEBUG: File read as ArrayBuffer ---");
 
       try {
         const parsedData = await parseScriteFile(arrayBuffer);
+        console.log("--- DEBUG: Parsed Scrite JSON ---");
+        console.log(parsedData);
         
+        const batch = writeBatch(firestore);
+
         // Create a new script document
         const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
         const scriptTitle = parsedData.script.split('\n')[0] || 'Untitled Import';
-
-        const batch = writeBatch(firestore);
-
+        
         // 1. Set main script data
         batch.set(newScriptRef, {
             title: scriptTitle,
@@ -82,7 +85,7 @@ export default function AppHeader({ setView }: AppHeaderProps) {
         const charactersCollectionRef = collection(firestore, newScriptRef.path, 'characters');
         parsedData.characters.forEach(char => {
             const newCharRef = doc(charactersCollectionRef);
-            batch.set(newCharRef, char);
+            batch.set(newCharRef, { ...char, scenes: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         });
 
         // 3. Add notes
@@ -91,29 +94,37 @@ export default function AppHeader({ setView }: AppHeaderProps) {
             const newNoteRef = doc(notesCollectionRef);
             batch.set(newNoteRef, note);
         });
+
+        // 4. Add scenes
+        const scenesCollectionRef = collection(firestore, newScriptRef.path, 'scenes');
+        parsedData.scenes.forEach(scene => {
+            const newSceneRef = doc(scenesCollectionRef);
+            batch.set(newSceneRef, scene);
+        });
         
         await batch.commit().catch(serverError => {
             const permissionError = new FirestorePermissionError({
               path: `users/${user.uid}/scripts`,
               operation: 'write', 
               requestResourceData: {
-                  script: parsedData.script.substring(0, 100) + '...',
-                  characters: parsedData.characters,
-                  notes: parsedData.notes,
+                  script: "Batch write for Scrite import",
+                  characterCount: parsedData.characters.length,
+                  noteCount: parsedData.notes.length,
+                  sceneCount: parsedData.scenes.length
               },
             });
             errorEmitter.emit('permission-error', permissionError);
-            throw permissionError; // Rethrow to be caught by outer catch
+            throw permissionError;
         });
 
         toast({
           title: 'Import Successful',
           description: `"${scriptTitle}" has been added to My Scripts.`,
         });
-        setView('my-scripts'); // Switch to scripts view after successful import
+        setView('my-scripts');
 
       } catch (error) {
-         console.error('--- DEBUG: Import Failed ---', error);
+         console.error('--- DEBUG: Import Parsing Failed ---', error);
          toast({
             variant: 'destructive',
             title: 'Import Failed',
