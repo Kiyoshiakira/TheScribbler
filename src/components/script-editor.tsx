@@ -72,22 +72,26 @@ const ScriptLineComponent = ({
     }
   }, [line.text]);
   
-  const getElementStyling = (type: ScriptElement) => {
+  const getElementStyling = (type: ScriptElement, text: string) => {
+    // Add min-height to empty lines to ensure they are visible and clickable
+    if (!text.trim()) {
+        return 'h-[1.5em]';
+    }
     switch (type) {
-      case 'scene-heading':
-        return 'uppercase font-bold';
-      case 'action':
-        return '';
-      case 'character':
-        return 'uppercase ml-[35%] max-w-sm';
-      case 'parenthetical':
-        return 'ml-[30%] max-w-xs text-muted-foreground';
-      case 'dialogue':
-        return 'max-w-md mx-auto';
-      case 'transition':
-        return 'uppercase text-right';
-      default:
-        return '';
+        case 'scene-heading':
+            return 'uppercase font-bold';
+        case 'action':
+            return '';
+        case 'character':
+            return 'uppercase pl-[22rem]';
+        case 'parenthetical':
+            return 'pl-[18rem] text-muted-foreground';
+        case 'dialogue':
+            return 'pl-[14rem] pr-[14rem]';
+        case 'transition':
+            return 'uppercase text-right';
+        default:
+            return '';
     }
   };
 
@@ -111,8 +115,8 @@ const ScriptLineComponent = ({
       onBlur={handleBlur}
       onContextMenu={(e) => onContextMenu(e, line.id)}
       className={cn(
-        'w-full outline-none focus:bg-primary/10 rounded-sm px-2 py-1',
-        getElementStyling(line.type)
+        'w-full outline-none focus:bg-primary/10 rounded-sm px-2 py-0.5 leading-relaxed',
+        getElementStyling(line.type, line.text)
       )}
       dangerouslySetInnerHTML={{ __html: line.text }}
     />
@@ -373,7 +377,7 @@ export default function ScriptEditor({
         </DropdownMenu>
 
         <div
-          className="flex-1 resize-none font-code text-base leading-relaxed bg-card flex flex-col"
+          className="flex-1 resize-none font-code text-base bg-card flex flex-col"
           style={{ minHeight: '60vh' }}
         >
           {lines.map(line => (
