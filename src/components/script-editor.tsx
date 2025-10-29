@@ -385,11 +385,18 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
   const editorContent = (
     <>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <CardTitle className="font-headline flex items-center gap-2 text-lg">
             <Film className="w-5 h-5 text-primary" />
-            <span>SCENE 1: INT. COFFEE SHOP - DAY</span>
+            <span className="truncate">SCENE 1: INT. COFFEE SHOP - DAY</span>
           </CardTitle>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground ml-auto">
+            <span>{wordCount} words</span>
+            <div className="flex items-center gap-2">
+                <Clock className='w-4 h-4' />
+                <span>Approx. {estimatedMinutes} min</span>
+            </div>
+          </div>
           {!isStandalone && (
               <Button 
                 variant="outline" 
@@ -462,15 +469,7 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
           ))}
         </div>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground justify-end gap-6">
-        <div className='flex items-center gap-6'>
-            <span>{wordCount} words</span>
-            <div className="flex items-center gap-2">
-                <Clock className='w-4 h-4' />
-                <span>Approx. {estimatedMinutes} min</span>
-            </div>
-        </div>
-      </CardFooter>
+      <CardFooter />
 
       <Dialog open={isSuggestionsDialogOpen} onOpenChange={setIsSuggestionsDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
