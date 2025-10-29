@@ -25,7 +25,6 @@ import { useToast } from '@/hooks/use-toast';
 import { ScriptContext, useScript } from '@/context/script-context';
 import { getAiSuggestions, getAiDeepAnalysis, getAiProofreadSuggestions } from '@/app/actions';
 import type { AiDeepAnalysisOutput } from '@/ai/flows/ai-deep-analysis';
-import type { ProofreadSuggestion } from '@/app/page';
 import AiAssistant from './ai-assistant';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -36,6 +35,13 @@ import CollabAssistant from './collab-assistant';
 interface AnalysisItem {
   point: string;
   suggestion: string;
+}
+
+// This needs to be defined here because of how it's used across components
+export interface ProofreadSuggestion {
+    originalText: string;
+    correctedText: string;
+    explanation: string;
 }
 
 export type AiFabAction =
@@ -541,7 +547,9 @@ export default function AiFab({
             className={cn(
                 "mb-2 p-0",
                 bubbleMode === 'ai' && activeView === 'menu' && "w-64",
-                (bubbleMode !== 'ai' || activeView !== 'menu') && "w-[28rem] h-[32rem] flex flex-col"
+                bubbleMode === 'ai' && activeView === 'chat' && "w-[26rem] h-[30rem] flex flex-col",
+                bubbleMode === 'ai' && (activeView === 'suggestions' || activeView === 'analysis' || activeView === 'proofread') && "w-[28rem] h-auto max-h-[32rem] flex flex-col",
+                bubbleMode === 'collab' && "w-[28rem] h-[32rem] flex flex-col"
             )} 
             side="top" 
             align="end"
@@ -748,3 +756,5 @@ export default function AiFab({
     </>
   );
 }
+
+    
