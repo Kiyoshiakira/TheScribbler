@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import { useAuth, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { updateProfile } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -31,6 +31,9 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
   const [coverImageUrl, setCoverImageUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName || '');
@@ -41,6 +44,21 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
       setCoverImageUrl(profile.coverImageUrl || '');
     }
   }, [user, profile, open]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, setter: (url: string) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setter(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+     // Reset the input value to allow re-uploading the same file
+    if (e.target) {
+        e.target.value = '';
+    }
+  };
 
   
   const handleSave = async () => {
@@ -110,11 +128,24 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-4">
                 <Avatar className="w-24 h-24">
                     <AvatarImage src={photoURL || undefined} alt={displayName} />
                     <AvatarFallback>{displayName?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => photoInputRef.current?.click()}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Photo
+                    </Button>
+                    <input
+                        type="file"
+                        ref={photoInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleFileSelect(e, setPhotoURL)}
+                    />
+                </div>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="displayName">Display Name</Label>
@@ -135,12 +166,25 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
             </div>
             <div className="space-y-2">
                 <Label htmlFor="coverImageUrl">Cover Image URL</Label>
-                <Input
-                    id="coverImageUrl"
-                    value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
-                    placeholder="https://example.com/your-banner.jpg"
-                />
+                 <div className="flex gap-2">
+                    <Input
+                        id="coverImageUrl"
+                        value={coverImageUrl}
+                        onChange={(e) => setCoverImageUrl(e.target.value)}
+                        placeholder="https://example.com/your-banner.jpg"
+                    />
+                     <Button variant="outline" onClick={() => coverInputRef.current?.click()} className="flex-shrink-0">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload
+                    </Button>
+                      <input
+                        type="file"
+                        ref={coverInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleFileSelect(e, setCoverImageUrl)}
+                    />
+                </div>
             </div>
              <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
