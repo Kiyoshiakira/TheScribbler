@@ -72,10 +72,10 @@ const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id);
 
 function CharacterDialog({ character, onSave, trigger }: { character?: Character | null, onSave: (char: Character) => void, trigger: React.ReactNode }) {
   const { scriptContent } = useScript();
-  const [name, setName] = useState(character?.name || '');
-  const [description, setDescription] = useState(character?.description || '');
-  const [profile, setProfile] = useState(character?.profile || '');
-  const [imageUrl, setImageUrl] = useState(character?.imageUrl || character?.imageId && getImage(character.imageId)?.imageUrl || '');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [profile, setProfile] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -86,7 +86,7 @@ function CharacterDialog({ character, onSave, trigger }: { character?: Character
       setName(character?.name || '');
       setDescription(character?.description || '');
       setProfile(character?.profile || '');
-      setImageUrl(character?.imageUrl || character?.imageId && getImage(character.imageId)?.imageUrl || '');
+      setImageUrl(character?.imageUrl || (character?.imageId && getImage(character.imageId)?.imageUrl) || '');
     }
   }, [open, character]);
 
@@ -256,18 +256,16 @@ function CharacterDialog({ character, onSave, trigger }: { character?: Character
 }
 
 export default function CharactersView() {
-  const [characters, setCharacters] = useState<Character[]>(initialCharacters);
+  const [characters, setCharacters] = useState<Character[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const item = window.localStorage.getItem(CHARACTERS_STORAGE_KEY);
-      if (item) {
-        setCharacters(JSON.parse(item));
-      }
+      setCharacters(item ? JSON.parse(item) : initialCharacters);
     } catch (error) {
       console.warn(`Error reading localStorage key “${CHARACTERS_STORAGE_KEY}”:`, error);
-      // Keep initial characters
+      setCharacters(initialCharacters);
     } finally {
       setIsLoaded(true);
     }
@@ -290,7 +288,7 @@ export default function CharactersView() {
       updatedCharacters[existingIndex] = charToSave;
       setCharacters(updatedCharacters);
     } else {
-      setCharacters([...characters, charToSave]);
+      setCharacters([charToSave, ...characters]);
     }
   };
 
@@ -359,3 +357,5 @@ export default function CharactersView() {
     </div>
   );
 }
+
+    

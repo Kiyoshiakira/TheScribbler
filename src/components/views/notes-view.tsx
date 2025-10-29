@@ -92,10 +92,10 @@ const initialNotes: Note[] = [
 
 function NoteDialog({ note, onSave, trigger }: { note?: Note | null, onSave: (note: Note) => void, trigger: React.ReactNode }) {
     const [open, setOpen] = useState(false);
-    const [title, setTitle] = useState(note?.title || '');
-    const [content, setContent] = useState(note?.content || '');
-    const [category, setCategory] = useState<NoteCategory>(note?.category || 'General');
-    const [imageUrl, setImageUrl] = useState(note?.imageUrl || '');
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [category, setCategory] = useState<NoteCategory>('General');
+    const [imageUrl, setImageUrl] = useState('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
@@ -193,18 +193,16 @@ function NoteDialog({ note, onSave, trigger }: { note?: Note | null, onSave: (no
 
 
 export default function NotesView() {
-  const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const item = window.localStorage.getItem(NOTES_STORAGE_KEY);
-      if (item) {
-        setNotes(JSON.parse(item));
-      }
+      setNotes(item ? JSON.parse(item) : initialNotes);
     } catch (error) {
       console.warn(`Error reading localStorage key “${NOTES_STORAGE_KEY}”:`, error);
-      // Keep initial notes
+      setNotes(initialNotes);
     } finally {
         setIsLoaded(true);
     }
@@ -237,6 +235,7 @@ export default function NotesView() {
         <h1 className="text-3xl font-bold font-headline">Notes</h1>
         <NoteDialog
             onSave={handleSaveNote}
+            note={null}
             trigger={
                 <Button>
                     <Plus className="mr-2 h-4 w-4" />
@@ -276,3 +275,5 @@ export default function NotesView() {
     </div>
   );
 }
+
+    
