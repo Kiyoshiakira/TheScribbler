@@ -30,6 +30,7 @@ import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
 import { LoglineDialog } from '../logline-dialog';
 import { ScrollArea } from '../ui/scroll-area';
+import { SettingsDialog } from '../settings-dialog';
 
 interface AppSidebarProps {
   activeView: View;
@@ -68,6 +69,7 @@ export default function AppSidebar({
   const { state: sidebarState } = useSidebar();
   const { script, isScriptLoading } = useScript();
   const [loglineDialogOpen, setLoglineDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   
   const formatElementName = (name: string | null) => {
     if (!name) return 'N/A';
@@ -194,7 +196,7 @@ export default function AppSidebar({
       <SidebarFooter>
         <SidebarMenu className="p-2">
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
+            <SidebarMenuButton tooltip="Settings" onClick={() => setSettingsDialogOpen(true)}>
               <Settings />
               <span>Settings</span>
             </SidebarMenuButton>
@@ -203,6 +205,7 @@ export default function AppSidebar({
       </SidebarFooter>
     </Sidebar>
     <LoglineDialog open={loglineDialogOpen} onOpenChange={setLoglineDialogOpen} />
+    <SettingsDialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen} />
     </>
   );
 }
