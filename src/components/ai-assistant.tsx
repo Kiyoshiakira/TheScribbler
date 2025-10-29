@@ -167,7 +167,7 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
             <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
           <TabsContent value="suggestions" className="mt-4 flex-1 flex flex-col min-h-0">
-            <div className="flex flex-col gap-4 h-full">
+            <div className="flex flex-col gap-4 flex-1 min-h-0">
                 <Button onClick={handleGetSuggestions} disabled={isSuggestionsLoading}>
                     <Lightbulb className="mr-2 h-4 w-4" />
                     {isSuggestionsLoading ? 'Thinking...' : 'Suggest Improvements'}
@@ -200,7 +200,7 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
             </div>
           </TabsContent>
           <TabsContent value="analysis" className="mt-4 flex-1 flex flex-col min-h-0">
-            <div className="flex flex-col gap-4 h-full">
+            <div className="flex flex-col gap-4 flex-1 min-h-0">
                 <Button onClick={handleGetAnalysis} disabled={isAnalysisLoading}>
                     <Wand2 className="mr-2 h-4 w-4" />
                     {isAnalysisLoading ? 'Analyzing...' : 'Run Deep Analysis'}
@@ -237,7 +237,7 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
                 </div>
             </div>
           </TabsContent>
-          <TabsContent value="chat" className="mt-4 flex-1 flex flex-col h-full">
+          <TabsContent value="chat" className="mt-4 flex-1 flex flex-col min-h-0">
             <ScrollArea className="flex-1 rounded-md border p-4" ref={scrollAreaRef}>
                 <div className='space-y-4'>
                     {chatHistory.map((msg, index) => (
