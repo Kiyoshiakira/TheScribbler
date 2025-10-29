@@ -11,6 +11,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
+const SCRIPT_TOKEN_LIMIT = 1000000; // 1 million characters
+
 const AiProofreadScriptInputSchema = z.object({
   script: z.string().describe('The screenplay text to proofread.'),
 });
@@ -79,6 +81,10 @@ const aiProofreadScriptFlow = ai.defineFlow(
     // If the script is very short, it's probably not worth analyzing.
     if (input.script.length < 50) {
       return { suggestions: [] };
+    }
+     // Prevent token limit errors.
+    if (input.script.length > SCRIPT_TOKEN_LIMIT) {
+        return { suggestions: [] };
     }
     const { output } = await prompt({
       input,

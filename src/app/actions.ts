@@ -29,6 +29,7 @@ import {
     type AiGenerateLoglineInput,
 } from '@/ai/flows/ai-generate-logline';
 
+const SCRIPT_TOKEN_LIMIT = 1000000; // 1 million characters
 
 export async function getAiSuggestions(
   input: AiSuggestSceneImprovementsInput
@@ -138,6 +139,13 @@ export async function runAiAgent(input: AiAgentOrchestratorInput) {
 export async function getAiProofreadSuggestions(input: AiProofreadScriptInput) {
     if (!process.env.GEMINI_API_KEY) {
         return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    }
+    // Prevent calling the flow if the script is too long.
+    if (input.script.length > SCRIPT_TOKEN_LIMIT) {
+        return {
+          data: null,
+          error: `The script is too long for the proofreader. Please reduce its length and try again. (Limit: ${SCRIPT_TOKEN_LIMIT} characters)`,
+        };
     }
     try {
         const result = await aiProofreadScript(input);
