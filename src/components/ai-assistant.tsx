@@ -60,11 +60,12 @@ export default function AiAssistant() {
 
     const userMessage: ChatMessage = { sender: 'user', text: chatInput };
     setChatHistory(prev => [...prev, userMessage]);
+    const currentInput = chatInput;
     setChatInput('');
     setIsChatLoading(true);
 
     const result = await runAiAgent({
-      request: chatInput,
+      request: currentInput,
       script: scriptContent,
     });
 

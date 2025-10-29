@@ -231,18 +231,13 @@ export default function AiFab() {
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
              <div className="space-y-4 py-4">
-                {isSuggestionsLoading && (
+                {isSuggestionsLoading ? (
                 <div className="space-y-4">
                     <Skeleton className="h-12 w-full" />
                     <Skeleton className="h-12 w-full" />
                     <Skeleton className="h-12 w-4/5" />
                 </div>
-                )}
-                {!isSuggestionsLoading && suggestions.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">
-                    No suggestions available at the moment.
-                </div>
-                )}
+                ) : suggestions.length > 0 ? (
                 <ul className="space-y-3">
                 {suggestions.map((suggestion, index) => (
                     <li key={index} className="text-sm flex gap-3 p-3 bg-muted/50 rounded-md">
@@ -251,6 +246,11 @@ export default function AiFab() {
                     </li>
                 ))}
                 </ul>
+                ) : (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                    No suggestions available at the moment.
+                </div>
+                )}
             </div>
           </ScrollArea>
         </DialogContent>
@@ -268,19 +268,13 @@ export default function AiFab() {
             </DialogDescription>
           </DialogHeader>
            <ScrollArea className="max-h-[60vh] -mx-6 px-6">
-                {isAnalysisLoading && (
+                {isAnalysisLoading ? (
                     <div className="space-y-4 p-4">
                         <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-12 w-4/5" />
                     </div>
-                )}
-                {!isAnalysisLoading && !analysis && (
-                    <div className="text-center text-sm text-muted-foreground py-8 px-4">
-                        Analysis results will appear here.
-                    </div>
-                )}
-                {analysis && (
+                ) : analysis ? (
                     <Accordion type="multiple" defaultValue={['Plot', 'Characters', 'Dialogue']} className="w-full py-4">
                         {analysis.plotAnalysis.length > 0 && (
                             <AnalysisSection title="Plot" items={analysis.plotAnalysis} icon={<Bot className='w-4 h-4 text-primary' />} />
@@ -292,6 +286,10 @@ export default function AiFab() {
                             <AnalysisSection title="Dialogue" items={analysis.dialogueAnalysis} icon={<MessageSquare className='w-4 h-4 text-primary' />} />
                         )}
                     </Accordion>
+                ) : (
+                    <div className="text-center text-sm text-muted-foreground py-8 px-4">
+                        Analysis results will appear here.
+                    </div>
                 )}
             </ScrollArea>
         </DialogContent>
@@ -307,43 +305,42 @@ export default function AiFab() {
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
-            {isProofreading && proofreadSuggestions.length === 0 ? (
-                <div className="space-y-4 py-4">
-                    <Skeleton className="h-24 w-full" />
-                    <Skeleton className="h-24 w-full" />
-                </div>
-            ) : (
             <div className="space-y-4 py-4">
-              {proofreadSuggestions.map((suggestion, index) => (
-                <Card key={index} className="overflow-hidden">
-                  <CardHeader className="bg-muted/50 p-4">
-                    <CardTitle className="text-sm font-semibold">{suggestion.explanation}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 text-sm">
-                    <p className="text-red-500 line-through mb-2">"{suggestion.originalText}"</p>
-                    <p className="text-green-600">"{suggestion.correctedText}"</p>
-                  </CardContent>
-                  <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => dismissSuggestion(suggestion)}>
-                      <X className="w-4 h-4 mr-2" />
-                      Dismiss
-                    </Button>
-                    <Button size="sm" onClick={() => applySuggestion(suggestion)}>
-                      <Check className="w-4 h-4 mr-2" />
-                      Apply
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-              {!isProofreading && proofreadSuggestions.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                    <Check className="w-12 h-12 mx-auto" />
-                    <h3 className="mt-4 text-lg font-medium">No errors found!</h3>
-                    <p>The proofreader didn't find any suggestions.</p>
-                </div>
-              )}
+                {isProofreading ? (
+                    <div className="space-y-4 py-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </div>
+                ) : proofreadSuggestions.length > 0 ? (
+                    proofreadSuggestions.map((suggestion, index) => (
+                        <Card key={index} className="overflow-hidden">
+                        <CardHeader className="bg-muted/50 p-4">
+                            <CardTitle className="text-sm font-semibold">{suggestion.explanation}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 text-sm">
+                            <p className="text-red-500 line-through mb-2">"{suggestion.originalText}"</p>
+                            <p className="text-green-600">"{suggestion.correctedText}"</p>
+                        </CardContent>
+                        <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => dismissSuggestion(suggestion)}>
+                            <X className="w-4 h-4 mr-2" />
+                            Dismiss
+                            </Button>
+                            <Button size="sm" onClick={() => applySuggestion(suggestion)}>
+                            <Check className="w-4 h-4 mr-2" />
+                            Apply
+                            </Button>
+                        </CardFooter>
+                        </Card>
+                    ))
+                ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <Check className="w-12 h-12 mx-auto" />
+                        <h3 className="mt-4 text-lg font-medium">No errors found!</h3>
+                        <p>The proofreader didn't find any suggestions.</p>
+                    </div>
+                )}
             </div>
-            )}
           </ScrollArea>
         </DialogContent>
       </Dialog>
