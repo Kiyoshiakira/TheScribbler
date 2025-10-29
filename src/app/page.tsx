@@ -9,7 +9,6 @@ import ScenesView from '@/components/views/scenes-view';
 import CharactersView from '@/components/views/characters-view';
 import NotesView from '@/components/views/notes-view';
 import type { ScriptElement } from '@/components/script-editor';
-import { ScriptProvider } from '@/context/script-context';
 
 export type View = 'editor' | 'scenes' | 'characters' | 'notes';
 
@@ -35,15 +34,17 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background">
+      <div className="flex h-screen bg-background">
         <AppSidebar
           activeView={view}
           setActiveView={setView}
           activeScriptElement={view === 'editor' ? activeScriptElement : null}
         />
-        <div className="flex flex-col flex-1 w-full">
+        <div className="flex flex-1 flex-col overflow-hidden">
           <AppHeader />
-          <main className="p-4 sm:p-6 lg:p-8 flex-1">{renderView()}</main>
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            {renderView()}
+          </main>
         </div>
       </div>
     </SidebarProvider>
