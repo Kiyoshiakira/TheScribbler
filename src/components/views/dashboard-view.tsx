@@ -14,8 +14,7 @@ import type { Note } from "./notes-view";
 import type { Scene } from "./scenes-view";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import Link from "next/link";
-
+import type { View } from "../layout/AppLayout";
 
 function StatCard({ title, value, icon, isLoading }: { title: string, value: number, icon: React.ReactNode, isLoading: boolean }) {
     return (
@@ -31,7 +30,7 @@ function StatCard({ title, value, icon, isLoading }: { title: string, value: num
     )
 }
 
-export default function DashboardView() {
+export default function DashboardView({ setView }: { setView: (view: View) => void }) {
     const { script, isScriptLoading } = useScript();
     const { user } = useUser();
     const firestore = useFirestore();
@@ -73,11 +72,9 @@ export default function DashboardView() {
                             <p className="text-lg text-muted-foreground italic">
                                 {script?.logline || "No logline has been set for this script yet."}
                             </p>
-                            <Link href="/logline" passHref>
-                                <Button variant="outline" size="sm">
-                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                </Button>
-                            </Link>
+                            <Button variant="outline" size="sm" onClick={() => setView('logline')}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                            </Button>
                         </div>
                     </>
                 )}
@@ -92,16 +89,12 @@ export default function DashboardView() {
             
             {/* Action Buttons */}
             <div className="flex items-center gap-4">
-                <Link href="/editor" passHref>
-                  <Button size="lg">
-                      <BookOpen className="mr-2" /> Open Editor
-                  </Button>
-                </Link>
-                 <Link href="/logline" passHref>
-                    <Button size="lg" variant="secondary">
-                        <NotebookPen className="mr-2" /> Edit Logline
-                    </Button>
-                 </Link>
+                <Button size="lg" onClick={() => setView('editor')}>
+                    <BookOpen className="mr-2" /> Open Editor
+                </Button>
+                <Button size="lg" variant="secondary" onClick={() => setView('logline')}>
+                    <NotebookPen className="mr-2" /> Edit Logline
+                </Button>
             </div>
 
             {/* Collapsible Lists */}

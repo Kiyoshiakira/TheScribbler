@@ -77,7 +77,7 @@ export default function AppSidebar({
   isLoadingStats
 }: {
   activeView: View;
-  setView: (view: View | 'settings' | 'profile') => void;
+  setView: (view: View | 'settings' | 'profile-edit') => void;
   stats: ScriptStats;
   isLoadingStats: boolean;
 }) {
@@ -98,10 +98,10 @@ export default function AppSidebar({
   return (
     <Sidebar variant="sidebar" collapsible="icon" side="left">
       <SidebarHeader>
-        <a href="#" className="flex items-center gap-2 p-2" onClick={() => setView(noScriptLoaded ? 'my-scripts' : 'dashboard')}>
+        <button className="flex items-center gap-2 p-2" onClick={() => setView('dashboard')}>
             <Logo />
             <h1 className="text-xl font-bold font-headline">ScriptScribbler</h1>
-        </a>
+        </button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
