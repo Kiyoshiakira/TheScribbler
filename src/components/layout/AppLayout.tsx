@@ -80,7 +80,7 @@ function AppLayoutContent() {
       // It correctly switches to the dashboard for that new script.
       setView('dashboard');
     }
-  }, [isCurrentScriptLoading, currentScriptId, view]);
+  }, [isCurrentScriptLoading, currentScriptId]);
 
 
   const handleSetView = (newView: View | 'settings' | 'profile-edit') => {

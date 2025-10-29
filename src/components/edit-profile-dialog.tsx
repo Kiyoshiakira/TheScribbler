@@ -93,9 +93,6 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
       });
       onOpenChange(false);
       
-      // Give a moment for data to propagate before a potential reload
-      setTimeout(() => window.location.reload(), 1500);
-
     } catch (error: any) {
         // This will now catch errors from either updateProfile or setDoc.
         // It's more likely to be a permission error from Firestore now.
