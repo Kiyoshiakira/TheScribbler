@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Film, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -27,10 +26,7 @@ const SCRIPT_ELEMENTS_CYCLE: ScriptElement[] = [
 ];
 
 interface ScriptEditorProps {
-  onActiveLineTypeChange: (type: ScriptElement | null) => void;
   isStandalone: boolean;
-  setWordCount: (count: number) => void;
-  setEstimatedMinutes: (minutes: number) => void;
 }
 
 interface ScriptLineComponentProps {
@@ -127,10 +123,7 @@ const ScriptLineComponent = ({
 ScriptLineComponent.displayName = 'ScriptLineComponent';
 
 export default function ScriptEditor({ 
-  onActiveLineTypeChange, 
-  isStandalone = false,
-  setWordCount,
-  setEstimatedMinutes,
+  isStandalone = false
  }: ScriptEditorProps) {
   const { lines, setLines, isScriptLoading } = useScript();
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
@@ -143,28 +136,6 @@ export default function ScriptEditor({
       setActiveLineId(lines[0].id);
     }
   }, [lines, activeLineId]);
-
-  useEffect(() => {
-    if (lines.length === 0) return;
-    const newScriptContent = lines.map(line => line.text.replace(/<br>/g, '')).join('\n');
-
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = newScriptContent.replace(/<br>/g, '\n');
-    const textOnly = tempDiv.textContent || tempDiv.innerText || '';
-    const words = textOnly.trim().split(/\s+/).filter(Boolean);
-    const count = words.length;
-    setWordCount(count);
-    
-    const minutes = Math.round((count / 160) * 10) / 10;
-    setEstimatedMinutes(minutes);
-  }, [lines, setWordCount, setEstimatedMinutes]);
-
-  useEffect(() => {
-    if (onActiveLineTypeChange && activeLineId) {
-      const activeLine = lines.find(line => line.id === activeLineId);
-      onActiveLineTypeChange(activeLine ? activeLine.type : null);
-    }
-  }, [activeLineId, lines, onActiveLineTypeChange]);
 
   const handleTextChange = (id: string, text: string) => {
     setLines(prevLines => {
@@ -293,48 +264,35 @@ export default function ScriptEditor({
   
   if (isScriptLoading) {
     return (
-        <Card className="h-full flex flex-col shadow-lg">
-            <CardHeader>
-                <Skeleton className="h-7 w-3/4" />
-            </CardHeader>
-            <CardContent className="flex-1 flex relative">
-                <div className="space-y-4 w-full">
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-6 w-1/2 mx-auto" />
-                    <Skeleton className="h-10 w-3/4" />
-                    <Skeleton className="h-10 w-4/5" />
-                </div>
-            </CardContent>
-            <CardFooter className="justify-between gap-6">
-                <Skeleton className="h-6 w-24" />
-                 <div className='flex items-center gap-6'>
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-24" />
-                </div>
-            </CardFooter>
-        </Card>
+        <div className="h-full flex flex-col p-6 space-y-4">
+            <Skeleton className="h-7 w-3/4" />
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-6 w-1/2 mx-auto" />
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-10 w-4/5" />
+        </div>
     );
   }
 
   const editorContent = (
     <div 
         ref={editorRef} 
-        className="flex-1 flex flex-col relative bg-card text-card-foreground shadow-lg rounded-lg h-full"
+        className={cn(
+            "flex-1 flex flex-col relative",
+            isStandalone ? "bg-background p-4" : ""
+        )}
         onContextMenu={(e) => e.preventDefault()}
         onClick={() => setContextMenu(null)}
       >
-        <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-            <CardTitle className="font-headline flex items-center gap-2 text-lg">
-                <Film className="w-5 h-5 text-primary" />
-                <span className="truncate">SCENE 1: INT. COFFEE SHOP - DAY</span>
-            </CardTitle>
+        <div className={cn(!isStandalone && "p-6 bg-card rounded-lg shadow-lg")}>
+            <div className="flex items-center justify-between gap-4 mb-4">
+                <h2 className="font-headline flex items-center gap-2 text-lg font-semibold">
+                    <Film className="w-5 h-5 text-primary" />
+                    <span className="truncate">SCENE 1: INT. COFFEE SHOP - DAY</span>
+                </h2>
             </div>
-        </CardHeader>
-        <CardContent 
-            className="flex-1 flex relative"
-        >
+            
             <DropdownMenu open={!!contextMenu} onOpenChange={() => setContextMenu(null)}>
                 <DropdownMenuTrigger asChild>
                     <div 
@@ -367,7 +325,7 @@ export default function ScriptEditor({
             </DropdownMenu>
 
             <div
-            className="flex-1 resize-none font-code text-base bg-card flex flex-col px-12"
+            className="flex-1 resize-none font-code text-base flex flex-col px-12"
             style={{ minHeight: '60vh' }}
             >
             {lines.map(line => (
@@ -382,18 +340,9 @@ export default function ScriptEditor({
                 </div>
             ))}
             </div>
-        </CardContent>
-        <CardFooter />
+        </div>
     </div>
   );
-
-  if (isStandalone) {
-    return (
-      <div className="h-screen w-screen bg-background flex flex-col p-4">
-        {editorContent}
-      </div>
-    );
-  }
 
   return editorContent;
 }
