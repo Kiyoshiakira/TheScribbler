@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useContext, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Film, ExternalLink, Bot, Check, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ScriptContext } from '@/context/script-context';
+import { useScript } from '@/context/script-context';
 import { getAiProofreadSuggestions } from '@/app/actions';
 import type { AiProofreadScriptOutput } from '@/ai/flows/ai-proofread-script';
 import { Badge } from './ui/badge';
@@ -140,7 +140,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = false }: ScriptEditorProps) {
-  const { script, lines, setLines, isScriptLoading } = useContext(ScriptContext);
+  const { script, lines, setLines, isScriptLoading } = useScript();
   const [wordCount, setWordCount] = useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = useState(0);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
@@ -522,3 +522,5 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
     </Card>
   );
 }
+
+    
