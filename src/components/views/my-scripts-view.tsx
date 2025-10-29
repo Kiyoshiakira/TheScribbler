@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Book, Library, Loader2, Plus, Trash } from 'lucide-react';
@@ -96,15 +96,34 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
     };
     
     const handleDeleteScript = async (scriptId: string) => {
-        if (!scriptsCollection) return;
+        if (!firestore || !user) return;
+        
+        const scriptRef = doc(firestore, 'users', user.uid, 'scripts', scriptId);
+
         try {
-            await deleteDoc(doc(scriptsCollection, scriptId));
+            const batch = writeBatch(firestore);
+
+            // Get and delete all subcollections
+            const subcollections = ['characters', 'scenes', 'notes'];
+            for (const sub of subcollections) {
+                const subcollectionRef = collection(scriptRef, sub);
+                const snapshot = await getDocs(subcollectionRef);
+                snapshot.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+            }
+
+            // Delete the main script document
+            batch.delete(scriptRef);
+
+            await batch.commit();
+
             toast({
                 title: 'Script Deleted',
-                description: 'The script has been permanently deleted.',
+                description: 'The script and all its data have been permanently deleted.',
             });
         } catch (error: any) {
-             console.error("Error deleting script: ", error);
+             console.error("Error deleting script and its subcollections: ", error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
@@ -112,6 +131,7 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
             });
         }
     }
+
 
     if (areScriptsLoading) {
         return (
@@ -172,7 +192,7 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
                                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
                                             This action cannot be undone. This will permanently delete your
-                                            script and all its associated data.
+                                            script and all its associated data (characters, scenes, notes).
                                         </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
