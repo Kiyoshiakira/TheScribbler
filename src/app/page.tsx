@@ -12,6 +12,7 @@ import NotesView from '@/components/views/notes-view';
 import type { ScriptElement } from '@/components/script-editor';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScriptProvider } from '@/context/script-context';
 
 export type View = 'editor' | 'scenes' | 'characters' | 'notes';
 
@@ -79,5 +80,5 @@ export default function Home() {
     );
   }
 
-  return <AppLayout />;
+  return <ScriptProvider><AppLayout /></ScriptProvider>;
 }

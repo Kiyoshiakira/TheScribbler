@@ -7,6 +7,7 @@ import {
   Link as LinkIcon,
   LogOut,
   Share2,
+  Upload,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,13 +25,52 @@ import { GoogleDocIcon } from '../ui/icons';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
+import { useScript } from '@/context/script-context';
+import { useToast } from '@/hooks/use-toast';
+import { useRef } from 'react';
 
 export default function AppHeader() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const { setScriptContent } = useScript();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const handleSignOut = async () => {
     await signOut(auth);
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target?.result as string;
+      setScriptContent(text);
+      toast({
+        title: 'Import Successful',
+        description: `Successfully imported ${file.name}.`,
+      });
+    };
+    reader.onerror = () => {
+        toast({
+            variant: 'destructive',
+            title: 'Import Failed',
+            description: 'There was an error reading the file.',
+        });
+    }
+    reader.readAsText(file);
+
+    // Reset file input
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
   };
 
   const UserMenu = () => {
@@ -77,10 +117,31 @@ export default function AppHeader() {
         />
       </div>
       <div className="ml-auto flex items-center gap-2 md:gap-4">
-        <Button variant="outline" className="hidden sm:inline-flex">
-          <GoogleDocIcon className="h-4 w-4 mr-2" />
-          Import from Google Docs
-        </Button>
+        <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileImport}
+            accept=".scrite"
+        />
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                    <Upload className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Import</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={triggerFileSelect}>
+                    <Book className="h-4 w-4 mr-2" />
+                    Import from Scrite (.scrite)
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <GoogleDocIcon className="h-4 w-4 mr-2" />
+                    Import from Google Docs
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
