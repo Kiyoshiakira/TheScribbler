@@ -1,5 +1,5 @@
 'use client';
-
+import { useState } from 'react';
 import {
   Book,
   ChevronDown,
@@ -8,6 +8,8 @@ import {
   LogOut,
   Share2,
   Upload,
+  User as UserIcon,
+  Settings
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,8 @@ import { useRef } from 'react';
 import { parseScriteFile } from '@/lib/scrite-parser';
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import type { View } from '@/app/page';
+import Link from 'next/link';
+import { SettingsDialog } from '../settings-dialog';
 
 interface AppHeaderProps {
   setView: (view: View) => void;
@@ -44,6 +48,7 @@ export default function AppHeader({ setView }: AppHeaderProps) {
   const { script, setScriptTitle, isScriptLoading } = useScript();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
 
   const handleSignOut = async () => {
@@ -134,7 +139,7 @@ export default function AppHeader({ setView }: AppHeaderProps) {
           title: 'Import Successful',
           description: `"${scriptTitle}" has been added to My Scripts.`,
         });
-        setView('my-scripts');
+        setView('profile');
 
       } catch (error) {
          console.error('--- DEBUG: Import Parsing Failed ---', error);
@@ -182,6 +187,19 @@ export default function AppHeader({ setView }: AppHeaderProps) {
             <p className="text-xs text-muted-foreground font-normal truncate">{user.email}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+           <Link href="/profile" passHref legacyBehavior>
+            <DropdownMenuItem asChild>
+              <a>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </a>
+            </DropdownMenuItem>
+          </Link>
+          <DropdownMenuItem onClick={() => setSettingsDialogOpen(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign Out</span>
@@ -193,6 +211,7 @@ export default function AppHeader({ setView }: AppHeaderProps) {
 
 
   return (
+    <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="flex md:hidden" />
       <div className="flex items-center gap-2">
@@ -269,5 +288,7 @@ export default function AppHeader({ setView }: AppHeaderProps) {
         <UserMenu />
       </div>
     </header>
+    <SettingsDialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen} />
+    </>
   );
 }

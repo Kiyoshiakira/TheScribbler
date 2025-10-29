@@ -29,6 +29,7 @@ import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
 import { ScrollArea } from '../ui/scroll-area';
 import { SettingsDialog } from '../settings-dialog';
+import Link from 'next/link';
 
 interface AppSidebarProps {
   activeView: View;
@@ -115,14 +116,19 @@ export default function AppSidebar({
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
             <SidebarMenuItem>
-            <SidebarMenuButton
-                onClick={() => setActiveView('my-scripts')}
-                isActive={activeView === 'my-scripts'}
-                tooltip="My Scripts"
-            >
-                <Library />
-                <span>My Scripts</span>
-            </SidebarMenuButton>
+                <Link href="/profile" passHref legacyBehavior>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={activeView === 'profile'}
+                        tooltip="Profile"
+                        onClick={() => setActiveView('profile')}
+                    >
+                        <a>
+                            <Library />
+                            <span>Profile</span>
+                        </a>
+                    </SidebarMenuButton>
+                </Link>
             </SidebarMenuItem>
             <SidebarSeparator />
             <SidebarMenuItem>

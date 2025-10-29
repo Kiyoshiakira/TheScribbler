@@ -18,7 +18,7 @@ import { useCurrentScript } from '@/context/current-script-context';
 import type { AiProofreadScriptOutput } from '@/ai/flows/ai-proofread-script';
 import { ScriptProvider } from '@/context/script-context';
 
-export type View = 'editor' | 'scenes' | 'characters' | 'notes' | 'my-scripts' | 'logline';
+export type View = 'editor' | 'scenes' | 'characters' | 'notes' | 'profile' | 'logline';
 
 export type ProofreadSuggestion = AiProofreadScriptOutput['suggestions'][0];
 
@@ -49,8 +49,6 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
         return <NotesView />;
       case 'logline':
         return <LoglineView />;
-      case 'my-scripts':
-        return <MyScriptsView setView={setView} />;
       default:
         return <EditorView 
             onActiveLineTypeChange={setActiveScriptElement}
@@ -62,8 +60,8 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
   };
   
   if (!currentScriptId) {
-    // This can happen briefly during loading, or if no scripts exist.
-    // MyScriptsView will handle the "no scripts" case.
+    // This should ideally redirect to the profile page, which now hosts the scripts list.
+    // The redirect logic is handled in the MainApp component.
     return (
        <SidebarProvider>
             <div className="flex h-screen bg-background">
@@ -110,17 +108,19 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
 
 function MainApp() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
-  const [view, setView] = React.useState<View>('my-scripts');
+  const [view, setView] = React.useState<View>('editor');
+  const router = useRouter();
 
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
       if (currentScriptId) {
         setView('editor');
       } else {
-        setView('my-scripts');
+        // If no script is active, redirect to the profile page to see the list.
+        router.push('/profile');
       }
     }
-  }, [currentScriptId, isCurrentScriptLoading]);
+  }, [currentScriptId, isCurrentScriptLoading, router]);
 
 
   if (isCurrentScriptLoading) {
@@ -135,6 +135,12 @@ function MainApp() {
         </div>
       </div>
     );
+  }
+
+  // If we are still here and there's no script ID, it means we are about to redirect.
+  // We can render a loading state or null to prevent a flash of the wrong content.
+  if (!currentScriptId) {
+    return null; 
   }
 
   return <AppLayout view={view} setView={setView} />;
