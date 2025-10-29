@@ -6,7 +6,7 @@ import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, errorEmi
 import { collection, addDoc, serverTimestamp, deleteDoc, doc, getDocs, writeBatch, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Book, Edit, Loader2, Plus, Trash } from 'lucide-react';
+import { Book, Edit, Loader2, Plus, Trash, Users, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentScript } from '@/context/current-script-context';
 import { Skeleton } from '../ui/skeleton';
@@ -25,24 +25,8 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import type { View } from '../layout/AppLayout';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-
-const initialScriptContent = `FADE IN:
-
-INT. COFFEE SHOP - DAY
-
-A stylish coffee shop. Sunlight streams in. The aroma of coffee fills the air.
-
-JANE (28), sharp and professional, types on her laptop.
-
-LEO (30), an artist, sketches in a notebook, lost in his world.
-
-A sudden CRASH makes everyone jump. A barista dropped a tray.
-
-In the silence, Jane and Leo's eyes meet. A spark.
-
-FADE OUT.
-`;
 
 interface Script {
     id: string;
@@ -87,37 +71,6 @@ export default function ProfileView({ setView }: ProfileViewProps) {
     );
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<{ photoURL?: string, coverImageUrl?: string, bio?: string }>(userDocRef);
 
-
-    const handleCreateNewScript = async () => {
-        if (!scriptsCollectionRef || !user) return;
-        try {
-            const newScriptRef = await addDoc(scriptsCollectionRef, {
-                title: 'Untitled Script',
-                content: initialScriptContent,
-                authorId: user.uid,
-                createdAt: serverTimestamp(),
-                lastModified: serverTimestamp(),
-            });
-            toast({
-                title: 'Script Created',
-                description: 'A new untitled script has been added to your collection.',
-            });
-            setCurrentScriptId(newScriptRef.id);
-            setView('dashboard');
-        } catch (error: any) {
-            const permissionError = new FirestorePermissionError({
-                path: scriptsCollectionRef.path,
-                operation: 'create',
-                requestResourceData: { title: 'Untitled Script' }
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not create a new script.',
-            });
-        }
-    };
 
     const handleOpenScript = (scriptId: string) => {
         setCurrentScriptId(scriptId);
@@ -190,14 +143,6 @@ export default function ProfileView({ setView }: ProfileViewProps) {
 
         return (
             <div className='mt-6'>
-                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold font-headline flex items-center gap-2">My Scripts</h2>
-                    <Button onClick={handleCreateNewScript}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Script
-                    </Button>
-                </div>
-                
                 {scripts && scripts.length > 0 ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {scripts.map((script) => (
@@ -265,13 +210,23 @@ export default function ProfileView({ setView }: ProfileViewProps) {
                         <Book className="mx-auto h-12 w-12" />
                         <h3 className="mt-4 text-lg font-medium">No Scripts Found</h3>
                         <p className="mt-1 text-sm">
-                            Get started by creating your first script or importing one.
+                            Your created and imported scripts will appear here.
                         </p>
                     </div>
                 )}
             </div>
         )
     }
+
+    const PlaceholderContent = ({ title, icon }: { title: string, icon: React.ReactNode }) => (
+      <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg mt-6">
+        {icon}
+        <h3 className="mt-4 text-lg font-medium">{title}</h3>
+        <p className="mt-1 text-sm">
+            This section is under construction. Come back soon!
+        </p>
+      </div>
+    );
 
     return (
         <div className="max-w-5xl mx-auto space-y-8">
@@ -316,7 +271,22 @@ export default function ProfileView({ setView }: ProfileViewProps) {
                 </div>
             </Card>
             
-            <ScriptsList />
+            <Tabs defaultValue="scripts" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="scripts">My Scripts</TabsTrigger>
+                <TabsTrigger value="friends">My Friends</TabsTrigger>
+                <TabsTrigger value="collabs">My Collabs</TabsTrigger>
+              </TabsList>
+              <TabsContent value="scripts">
+                <ScriptsList />
+              </TabsContent>
+              <TabsContent value="friends">
+                <PlaceholderContent title="Friends List Coming Soon" icon={<Users className="mx-auto h-12 w-12" />} />
+              </TabsContent>
+              <TabsContent value="collabs">
+                <PlaceholderContent title="Collaborations Coming Soon" icon={<UserCheck className="mx-auto h-12 w-12" />} />
+              </TabsContent>
+            </Tabs>
         </div>
     );
 }
