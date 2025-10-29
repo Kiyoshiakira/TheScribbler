@@ -18,15 +18,12 @@ import {
   FileText,
   Clock,
   Library,
-  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
 import type { View } from './AppLayout';
 import { useCurrentScript } from '@/context/current-script-context';
-import { useRouter } from 'next/navigation';
-
 
 export const Logo = () => (
   <svg
@@ -80,13 +77,12 @@ export default function AppSidebar({
   isLoadingStats
 }: {
   activeView: View;
-  setView: (view: View | 'profile') => void;
+  setView: (view: View | 'settings' | 'profile') => void;
   stats: ScriptStats;
   isLoadingStats: boolean;
 }) {
   const { isScriptLoading } = useScript();
   const { currentScriptId } = useCurrentScript();
-  const router = useRouter();
   
   const noScriptLoaded = !currentScriptId;
 
@@ -98,14 +94,6 @@ export default function AppSidebar({
     { view: 'characters', label: 'Characters', icon: Users },
     { view: 'notes', label: 'Notes', icon: StickyNote },
   ] as const;
-
-  const handleSetView = (view: View | 'profile') => {
-    if (view === 'profile') {
-      router.push('/profile');
-    } else {
-      setView(view);
-    }
-  }
 
   return (
     <Sidebar variant="sidebar" collapsible="icon" side="left">
@@ -125,16 +113,6 @@ export default function AppSidebar({
                 >
                     <Library />
                     <span>My Scripts</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                 <SidebarMenuButton
-                    onClick={() => handleSetView('profile')}
-                    isActive={activeView === 'profile'}
-                    tooltip="Profile"
-                >
-                    <User />
-                    <span>Profile</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             

@@ -15,10 +15,10 @@ import LoglineView from '../views/logline-view';
 import ScenesView from '../views/scenes-view';
 import CharactersView from '../views/characters-view';
 import NotesView from '../views/notes-view';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Character } from '../views/characters-view';
-import { useRouter } from 'next/navigation';
+import { EditProfileDialog } from '../edit-profile-dialog';
 
 export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'my-scripts';
 
@@ -26,8 +26,8 @@ function AppLayoutContent() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
   const [view, setView] = React.useState<View>('dashboard');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
   const { lines } = useScript();
-  const router = useRouter();
 
   const [wordCount, setWordCount] = React.useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = React.useState(0);
@@ -55,7 +55,6 @@ function AppLayoutContent() {
     const count = words.length;
     setWordCount(count);
     
-    // Using 160 words per page as a rough standard for screenplays
     const minutes = Math.round((count / 160) * 10) / 10;
     setEstimatedMinutes(minutes);
   }, [lines]);
@@ -75,7 +74,7 @@ function AppLayoutContent() {
     if (newView === 'settings') {
       setSettingsOpen(true);
     } else if (newView === 'profile') {
-      router.push('/profile');
+      setView('my-scripts');
     }
      else {
       setView(newView);
@@ -114,6 +113,7 @@ function AppLayoutContent() {
                 </main>
             </div>
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+            {user && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={null} />}
         </div>
     </SidebarProvider>
   );
