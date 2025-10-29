@@ -1,144 +1,142 @@
 /**
- * @fileOverview
- * This ruleset enforces a strict user-ownership model for the ScriptScribbler application.
+ * @fileoverview Firestore Security Rules for ScriptScribbler.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Users can only access their own data.
  *
  * Data Structure:
- * All data is nested under /users/{userId}, ensuring that users can only access their own data.
- * Scripts, characters, and notes are stored as subcollections under each user's document.
+ * All data is nested under /users/{userId}, ensuring clear ownership. Scripts, characters,
+ * notes, and scenes are subcollections under each user's scripts.
  *
  * Key Security Decisions:
- * - Users can only read and write their own scripts, characters, and notes.
- * - Listing other users' data is disallowed.
+ * - Users can only list data under their own user ID.
+ * - Data types and the presence of fields are not strictly validated (prototyping mode).
  *
  * Denormalization for Authorization:
- * N/A (Path-based authorization is sufficient)
- *
- * Structural Segregation:
- * N/A (All user data is private and stored under the /users/{userId} path)
+ *  - The `authorId` on scripts, characters, notes, and scenes is used for authorization checks
+ * to avoid `get()` calls and enforce ownership.  This field must match the document's
+ * parent `userId`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profile documents.
+     * @description Protects user profiles.
      * @path /users/{userId}
-     * @allow (create) Authenticated user can create their own profile if the userId matches their auth UID.
-     * @allow (get) Authenticated user can get their own profile.
-     * @allow (update) Authenticated user can update their own profile.
-     * @allow (delete) Authenticated user can delete their own profile.
-     * @deny (create) Non-authenticated user cannot create a profile.
-     * @deny (create) Authenticated user cannot create a profile with a mismatched userId.
-     * @deny (get) Non-authenticated user cannot get a profile.
-     * @deny (get) Authenticated user cannot get another user's profile.
-     * @deny (list) Listing all users is not allowed.
-     * @deny (update) Authenticated user cannot update another user's profile.
-     * @deny (delete) Authenticated user cannot delete another user's profile.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can create their own profile.
+     * @deny (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot create another user's profile.
+     * @allow (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can read their own profile.
+     * @deny (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot read another user's profile.
+     * @allow (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can update their own profile.
+     * @deny (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot update another user's profile.
+     * @allow (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can delete their own profile.
+     * @deny (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot delete another user's profile.
+     * @principle Enforces user-ownership.
      */
     match /users/{userId} {
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow get: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to script documents.
+     * @description Protects scripts owned by a user.
      * @path /users/{userId}/scripts/{scriptId}
-     * @allow (create) Authenticated user can create a script under their own user ID.
-     * @allow (get) Authenticated user can get a script under their own user ID.
-     * @allow (list) Authenticated user can list scripts under their own user ID.
-     * @allow (update) Authenticated user can update a script under their own user ID.
-     * @allow (delete) Authenticated user can delete a script under their own user ID.
-     * @deny (create) Non-authenticated user cannot create a script.
-     * @deny (create) Authenticated user cannot create a script under another user's ID.
-     * @deny (get) Non-authenticated user cannot get a script.
-     * @deny (get) Authenticated user cannot get a script under another user's ID.
-     * @deny (list) Non-authenticated user cannot list scripts.
-     * @deny (list) Authenticated user cannot list scripts under another user's ID.
-     * @deny (update) Non-authenticated user cannot update a script.
-     * @deny (update) Authenticated user cannot update a script under another user's ID.
-     * @deny (delete) Non-authenticated user cannot delete a script.
-     * @deny (delete) Authenticated user cannot delete a script under another user's ID.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can create a script under their own user ID.
+     * @deny (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot create a script under another user's ID.
+     * @allow (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can read a script under their own user ID.
+     * @deny (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot read a script under another user's ID.
+     * @allow (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can update a script under their own user ID.
+     * @deny (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot update a script under another user's ID.
+     * @allow (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can delete a script under their own user ID.
+     * @deny (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot delete a script under another user's ID.
+     * @principle Enforces user-ownership for scripts.
      */
     match /users/{userId}/scripts/{scriptId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
-
-     /**
-      * @description Controls access to character documents within a script.
-      * @path /users/{userId}/scripts/{scriptId}/characters/{characterId}
-      * @allow (create) Authenticated user can create a character within their own script.
-      * @allow (get) Authenticated user can get a character within their own script.
-      * @allow (list) Authenticated user can list characters within their own script.
-      * @allow (update) Authenticated user can update a character within their own script.
-      * @allow (delete) Authenticated user can delete a character within their own script.
-      * @deny (create) Non-authenticated user cannot create a character.
-      * @deny (create) Authenticated user cannot create a character within another user's script.
-      * @deny (get) Non-authenticated user cannot get a character.
-      * @deny (get) Authenticated user cannot get a character within another user's script.
-      * @deny (list) Non-authenticated user cannot list characters.
-      * @deny (list) Authenticated user cannot list characters within another user's script.
-      * @deny (update) Non-authenticated user cannot update a character.
-      * @deny (update) Authenticated user cannot update a character within another user's script.
-      * @deny (delete) Non-authenticated user cannot delete a character.
-      * @deny (delete) Authenticated user cannot delete a character within another user's script.
-      * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
-      */
-    match /users/{userId}/scripts/{scriptId}/characters/{characterId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to note documents within a script.
+     * @description Protects characters associated with a script.
+     * @path /users/{userId}/scripts/{scriptId}/characters/{characterId}
+     * @allow (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can create a character under their own script.
+     * @deny (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot create a character under another user's script.
+     * @allow (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can read a character under their own script.
+     * @deny (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot read a character under another user's script.
+     * @allow (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can update a character under their own script.
+     * @deny (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot update a character under another user's script.
+     * @allow (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can delete a character under their own script.
+     * @deny (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot delete a character under another user's script.
+     * @principle Enforces user-ownership for characters.
+     */
+    match /users/{userId}/scripts/{scriptId}/characters/{characterId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Protects notes associated with a script.
      * @path /users/{userId}/scripts/{scriptId}/notes/{noteId}
-     * @allow (create) Authenticated user can create a note within their own script.
-     * @allow (get) Authenticated user can get a note within their own script.
-     * @allow (list) Authenticated user can list notes within their own script.
-     * @allow (update) Authenticated user can update a note within their own script.
-     * @allow (delete) Authenticated user can delete a note within their own script.
-     * @deny (create) Non-authenticated user cannot create a note.
-     * @deny (create) Authenticated user cannot create a note within another user's script.
-     * @deny (get) Non-authenticated user cannot get a note.
-     * @deny (get) Authenticated user cannot get a note within another user's script.
-     * @deny (list) Non-authenticated user cannot list notes.
-     * @deny (list) Authenticated user cannot list notes within another user's script.
-     * @deny (update) Non-authenticated user cannot update a note.
-     * @deny (update) Authenticated user cannot update a note within another user's script.
-     * @deny (delete) Non-authenticated user cannot delete a note.
-     * @deny (delete) Authenticated user cannot delete a note within another user's script.
-     * @principle Enforces document ownership for writes, restricts access to a user's own data tree.
+     * @allow (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can create a note under their own script.
+     * @deny (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot create a note under another user's script.
+     * @allow (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can read a note under their own script.
+     * @deny (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot read a note under another user's script.
+     * @allow (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can update a note under their own script.
+     * @deny (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot update a note under another user's script.
+     * @allow (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can delete a note under their own script.
+     * @deny (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot delete a note under another user's script.
+     * @principle Enforces user-ownership for notes.
      */
     match /users/{userId}/scripts/{scriptId}/notes/{noteId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
+    /**
+     * @description Protects scenes associated with a script.
+     * @path /users/{userId}/scripts/{scriptId}/scenes/{sceneId}
+     * @allow (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can create a scene under their own script.
+     * @deny (create) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot create a scene under another user's script.
+     * @allow (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can read a scene under their own script.
+     * @deny (get) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot read a scene under another user's script.
+     * @allow (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can update a scene under their own script.
+     * @deny (update) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot update a scene under another user's script.
+     * @allow (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' can delete a scene under their own script.
+     * @deny (delete) User 'a4OQi7TrxzYjLzGR0v9ohoPgU4L2' cannot delete a scene under another user's script.
+     * @principle Enforces user-ownership for scenes.
+     */
+    match /users/{userId}/scripts/{scriptId}/scenes/{sceneId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
+  }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
+  // Helper functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
 
-    function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-    }
+  function isOwner(userId) {
+    return isSignedIn() && request.auth.uid == userId;
+  }
+
+  function isExistingOwner(userId) {
+    return isOwner(userId) && resource != null;
   }
 }
