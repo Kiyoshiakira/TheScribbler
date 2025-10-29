@@ -18,20 +18,28 @@ import NotesView from '../views/notes-view';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Character } from '../views/characters-view';
+import { EditProfileDialog } from '../edit-profile-dialog';
 
-export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile' | 'settings';
+export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'my-scripts' | 'settings' | 'profile';
 
 function AppLayoutContent() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
   const [view, setView] = React.useState<View>('dashboard');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
   const { lines } = useScript();
 
   const [wordCount, setWordCount] = React.useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = React.useState(0);
   
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const userProfileCollection = useMemoFirebase(
+    () => (user ? collection(firestore, 'users') : null),
+    [firestore, user]
+  );
+  const { data: userProfile, isLoading: isProfileLoading } = useCollection(userProfileCollection);
+
 
   const charactersCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'characters') : null),
@@ -61,10 +69,10 @@ function AppLayoutContent() {
 
   React.useEffect(() => {
     if (!isCurrentScriptLoading && !currentScriptId) {
-      setView('profile');
+      setView('my-scripts');
     } else if (!isCurrentScriptLoading && currentScriptId) {
-        // If a script becomes active, move away from profile view
-        if(view === 'profile') {
+        // If a script becomes active, move away from my-scripts view
+        if(view === 'my-scripts') {
             setView('dashboard');
         }
     }
@@ -73,7 +81,10 @@ function AppLayoutContent() {
   const handleSetView = (newView: View) => {
     if (newView === 'settings') {
       setSettingsOpen(true);
-    } else {
+    } else if (newView === 'profile') {
+      setProfileOpen(true);
+    }
+    else {
       setView(newView);
     }
   };
@@ -81,12 +92,12 @@ function AppLayoutContent() {
   const renderView = () => {
     switch(view) {
       case 'dashboard': return <DashboardView />;
-      case 'editor': return <EditorView isStandalone={false} />;
+      case 'editor': return <EditorView />;
       case 'logline': return <LoglineView />;
       case 'scenes': return <ScenesView />;
       case 'characters': return <CharactersView />;
       case 'notes': return <NotesView />;
-      case 'profile': return <MyScriptsView setView={handleSetView} />;
+      case 'my-scripts': return <MyScriptsView setView={handleSetView} />;
       default: return <DashboardView />;
     }
   };
@@ -110,6 +121,9 @@ function AppLayoutContent() {
                 </main>
             </div>
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+            { user && !isProfileLoading && 
+              <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={userProfile?.[0]} />
+            }
         </div>
     </SidebarProvider>
   );

@@ -85,7 +85,7 @@ export default function AppSidebar({
   const { isScriptLoading } = useScript();
   const { currentScriptId } = useCurrentScript();
   
-  const isProfileView = activeView === 'profile';
+  const isMyScriptsView = activeView === 'my-scripts';
   const noScriptLoaded = !currentScriptId;
 
   const scriptMenuItems = [
@@ -100,7 +100,7 @@ export default function AppSidebar({
   return (
     <Sidebar variant="sidebar" collapsible="icon" side="left">
       <SidebarHeader>
-        <a href="#" className="flex items-center gap-2 p-2" onClick={() => setView(noScriptLoaded ? 'profile' : 'dashboard')}>
+        <a href="#" className="flex items-center gap-2 p-2" onClick={() => setView(noScriptLoaded ? 'my-scripts' : 'dashboard')}>
             <Logo />
             <h1 className="text-xl font-bold font-headline">ScriptScribbler</h1>
         </a>
@@ -109,8 +109,8 @@ export default function AppSidebar({
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
             <SidebarMenuItem>
                 <SidebarMenuButton
-                    onClick={() => setView('profile')}
-                    isActive={isProfileView}
+                    onClick={() => setView('my-scripts')}
+                    isActive={isMyScriptsView}
                     tooltip="My Scripts"
                 >
                     <UserIcon />

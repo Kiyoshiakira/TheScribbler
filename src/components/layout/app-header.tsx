@@ -130,7 +130,7 @@ export default function AppHeader({ setView }: { activeView: View, setView: (vie
           title: 'Import Successful',
           description: `"${projectData.title}" has been added to My Scripts.`,
         });
-        setView('profile');
+        setView('my-scripts');
 
     } catch (error) {
         console.error('Scribbler import failed:', error);
@@ -203,7 +203,7 @@ export default function AppHeader({ setView }: { activeView: View, setView: (vie
           title: 'Import Successful',
           description: `"${scriptTitle}" has been added to My Scripts.`,
         });
-        setView('profile');
+        setView('my-scripts');
 
       } catch (error) {
          console.error('--- DEBUG: Import Parsing Failed ---', error);
@@ -299,7 +299,7 @@ export default function AppHeader({ setView }: { activeView: View, setView: (vie
           <DropdownMenuSeparator />
            <DropdownMenuItem onClick={() => setView('profile')}>
                 <UserIcon className="mr-2 h-4 w-4" />
-                <span>My Scripts</span>
+                <span>Profile</span>
             </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setView('settings')}>
             <Settings className="mr-2 h-4 w-4" />
@@ -315,14 +315,14 @@ export default function AppHeader({ setView }: { activeView: View, setView: (vie
     );
   };
 
-  const isProfileView = !currentScriptId;
+  const isMyScriptsView = !currentScriptId;
 
   return (
     <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="flex md:hidden" />
       <div className="flex items-center gap-2">
-        {isProfileView ? (
+        {isMyScriptsView ? (
              <h1 className="text-xl font-bold font-headline">My Scripts</h1>
         ) : (
           <>
@@ -369,7 +369,7 @@ export default function AppHeader({ setView }: { activeView: View, setView: (vie
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button disabled={isProfileView}>
+            <Button disabled={isMyScriptsView}>
               <Download className="h-4 w-4 md:mr-2" />
               <span className='hidden md:inline'>Export</span>
               <ChevronDown className="h-4 w-4 ml-0 md:ml-2" />
