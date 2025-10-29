@@ -44,14 +44,32 @@ const mapScriteCategoryToNoteCategory = (scriteCategory: string): NoteCategory =
 export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScriteFile> => {
   const zip = await JSZip.loadAsync(fileData);
   
-  // Find the content.xml file dynamically. Scrite files should have one primary XML file.
-  const xmlFiles = zip.file(/\.xml$/);
-  
-  if (xmlFiles.length === 0) {
-    throw new Error('Invalid .scrite file: No XML content file found inside the archive.');
+  let contentXmlFile: JSZip.JSZipObject | null = null;
+  const headerFile = zip.file('_header.json');
+
+  if (headerFile) {
+    const headerData = await headerFile.async('string');
+    const headerJson = JSON.parse(headerData);
+    // Scrite's header often contains a 'documentPath' pointing to the main content
+    if (headerJson.documentPath) {
+      contentXmlFile = zip.file(headerJson.documentPath);
+    }
   }
 
-  const contentXmlFile = xmlFiles[0];
+  // Fallback if header doesn't exist or doesn't contain the path
+  if (!contentXmlFile) {
+    const xmlFiles = zip.file(/\.xml$/);
+    if (xmlFiles.length > 0) {
+      contentXmlFile = xmlFiles[0];
+    }
+  }
+
+  if (!contentXmlFile) {
+    // If we still can't find it, throw a detailed error
+    const fileList = Object.keys(zip.files).join(', ');
+    throw new Error(`Invalid .scrite file: Could not find main XML content. Files in archive: [${fileList}]`);
+  }
+
   const xmlData = await contentXmlFile.async('string');
 
   const parser = new XMLParser({
@@ -60,8 +78,10 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     processEntities: false,
     ignorePiTags: true,
   });
-
-  const jsonObj = parser.parse(xmlData.replace(/<\?xml[^>]*\?>/g, '').trim());
+  
+  // Pre-process the XML to remove the <?xml ... ?> declaration
+  const cleanedXmlData = xmlData.replace(/<\?xml[^>]*\?>/g, '').trim();
+  const jsonObj = parser.parse(cleanedXmlData);
   const scriteDocument = jsonObj['scrite-document'];
 
   if (!scriteDocument) {
