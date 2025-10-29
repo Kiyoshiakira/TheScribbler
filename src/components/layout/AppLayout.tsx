@@ -8,19 +8,19 @@ import { ScriptProvider, useScript } from '@/context/script-context';
 import { useCurrentScript } from '@/context/current-script-context';
 import { Skeleton } from '../ui/skeleton';
 import { SettingsDialog } from '../settings-dialog';
-import MyScriptsView from '../views/my-scripts-view';
+import ProfileView from '../views/profile-view';
 import DashboardView from '../views/dashboard-view';
 import EditorView from '../views/editor-view';
 import LoglineView from '../views/logline-view';
 import ScenesView from '../views/scenes-view';
 import CharactersView from '../views/characters-view';
 import NotesView from '../views/notes-view';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection } from 'firebase/firestore';
 import type { Character } from '../views/characters-view';
 import { EditProfileDialog } from '../edit-profile-dialog';
 
-export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'my-scripts';
+export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile';
 
 function AppLayoutContent() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
@@ -43,13 +43,10 @@ function AppLayoutContent() {
 
 
   const charactersCollectionRef = useMemoFirebase(
-    () => (user && firestore && currentScriptId ? doc(firestore, 'users', user.uid, 'scripts', currentScriptId, 'characters') : null),
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'characters') : null),
     [firestore, user, currentScriptId]
   );
-  // This is wrong, it should be a collection. Since we don't use it, we can comment it out.
-  // const { data: characters, isLoading: areCharactersLoading } = useCollection<Character>(charactersCollectionRef);
-  const characters = [];
-  const areCharactersLoading = false;
+  const { data: characters, isLoading: areCharactersLoading } = useCollection<Character>(charactersCollectionRef);
   
   const characterCount = characters?.length || 0;
   const pageCount = Math.round(estimatedMinutes);
@@ -72,9 +69,9 @@ function AppLayoutContent() {
 
   React.useEffect(() => {
     if (!isCurrentScriptLoading && !currentScriptId) {
-      setView('my-scripts');
+      setView('profile');
     } else if (!isCurrentScriptLoading && currentScriptId) {
-        if(view === 'my-scripts') {
+        if(view === 'profile') {
             setView('dashboard');
         }
     }
@@ -98,7 +95,7 @@ function AppLayoutContent() {
       case 'scenes': return <ScenesView />;
       case 'characters': return <CharactersView />;
       case 'notes': return <NotesView />;
-      case 'my-scripts': return <MyScriptsView setView={handleSetView} />;
+      case 'profile': return <ProfileView setView={handleSetView} openProfileDialog={() => setProfileOpen(true)} />;
       default: return <DashboardView setView={handleSetView}/>;
     }
   };
@@ -122,7 +119,7 @@ function AppLayoutContent() {
                 </main>
             </div>
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-            {user && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={userProfile} />}
+            {user && userProfile && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={userProfile} />}
         </div>
     </SidebarProvider>
   );

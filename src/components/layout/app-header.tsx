@@ -130,7 +130,7 @@ export default function AppHeader({ activeView, setView }: { activeView: View, s
           title: 'Import Successful',
           description: `"${projectData.title}" has been added to My Scripts.`,
         });
-        setView('my-scripts');
+        setView('profile');
 
     } catch (error) {
         console.error('Scribbler import failed:', error);
@@ -203,7 +203,7 @@ export default function AppHeader({ activeView, setView }: { activeView: View, s
           title: 'Import Successful',
           description: `"${scriptTitle}" has been added to My Scripts.`,
         });
-        setView('my-scripts');
+        setView('profile');
 
       } catch (error) {
          console.error('--- DEBUG: Import Parsing Failed ---', error);
@@ -315,7 +315,7 @@ export default function AppHeader({ activeView, setView }: { activeView: View, s
     );
   };
 
-  const isMyScriptsView = activeView === 'my-scripts';
+  const isMyScriptsView = activeView === 'profile';
 
   return (
     <>
@@ -323,7 +323,7 @@ export default function AppHeader({ activeView, setView }: { activeView: View, s
       <SidebarTrigger className="flex md:hidden" />
       <div className="flex items-center gap-2">
         {isMyScriptsView ? (
-             <h1 className="text-xl font-bold font-headline">My Scripts</h1>
+             <h1 className="text-xl font-bold font-headline">My Profile</h1>
         ) : (
           <>
             <Book className="h-6 w-6 text-muted-foreground" />

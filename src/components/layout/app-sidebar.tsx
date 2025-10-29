@@ -17,7 +17,7 @@ import {
   LayoutDashboard,
   FileText,
   Clock,
-  Library,
+  User as UserIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
@@ -107,12 +107,12 @@ export default function AppSidebar({
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
             <SidebarMenuItem>
                  <SidebarMenuButton
-                    onClick={() => setView('my-scripts')}
-                    isActive={activeView === 'my-scripts'}
-                    tooltip="My Scripts"
+                    onClick={() => setView('profile')}
+                    isActive={activeView === 'profile'}
+                    tooltip="My Profile"
                 >
-                    <Library />
-                    <span>My Scripts</span>
+                    <UserIcon />
+                    <span>My Profile</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             
