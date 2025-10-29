@@ -22,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '../ui/sidebar';
 import { GoogleDocIcon } from '../ui/icons';
-import { useAuth, useUser, useFirestore } from '@/firebase';
+import { useAuth, useUser, useFirestore, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
@@ -74,8 +74,8 @@ export default function AppHeader({ setNotes }: AppHeaderProps) {
 
         // 3. Update characters in Firestore
         if (firestore && user) {
-          const batch = writeBatch(firestore);
           const charactersCollection = collection(firestore, 'users', user.uid, 'characters');
+          const batch = writeBatch(firestore);
 
           // Clear existing characters
           const existingCharsSnapshot = await getDocs(charactersCollection);
@@ -84,10 +84,23 @@ export default function AppHeader({ setNotes }: AppHeaderProps) {
           // Add new characters
           parsedData.characters.forEach(char => {
              const newCharRef = doc(collection(firestore, 'users', user.uid, 'characters'));
-             batch.set(newCharRef, char);
+             batch.set(newCharRef, { ...char, userId: user.uid });
           });
           
-          await batch.commit();
+          batch.commit().catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+              path: charactersCollection.path,
+              operation: 'write', // Representing a batch write
+              requestResourceData: parsedData.characters,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            console.error('--- DEBUG: Firestore Batch Commit Failed ---', permissionError);
+            toast({
+              variant: 'destructive',
+              title: 'Import Failed',
+              description: 'Could not save imported characters to the database due to permission errors.',
+            });
+          });
         }
 
         toast({
