@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Film, ExternalLink, Bot, Check, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -55,7 +55,7 @@ const ScriptLineComponent = ({
   isFocused,
   onContextMenu,
 }: ScriptLineComponentProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isFocused && ref.current) {
@@ -84,9 +84,9 @@ const ScriptLineComponent = ({
       case 'action':
         return '';
       case 'character':
-        return 'uppercase text-center max-w-sm mx-auto';
+        return 'uppercase ml-[35%] max-w-sm';
       case 'parenthetical':
-        return 'text-center max-w-xs mx-auto text-muted-foreground';
+        return 'ml-[30%] max-w-xs text-muted-foreground';
       case 'dialogue':
         return 'max-w-md mx-auto';
       case 'transition':
@@ -144,7 +144,7 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
   const [wordCount, setWordCount] = useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = useState(0);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = React.useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lineId: string } | null>(null);
 
   const [suggestions, setSuggestions] = useState<CorrectionSuggestion[]>([]);
