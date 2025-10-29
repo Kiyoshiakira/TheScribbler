@@ -1,8 +1,7 @@
-'use server';
 import * as admin from 'firebase-admin';
 import { firebaseConfig } from '@/firebase/config';
 
-// IMPORTANT: This file should only be used in server-side code ('use server').
+// IMPORTANT: This file should only be used in server-side code.
 // It initializes the Firebase Admin SDK, which has elevated privileges.
 
 let adminApp: admin.app.App;
@@ -26,6 +25,6 @@ if (admin.apps.length > 0) {
   // if adminApp is not initialized. We handle this gracefully in the actions.
 }
 
-// We cannot safely export adminApp if it might not be initialized, and because this is a 'use server' file.
+// We cannot safely export adminApp if it might not be initialized.
 // Instead, functions that need it should import it directly from this module.
 export { adminApp };
