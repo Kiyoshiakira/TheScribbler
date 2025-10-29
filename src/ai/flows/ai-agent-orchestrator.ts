@@ -135,7 +135,6 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
   async (input) => {
     // First, generate a response from the model.
     let llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
       prompt: orchestratorPrompt,
       input,
       tools: [generateCharacterTool, proofreadScriptTool],
@@ -185,7 +184,6 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
         
        // If tools were called, send the results back to the model for a final response.
        llmResponse = await ai.generate({
-          model: 'googleai/gemini-1.5-flash-latest',
           prompt: orchestratorPrompt,
           input,
           tools: [generateCharacterTool, proofreadScriptTool],
