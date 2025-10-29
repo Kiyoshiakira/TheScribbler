@@ -44,9 +44,11 @@ export const parseScriteFile = (xmlData: string): ParsedScriteFile => {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
-    ignorePiTags: true, // Ignore processing instructions like <?xml ... ?>
   });
-  const jsonObj = parser.parse(xmlData);
+
+  // Pre-process the XML data to remove the PI tag that causes parsing errors.
+  const cleanXmlData = xmlData.replace(/<\?xml[^>]*\?>/g, '').trim();
+  const jsonObj = parser.parse(cleanXmlData);
 
   const scriteDocument = jsonObj['scrite-document'];
 
@@ -58,7 +60,7 @@ export const parseScriteFile = (xmlData: string): ParsedScriteFile => {
   let characterList = scriteDocument?.characters?.character;
   if (characterList) {
     if (!Array.isArray(characterList)) {
-        characterList = [characterList];
+        characterList = [characterList]; // Ensure it's an array for consistency
     }
     characterList.forEach((char: any) => {
       characters.push({
@@ -75,7 +77,7 @@ export const parseScriteFile = (xmlData: string): ParsedScriteFile => {
   let notesList = scriteDocument?.notebook?.note;
   if (notesList) {
     if (!Array.isArray(notesList)) {
-        notesList = [notesList];
+        notesList = [notesList]; // Ensure it's an array
     }
     notesList.forEach((note: any, index: number) => {
       notes.push({
