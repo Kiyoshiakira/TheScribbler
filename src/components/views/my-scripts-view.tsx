@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -21,6 +21,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { type View } from '@/app/page';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 
 const initialScriptContent = `FADE IN:
 
@@ -56,6 +58,14 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
     const firestore = useFirestore();
     const { toast } = useToast();
     const { setCurrentScriptId } = useCurrentScript();
+    const [isDeleting, setIsDeleting] = useState(false);
+    
+    // State for selective delete
+    const [deleteScriptDoc, setDeleteScriptDoc] = useState(true);
+    const [deleteCharacters, setDeleteCharacters] = useState(true);
+    const [deleteScenes, setDeleteScenes] = useState(true);
+    const [deleteNotes, setDeleteNotes] = useState(true);
+
 
     const scriptsCollection = useMemoFirebase(
         () => (user && firestore ? collection(firestore, 'users', user.uid, 'scripts') : null),
@@ -95,40 +105,57 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
         setView('editor');
     };
     
-    const handleDeleteScript = async (scriptId: string) => {
-        if (!firestore || !user) return;
+    const handleSelectiveDelete = async (scriptId: string) => {
+        if (!firestore || !user || (!deleteScriptDoc && !deleteCharacters && !deleteScenes && !deleteNotes)) {
+             toast({
+                variant: 'destructive',
+                title: 'No Selection',
+                description: 'Please select at least one item to delete.',
+            });
+            return;
+        }
         
+        setIsDeleting(true);
         const scriptRef = doc(firestore, 'users', user.uid, 'scripts', scriptId);
 
         try {
             const batch = writeBatch(firestore);
-
-            // Get and delete all subcollections
-            const subcollections = ['characters', 'scenes', 'notes'];
-            for (const sub of subcollections) {
-                const subcollectionRef = collection(scriptRef, sub);
+            
+            if (deleteCharacters) {
+                const subcollectionRef = collection(scriptRef, 'characters');
                 const snapshot = await getDocs(subcollectionRef);
-                snapshot.forEach((doc) => {
-                    batch.delete(doc.ref);
-                });
+                snapshot.forEach((doc) => batch.delete(doc.ref));
+            }
+            if (deleteScenes) {
+                const subcollectionRef = collection(scriptRef, 'scenes');
+                const snapshot = await getDocs(subcollectionRef);
+                snapshot.forEach((doc) => batch.delete(doc.ref));
+            }
+            if (deleteNotes) {
+                const subcollectionRef = collection(scriptRef, 'notes');
+                const snapshot = await getDocs(subcollectionRef);
+                snapshot.forEach((doc) => batch.delete(doc.ref));
             }
 
-            // Delete the main script document
-            batch.delete(scriptRef);
+            if (deleteScriptDoc) {
+                batch.delete(scriptRef);
+            }
 
             await batch.commit();
 
             toast({
-                title: 'Script Deleted',
-                description: 'The script and all its data have been permanently deleted.',
+                title: 'Delete Successful',
+                description: 'The selected script components have been deleted.',
             });
         } catch (error: any) {
-             console.error("Error deleting script and its subcollections: ", error);
+             console.error("Error deleting script components: ", error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'Could not delete the script.',
+                description: 'Could not delete the selected components.',
             });
+        } finally {
+            setIsDeleting(false);
         }
     }
 
@@ -189,17 +216,35 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your
-                                            script and all its associated data (characters, scenes, notes).
-                                        </AlertDialogDescription>
+                                            <AlertDialogTitle>Delete Script Components</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action can be destructive. Select the components you want to permanently delete. Unchecking "Script" will clear its sub-collections but keep the script document itself.
+                                            </AlertDialogDescription>
                                         </AlertDialogHeader>
+                                        <div className="space-y-4 my-4">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="del-script" checked={deleteScriptDoc} onCheckedChange={(c) => setDeleteScriptDoc(c as boolean)} />
+                                                <Label htmlFor="del-script" className="font-semibold">Script</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="del-chars" checked={deleteCharacters} onCheckedChange={(c) => setDeleteCharacters(c as boolean)} />
+                                                <Label htmlFor="del-chars">All Characters</Label>
+                                            </div>
+                                             <div className="flex items-center space-x-2">
+                                                <Checkbox id="del-scenes" checked={deleteScenes} onCheckedChange={(c) => setDeleteScenes(c as boolean)} />
+                                                <Label htmlFor="del-scenes">All Scenes</Label>
+                                            </div>
+                                             <div className="flex items-center space-x-2">
+                                                <Checkbox id="del-notes" checked={deleteNotes} onCheckedChange={(c) => setDeleteNotes(c as boolean)} />
+                                                <Label htmlFor="del-notes">All Notes</Label>
+                                            </div>
+                                        </div>
                                         <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteScript(script.id)}>
-                                            Continue
-                                        </AlertDialogAction>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleSelectiveDelete(script.id)} disabled={isDeleting}>
+                                                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                Delete Selected
+                                            </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
