@@ -271,11 +271,11 @@ export default function ScriptEditor({
     );
   }
 
-  const editorContent = (
+  return (
     <div 
         ref={editorRef} 
         className={cn(
-            "flex-1 flex flex-col relative",
+            "flex-1 relative",
             isStandalone ? "bg-background p-4" : ""
         )}
         onContextMenu={(e) => e.preventDefault()}
@@ -321,7 +321,7 @@ export default function ScriptEditor({
             </DropdownMenu>
 
             <div
-            className="flex-1 resize-none font-code text-base flex flex-col px-12"
+            className="flex-1 resize-none font-code text-base px-12"
             style={{ minHeight: '60vh' }}
             >
             {lines.map(line => (
