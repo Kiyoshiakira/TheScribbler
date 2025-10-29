@@ -135,7 +135,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
   async (input) => {
     // First, generate a response from the model.
     let llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-pro-latest',
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: orchestratorPrompt,
       input,
       tools: [generateCharacterTool, proofreadScriptTool],
@@ -163,34 +163,36 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     if (llmResponse.toolRequests.length > 0) {
       const toolResponses = [];
        for (const toolRequest of llmResponse.toolRequests) {
+         let toolOutput: any;
+         let toolType: string | null = null;
          if (toolRequest.name === 'generateCharacter') {
-           const characterData = await toolRequest.run();
-           toolResult = {
-             type: 'character',
-             data: characterData,
-           };
-           toolResponses.push({tool: 'generateCharacter', result: characterData});
+           toolOutput = await toolRequest.run();
+           toolType = 'character';
          }
          if (toolRequest.name === 'proofreadScript') {
-           const proofreadData = await toolRequest.run();
-           toolResult = {
-             type: 'proofread',
-             data: proofreadData,
-           };
-           toolResponses.push({tool: 'proofreadScript', result: proofreadData});
+           toolOutput = await toolRequest.run();
+           toolType = 'proofread';
+         }
+
+         if (toolOutput) {
+            toolResult = {
+                type: toolType,
+                data: toolOutput,
+            };
+            toolResponses.push(toolRequest.response(toolOutput));
          }
        }
         
        // If tools were called, send the results back to the model for a final response.
        llmResponse = await ai.generate({
-          model: 'googleai/gemini-1.5-pro-latest',
+          model: 'googleai/gemini-1.5-flash-latest',
           prompt: orchestratorPrompt,
           input,
           tools: [generateCharacterTool, proofreadScriptTool],
           history: [
             ...llmResponse.history,
-            {role: 'user', content: llmResponse.history[llmResponse.history.length-1].content},
-            {role: 'model', content: llmResponse.toolRequests.map(tr => ({toolResponse: {name: tr.name, output: toolResult.data}}))},
+            {role: 'model', content: llmResponse.toolRequests.map(tr => ({toolRequest: tr}))},
+            {role: 'user', content: toolResponses.map(tr => ({toolResponse: tr}))}
           ],
           output: {
             format: 'json',
