@@ -44,6 +44,7 @@ export const parseScriteFile = (xmlData: string): ParsedScriteFile => {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
+    ignorePiTags: true, // Ignore processing instructions like <?xml ... ?>
   });
   const jsonObj = parser.parse(xmlData);
 
