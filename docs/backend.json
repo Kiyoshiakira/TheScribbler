@@ -113,9 +113,9 @@
           "type": "string",
           "description": "Unique identifier for the character."
         },
-        "scriptId": {
-          "type": "string",
-          "description": "Reference to the Script this character belongs to. (Relationship: Script 1:N Character)"
+        "userId": {
+            "type": "string",
+            "description": "The ID of the user who owns this character."
         },
         "name": {
           "type": "string",
@@ -123,14 +123,35 @@
         },
         "description": {
           "type": "string",
-          "description": "Description of the character (e.g., personality, appearance)."
+          "description": "A short, one-line description of the character."
+        },
+        "profile": {
+            "type": "string",
+            "description": "A detailed profile of the character, including backstory, personality, motivations, etc."
+        },
+        "imageUrl": {
+            "type": "string",
+            "description": "URL for the character's portrait image."
+        },
+        "scenes": {
+            "type": "number",
+            "description": "The number of scenes the character appears in."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
         }
       },
       "required": [
         "id",
-        "scriptId",
+        "userId",
         "name",
-        "description"
+        "description",
+        "scenes"
       ]
     },
     "Collaboration": {
@@ -220,57 +241,17 @@
         }
       },
       {
-        "path": "/users/{userId}/scripts/{scriptId}",
-        "definition": {
-          "entityName": "Script",
-          "schema": {
-            "$ref": "#/backend/entities/Script"
-          },
-          "description": "Stores scripts owned by a specific user. Path-based ownership ensures only the user can access these scripts.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "scriptId",
-              "description": "The unique identifier for the script."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/scripts/{scriptId}/scenes/{sceneId}",
-        "definition": {
-          "entityName": "Scene",
-          "schema": {
-            "$ref": "#/backend/entities/Scene"
-          },
-          "description": "Stores scenes associated with a specific script.  This supports listing scenes by script.",
-          "params": [
-            {
-              "name": "scriptId",
-              "description": "The unique identifier for the script."
-            },
-            {
-              "name": "sceneId",
-              "description": "The unique identifier for the scene."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/scripts/{scriptId}/characters/{characterId}",
+        "path": "/users/{userId}/characters/{characterId}",
         "definition": {
           "entityName": "Character",
           "schema": {
             "$ref": "#/backend/entities/Character"
           },
-          "description": "Stores characters associated with a specific script. This supports listing characters by script.",
+          "description": "Stores characters owned by a specific user. Path-based ownership ensures only the user can access these scripts.",
           "params": [
             {
-              "name": "scriptId",
-              "description": "The unique identifier for the script."
+              "name": "userId",
+              "description": "The unique identifier for the user."
             },
             {
               "name": "characterId",
@@ -278,48 +259,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/scripts/{scriptId}/collaborations/{collaborationId}",
-        "definition": {
-          "entityName": "Collaboration",
-          "schema": {
-            "$ref": "#/backend/entities/Collaboration"
-          },
-          "description": "Stores collaboration sessions for a script.  Includes denormalized 'userId' and 'role' for authorization independence.",
-          "params": [
-            {
-              "name": "scriptId",
-              "description": "The unique identifier for the script."
-            },
-            {
-              "name": "collaborationId",
-              "description": "The unique identifier for the collaboration session."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/scenes/{sceneId}/sceneCharacters/{sceneCharacterId}",
-        "definition": {
-          "entityName": "SceneCharacter",
-          "schema": {
-            "$ref": "#/backend/entities/SceneCharacter"
-          },
-          "description": "Stores the relationship between scenes and characters. This supports listing scene characters by scene.",
-          "params": [
-            {
-              "name": "sceneId",
-              "description": "The unique identifier for the scene."
-            },
-            {
-              "name": "sceneCharacterId",
-              "description": "The unique identifier for the scene character relationship."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability, following the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). It leverages denormalization, structural segregation, and consistent access modeling.\n\n**Authorization Independence:**\n\n*   Authorization data (e.g., roles, members) is denormalized into subcollections or documents where necessary. For instance, the `Collaboration` entity stores `userId` and `role` within the document itself, removing the need to fetch user roles from a separate location. This allows atomic operations (transactions/batches) without relying on parent data.\n\n**Structural Segregation:**\n\n*   The structure segregates data based on access needs. User-specific data (scripts) are stored under `/users/{userId}/scripts/{scriptId}`, while collaborative data is stored in `/scripts/{scriptId}/collaborations/{collaborationId}`. This prevents mixing data with different access requirements in the same collection.\n\n**Access Modeling:**\n\n*   **Path-Based Ownership:** User-owned scripts are stored under `/users/{userId}/scripts/{scriptId}`, which provides a clear ownership model.\n*   **Membership Map (Collaborations):** The `Collaboration` entity includes `userId` and `role` fields directly, acting as a membership map. This provides explicit information of which users have certain access or roles.\n\n**QAPs (Rules are not Filters):**\n\n*   The structure supports secure `list` operations by ensuring that each collection has a homogeneous security posture. Rules can be written to allow listing only documents that the user has access to, based on path-based ownership or membership maps."
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability. The structure has been simplified to directly associate characters with users (`/users/{userId}/characters/{characterId}`). This provides clear, path-based ownership, making it easy to write security rules that allow a user to only access their own characters. This is more efficient for the current requirements than a more complex, multi-level script-based structure."
   }
 }
