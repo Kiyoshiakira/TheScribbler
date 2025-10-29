@@ -321,11 +321,11 @@ export default function ScriptEditor({
             </DropdownMenu>
 
             <div
-            className="flex-1 resize-none font-code text-base px-12"
+            className="font-code text-base px-12 space-y-4"
             style={{ minHeight: '60vh' }}
             >
             {lines.map(line => (
-                <div key={line.id} data-line-id={line.id} onClick={() => setActiveLineId(line.id)} className="py-1">
+                <div key={line.id} data-line-id={line.id} onClick={() => setActiveLineId(line.id)}>
                     <ScriptLineComponent
                         line={line}
                         onTextChange={handleTextChange}
