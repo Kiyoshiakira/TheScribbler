@@ -89,25 +89,17 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
 
 function MainApp() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
-  const [view, setView] = React.useState<View | null>(null);
+  const [view, setView] = React.useState<View>('editor');
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!isCurrentScriptLoading) {
-      if (currentScriptId) {
-        // Only default to editor if no view has been selected by the user yet.
-        if (view === null) {
-          setView('editor');
-        }
-      } else {
-        router.push('/profile');
-      }
+    if (!isCurrentScriptLoading && !currentScriptId) {
+      router.push('/profile');
     }
-  }, [currentScriptId, isCurrentScriptLoading, router, view]);
+  }, [currentScriptId, isCurrentScriptLoading, router]);
 
-
-  if (isCurrentScriptLoading || !view) {
-     return (
+  if (isCurrentScriptLoading) {
+    return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Skeleton className="h-16 w-16 rounded-full" />
@@ -121,20 +113,20 @@ function MainApp() {
   }
 
   if (!currentScriptId) {
-      // While redirecting, show a loader or nothing
-      return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background">
-            <div className="flex flex-col items-center gap-4">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <p className="text-sm text-muted-foreground">Redirecting to your profile...</p>
-                </div>
-            </div>
+    // While redirecting, show a loader or nothing
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <p className="text-sm text-muted-foreground">Redirecting to your profile...</p>
+          </div>
         </div>
-      );
+      </div>
+    );
   }
-  
+
   return <AppLayout view={view} setView={setView} />;
 }
 
