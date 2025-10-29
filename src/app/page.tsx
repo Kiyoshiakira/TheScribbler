@@ -58,6 +58,13 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
     );
     const { data: scenes } = useCollection<Scene>(scenesCollection);
 
+  // If there's no active script, redirect to the profile page to select one.
+  React.useEffect(() => {
+    if (!currentScriptId) {
+      router.push('/profile');
+    }
+  }, [currentScriptId, router]);
+
 
   const renderView = () => {
     switch (view) {
@@ -84,8 +91,18 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
   };
   
   if (!currentScriptId) {
-    // Handled in MainApp component - redirect to profile
-    return null;
+    // While redirecting, show a loader or nothing
+    return (
+       <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[250px]" />
+            <p className="text-sm text-muted-foreground">Redirecting to your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -121,12 +138,6 @@ function MainApp() {
   const [view, setView] = React.useState<View>('dashboard');
   const router = useRouter();
 
-  React.useEffect(() => {
-    if (!isCurrentScriptLoading && !currentScriptId) {
-      router.push('/profile');
-    }
-  }, [currentScriptId, isCurrentScriptLoading, router]);
-
   if (isCurrentScriptLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -142,7 +153,8 @@ function MainApp() {
   }
 
   if (!currentScriptId) {
-    // While redirecting, show a loader or nothing
+     // The AppLayout component will handle the redirection.
+     // Show a loader while it does its work.
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">

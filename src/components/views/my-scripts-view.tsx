@@ -51,10 +51,10 @@ interface Script {
 }
 
 interface MyScriptsViewProps {
-    setView: (view: View) => void;
+    // setView is no longer needed as we navigate directly
 }
 
-export default function MyScriptsView({ setView }: MyScriptsViewProps) {
+export default function MyScriptsView(props: MyScriptsViewProps) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();

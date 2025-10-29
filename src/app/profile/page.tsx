@@ -109,14 +109,6 @@ export default function ProfilePage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
 
-  const handleSetView = (newView: View) => {
-    if (newView !== 'profile') {
-        // The `useCurrentScript` context will have been updated by MyScriptsView,
-        // so we can just navigate to the main app page.
-        router.push('/');
-    }
-  }
-
   if (isUserLoading || !user || isProfileLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -135,13 +127,13 @@ export default function ProfilePage() {
       <div className="flex h-screen bg-background">
         <AppSidebar
           activeView={'profile'}
-          setActiveView={handleSetView}
+          setActiveView={(view) => router.push('/')} // Clicking any view on profile goes to main app page
           activeScriptElement={null}
           wordCount={0}
           estimatedMinutes={0}
         />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <AppHeader setView={handleSetView} />
+          <AppHeader setView={(view) => router.push('/')} />
           <main className="flex-1 overflow-y-auto">
             <ProfileHeader user={user} profile={userProfile} onEdit={() => setIsEditDialogOpen(true)} />
             
@@ -153,7 +145,7 @@ export default function ProfilePage() {
                         <TabsTrigger value="friends">Friends</TabsTrigger>
                     </TabsList>
                     <TabsContent value="scripts" className="py-6">
-                        <MyScriptsView setView={handleSetView} />
+                        <MyScriptsView />
                     </TabsContent>
                     <TabsContent value="friends" className="py-6">
                         <FriendsList />
