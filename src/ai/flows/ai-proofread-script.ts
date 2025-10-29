@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const AiProofreadScriptInputSchema = z.object({
   script: z.string().describe('The screenplay text to proofread.'),
@@ -79,7 +80,10 @@ const aiProofreadScriptFlow = ai.defineFlow(
     if (input.script.length < 50) {
       return { suggestions: [] };
     }
-    const { output } = await prompt(input);
+    const { output } = await prompt({
+      input,
+      model: googleAI('gemini-1.5-pro-latest'),
+    });
     return output!;
   }
 );
