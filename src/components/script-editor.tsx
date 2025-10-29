@@ -390,6 +390,22 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
             <Film className="w-5 h-5 text-primary" />
             <span>SCENE 1: INT. COFFEE SHOP - DAY</span>
           </CardTitle>
+          {!isStandalone && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsSuggestionsDialogOpen(true)}
+                disabled={isProofreading || suggestions.length === 0}
+              >
+                  <Bot className="w-4 h-4 mr-2" />
+                  Proofreader
+                  {isProofreading ? (
+                    <Skeleton className='w-4 h-4 rounded-full ml-2' />
+                  ) : (
+                    suggestions.length > 0 && <Badge variant="default" className="ml-2">{suggestions.length}</Badge>
+                  )}
+              </Button>
+            )}
         </div>
       </CardHeader>
       <CardContent 
@@ -446,26 +462,7 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
           ))}
         </div>
       </CardContent>
-      <CardFooter className="text-sm text-muted-foreground justify-between gap-6">
-        <div className='flex items-center gap-2'>
-            {!isStandalone && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className='h-auto px-2 py-1'
-                onClick={() => setIsSuggestionsDialogOpen(true)}
-                disabled={isProofreading || suggestions.length === 0}
-              >
-                  <Bot className="w-4 h-4 mr-2" />
-                  Proofreader
-                  {isProofreading ? (
-                    <Skeleton className='w-4 h-4 rounded-full ml-2' />
-                  ) : (
-                    suggestions.length > 0 && <Badge variant="default" className="ml-2">{suggestions.length}</Badge>
-                  )}
-              </Button>
-            )}
-        </div>
+      <CardFooter className="text-sm text-muted-foreground justify-end gap-6">
         <div className='flex items-center gap-6'>
             <span>{wordCount} words</span>
             <div className="flex items-center gap-2">
@@ -527,5 +524,7 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
     </Card>
   );
 }
+
+    
 
     
