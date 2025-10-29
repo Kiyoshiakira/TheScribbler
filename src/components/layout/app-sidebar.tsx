@@ -18,19 +18,15 @@ import {
   StickyNote,
   Users,
   CaseSensitive,
-  Library,
   Clock,
   NotebookPen,
-  User,
 } from 'lucide-react';
 import type { View } from '@/app/page';
 import type { ScriptElement } from '../script-editor';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
-import { ScrollArea } from '../ui/scroll-area';
 import { SettingsDialog } from '../settings-dialog';
-import Link from 'next/link';
 
 interface AppSidebarProps {
   activeView: View;
@@ -122,17 +118,6 @@ export default function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    isActive={activeView === 'profile'}
-                    tooltip="My Scripts"
-                    onClick={() => setActiveView('profile')}
-                >
-                    <Library />
-                    <span>My Scripts</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarSeparator />
             <SidebarMenuItem>
             <SidebarMenuButton
                 onClick={() => setActiveView('editor')}

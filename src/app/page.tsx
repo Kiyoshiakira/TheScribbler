@@ -9,7 +9,6 @@ import EditorView from '@/components/views/editor-view';
 import ScenesView from '@/components/views/scenes-view';
 import CharactersView from '@/components/views/characters-view';
 import NotesView from '@/components/views/notes-view';
-import MyScriptsView from '@/components/views/my-scripts-view';
 import LoglineView from '@/components/views/logline-view';
 import type { ScriptElement } from '@/components/script-editor';
 import { useUser } from '@/firebase';
@@ -30,12 +29,11 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
   // State lifted from ScriptEditor
   const [wordCount, setWordCount] = React.useState(0);
   const [estimatedMinutes, setEstimatedMinutes] = React.useState(0);
+  const router = useRouter();
 
 
   const renderView = () => {
     switch (view) {
-      case 'profile':
-        return <MyScriptsView setView={setView} />;
       case 'editor':
         return <EditorView 
             onActiveLineTypeChange={setActiveScriptElement}
@@ -61,36 +59,11 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
     }
   };
   
-  if (!currentScriptId && view !== 'profile') {
-    // This should ideally redirect to the profile page, which now hosts the scripts list.
-    // The redirect logic is handled in the MainApp component.
+  if (!currentScriptId) {
+    // Handled in MainApp component - redirect to profile
     return null;
   }
 
-  // If there's no script, but the view is 'profile', we show the MyScriptsView.
-  if (!currentScriptId && view === 'profile') {
-     return (
-       <SidebarProvider>
-            <div className="flex h-screen bg-background">
-                <AppSidebar
-                    activeView={view}
-                    setActiveView={setView}
-                    activeScriptElement={null}
-                    wordCount={0}
-                    estimatedMinutes={0}
-                />
-                <div className="flex flex-1 flex-col overflow-hidden">
-                    <AppHeader setView={setView} />
-                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-                         <MyScriptsView setView={setView} />
-                    </main>
-                </div>
-            </div>
-        </SidebarProvider>
-    );
-  }
-
-  // This should only render if currentScriptId is truthy
   return (
     <ScriptProvider scriptId={currentScriptId!}>
       <SidebarProvider>
@@ -122,14 +95,12 @@ function MainApp() {
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
       if (currentScriptId) {
-        // If there's a script, default to the editor view
         setView('editor');
       } else {
-        // If no script is active, default to the profile view (list of scripts)
-        setView('profile');
+        router.push('/profile');
       }
     }
-  }, [currentScriptId, isCurrentScriptLoading]);
+  }, [currentScriptId, isCurrentScriptLoading, router]);
 
 
   if (isCurrentScriptLoading) {
@@ -144,6 +115,21 @@ function MainApp() {
         </div>
       </div>
     );
+  }
+
+  if (!currentScriptId) {
+      // While redirecting, show a loader or nothing
+      return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <p className="text-sm text-muted-foreground">Redirecting to your profile...</p>
+                </div>
+            </div>
+        </div>
+      );
   }
   
   return <AppLayout view={view} setView={setView} />;

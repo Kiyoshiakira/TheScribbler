@@ -8,16 +8,14 @@ import MyScriptsView from '@/components/views/my-scripts-view';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { View } from '@/app/page';
-import { useCurrentScript } from '@/context/current-script-context';
+import { useCurrentScript, CurrentScriptContext } from '@/context/current-script-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Camera, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardTitle, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ScriptProvider } from '@/context/script-context';
-
 
 function FriendsList() {
   const friends = PlaceHolderImages.filter(img => img.id.startsWith('user')).slice(0, 4);
@@ -79,10 +77,9 @@ function ProfileHeader({ user }: { user: any }) {
 }
 
 export default function ProfilePage() {
-  const [view, setView] = React.useState<View>('profile');
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const { setCurrentScriptId, currentScriptId } = useCurrentScript();
+  const { setCurrentScriptId } = useCurrentScript();
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -96,9 +93,6 @@ export default function ProfilePage() {
   }, [setCurrentScriptId]);
 
   const handleSetView = (newView: View) => {
-    // This is now primarily for navigating *away* from the profile page
-    // when a script is opened from MyScriptsView.
-    setView(newView);
     if (newView !== 'profile') {
         // The `useCurrentScript` context will have been updated by MyScriptsView,
         // so we can just navigate to the main app page.
@@ -121,7 +115,6 @@ export default function ProfilePage() {
   return (
     <SidebarProvider>
       <div className="flex h-screen bg-background">
-        {/* We can show a minimal sidebar or no sidebar at all on the profile page */}
         <AppSidebar
           activeView={'profile'}
           setActiveView={handleSetView}
@@ -142,10 +135,7 @@ export default function ProfilePage() {
                         <TabsTrigger value="friends">Friends</TabsTrigger>
                     </TabsList>
                     <TabsContent value="scripts" className="py-6">
-                        {/* We wrap MyScriptsView in a provider so it can set the current script */}
-                        <CurrentScriptContext.Consumer>
-                            {() => <MyScriptsView setView={handleSetView} />}
-                        </CurrentScriptContext.Consumer>
+                        <MyScriptsView setView={handleSetView} />
                     </TabsContent>
                     <TabsContent value="friends" className="py-6">
                         <FriendsList />
