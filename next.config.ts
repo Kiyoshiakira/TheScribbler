@@ -28,20 +28,25 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+       {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   async headers() {
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' blob: data: https://images.unsplash.com https://picsum.photos;
+      img-src 'self' blob: data: https://images.unsplash.com https://picsum.photos https://lh3.googleusercontent.com;
       font-src 'self' https://fonts.gstatic.com;
-      connect-src 'self' *;
+      connect-src 'self' https://*.google.com https://*.googleapis.com https://*.googleusercontent.com wss://*.cloudworkstations.dev;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
-      upgrade-insecure-requests;
     `;
     return [
       {
