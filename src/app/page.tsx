@@ -89,7 +89,7 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
 
 function MainApp() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
-  const [view, setView] = React.useState<View>('editor');
+  const [view, setView] = React.useState<View>('profile');
   const router = useRouter();
 
   React.useEffect(() => {
