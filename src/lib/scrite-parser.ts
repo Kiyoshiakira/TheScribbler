@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import type { ScriptLine } from '@/components/script-editor';
 
 export type NoteCategory = 'Plot' | 'Character' | 'Dialogue' | 'Research' | 'Theme' | 'Scene' | 'General';
 
@@ -30,6 +31,7 @@ export interface ParsedScene {
 
 export interface ParsedScriteFile {
   script: string;
+  lines: ScriptLine[];
   characters: ParsedCharacter[];
   notes: ParsedNote[];
   scenes: ParsedScene[];
@@ -44,8 +46,12 @@ const getAsArray = (obj: any) => {
 
 // A helper to parse Quill Delta format to plain text
 const parseQuillDelta = (delta: any): string => {
-    if (!delta || !delta.ops) return '';
-    return delta.ops.map((op: any) => op.insert || '').join('').trim();
+    if (!delta) return '';
+    if (typeof delta === 'string') return delta; // Already plain text
+    if (delta.ops) {
+        return delta.ops.map((op: any) => op.insert || '').join('').trim();
+    }
+    return '';
 };
 
 
@@ -67,67 +73,76 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
   }
 
   // 1. Parse Script Content and Scenes
-  let scriptContent = '';
+  const scriptLines: ScriptLine[] = [];
   const scenes: ParsedScene[] = [];
   const scenesFromStructure = getAsArray(structure.elements);
   let sceneCounter = 0;
-
+  let lineCounter = 0;
 
   scenesFromStructure.forEach((sceneContainer: any) => {
     if (sceneContainer.scene) {
       sceneCounter++;
-      let sceneText = '';
+      let sceneTextContent = '';
       const sceneElements = getAsArray(sceneContainer.scene.elements);
       const heading = sceneContainer.scene.heading;
       let sceneSetting = 'Untitled Scene';
 
       if (heading && heading.location && heading.moment) {
-        sceneSetting = `${heading.locationType || 'EXT.'} ${heading.location} - ${heading.moment}`;
-        sceneText += sceneSetting.toUpperCase() + '\n\n';
+        sceneSetting = `${heading.locationType || 'INT.'} ${heading.location} - ${heading.moment}`;
+        const sceneHeadingText = sceneSetting.toUpperCase();
+        scriptLines.push({ id: `line-${lineCounter++}`, type: 'scene-heading', text: sceneHeadingText });
+        sceneTextContent += sceneHeadingText + '\n\n';
       }
       
       if (sceneElements) {
         sceneElements.forEach((element: any) => {
-            let text = element.text || '';
-            text = text.replace(/<[^>]*>?/gm, ''); // Strip any HTML tags if present
+            let text = parseQuillDelta(element.text || '');
+            if (!text) return; // Skip empty elements
+
+            let type: ScriptLine['type'] = 'action';
 
             switch(element.type) {
                 case 'Action':
-                    sceneText += text + '\n\n';
+                    type = 'action';
+                    scriptLines.push({ id: `line-${lineCounter++}`, type, text });
+                    sceneTextContent += text + '\n\n';
                     break;
                 case 'Character':
-                    sceneText += `${text.toUpperCase()}\n`;
+                    type = 'character';
+                    scriptLines.push({ id: `line-${lineCounter++}`, type, text: text.toUpperCase() });
+                    sceneTextContent += text.toUpperCase() + '\n';
                     break;
                 case 'Parenthetical':
-                    sceneText += `(${text})\n`;
+                     type = 'parenthetical';
+                     const parentheticalText = `(${text})`;
+                     scriptLines.push({ id: `line-${lineCounter++}`, type, text: parentheticalText });
+                     sceneTextContent += parentheticalText + '\n';
                     break;
                 case 'Dialogue':
-                    sceneText += `${text}\n\n`;
+                    type = 'dialogue';
+                    scriptLines.push({ id: `line-${lineCounter++}`, type, text });
+                    sceneTextContent += text + '\n\n';
                     break;
                 case 'Transition':
-                    sceneText += `${text.toUpperCase()}\n\n`;
+                    type = 'transition';
+                    const transitionText = text.toUpperCase();
+                    scriptLines.push({ id: `line-${lineCounter++}`, type, text: transitionText });
+                    sceneTextContent += transitionText + '\n\n';
                     break;
-                default:
-                    sceneText += text + '\n';
             }
         });
       }
 
 
-      const wordCount = sceneText.trim().split(/\s+/).filter(Boolean).length;
-      let estimatedTime = Math.round((wordCount / 160) * 10) / 10; // Approx 160 words per minute
-      if (isNaN(estimatedTime)) {
-        estimatedTime = 0;
-      }
+      const wordCount = sceneTextContent.trim().split(/\s+/).filter(Boolean).length;
+      let estimatedTime = isNaN(wordCount) || wordCount === 0 ? 0 : Math.round((wordCount / 160) * 10) / 10;
       
       scenes.push({
         sceneNumber: sceneCounter,
         setting: sceneSetting,
-        description: sceneContainer.scene.synopsis || 'No synopsis available.',
+        description: parseQuillDelta(sceneContainer.scene.synopsis) || 'No synopsis available.',
         time: estimatedTime,
       });
-
-      scriptContent += sceneText;
     }
   });
 
@@ -152,17 +167,21 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
   if (notesList) {
     notesList.forEach((note: any) => {
       if(note.type === 'TextNoteType' && note.content){
-         notes.push({
-            title: note.title || 'Untitled Note',
-            content: parseQuillDelta(note.content),
-            category: 'General', 
-        });
+         const content = parseQuillDelta(note.content);
+         if (content) {
+            notes.push({
+                title: note.title || 'Untitled Note',
+                content: content,
+                category: 'General', 
+            });
+         }
       }
     });
   }
   
   return {
-    script: scriptContent.trim(),
+    script: scriptLines.map(l => l.text).join('\n'),
+    lines: scriptLines,
     characters,
     notes,
     scenes,

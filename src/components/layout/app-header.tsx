@@ -75,12 +75,9 @@ export default function AppHeader({ setView }: AppHeaderProps) {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const arrayBuffer = e.target?.result as ArrayBuffer;
-      console.log("--- DEBUG: File read as ArrayBuffer ---");
 
       try {
         const parsedData = await parseScriteFile(arrayBuffer);
-        console.log("--- DEBUG: Parsed Scrite JSON ---");
-        console.log(parsedData);
         
         const batch = writeBatch(firestore);
 
