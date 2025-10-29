@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAiCharacterProfile } from '@/app/actions';
+import { getAiCharacterProfile, type AiGenerateCharacterProfileInput } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
 import React from 'react';
 
@@ -163,7 +163,7 @@ function CharacterDialog({ character, onSave, trigger }: { character?: Character
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle className="font-headline">{character ? 'Edit Character' : 'Add New Character'}</DialogTitle>
           <DialogDescription>
