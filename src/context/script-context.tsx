@@ -41,36 +41,45 @@ export const ScriptContext = createContext<ScriptContextType>({
 // Function to parse the raw script content into lines
 const parseContentToLines = (content: string): ScriptLine[] => {
     if (typeof content !== 'string') return [];
-    const lineTexts = content.split('\n');
     
-    return lineTexts.map((text, index) => {
-        let type: ScriptElement = 'action';
+    const rawLines = content.split('\n');
+    const parsedLines: ScriptLine[] = [];
+
+    for (let i = 0; i < rawLines.length; i++) {
+        const text = rawLines[i];
         const trimmedText = text.trim();
+        let type: ScriptElement = 'action'; // Default to action
 
+        const prevLineType = parsedLines[i - 1]?.type;
+
+        // Rule-based parsing
         if (trimmedText.startsWith('INT.') || trimmedText.startsWith('EXT.')) {
-        type = 'scene-heading';
-        } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
-        type = 'parenthetical';
+            type = 'scene-heading';
         } else if (trimmedText.endsWith('TO:')) {
-        type = 'transition';
-        } else if (/^[A-Z\s]+$/.test(trimmedText) && trimmedText.length > 0 && trimmedText.length < 35 && !trimmedText.includes('(')) {
-            // Heuristic for character: ALL CAPS, short, and not a transition.
-            // Look at previous line to be more certain.
-            const prevLine = lineTexts[index - 1]?.trim() ?? '';
-            if (prevLine === '' || prevLine.endsWith('TO:')) { // Previous line was empty or a transition
-                type = 'character';
+            type = 'transition';
+        } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
+            type = 'parenthetical';
+        } else if (trimmedText === trimmedText.toUpperCase() && trimmedText !== '' && !trimmedText.includes('(') && !trimmedText.includes(')')) {
+            // Potential Character or Scene Heading continuation
+            if (prevLineType === 'action' || prevLineType === 'transition' || prevLineType === undefined || (parsedLines[i-1] && parsedLines[i-1].text.trim() === '')) {
+                 // It's likely a character name if it's all caps and follows an action, transition, or blank line.
+                 // This is a heuristic and might need refinement.
+                 type = 'character';
             }
-        } else if (index > 0) {
-            const prevLine = lineTexts[index - 1]?.trim() ?? '';
-            const prevLineIsCharacter = /^[A-Z\s]+$/.test(prevLine) && prevLine.length < 35 && !prevLine.includes('(');
-            if(prevLineIsCharacter) {
-                type = 'dialogue';
-            }
+        } else if (prevLineType === 'character' || prevLineType === 'parenthetical') {
+            type = 'dialogue';
         }
+        
+        parsedLines.push({
+            id: `line-${i}-${Date.now()}`,
+            type,
+            text,
+        });
+    }
 
-        return { id: `line-${index}-${Date.now()}`, type, text };
-    });
+    return parsedLines;
 };
+
 
 export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, scriptId: string }) => {
   const { user } = useUser();
@@ -92,24 +101,14 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     // This effect's job is to sync the firestoreScript data to our local state.
     // It is the single source of truth from the database.
     if (firestoreScript) {
+      if (localScript?.id !== firestoreScript.id || localScript?.content !== firestoreScript.content) {
         setLocalScript(firestoreScript);
-        // Always re-parse the content from Firestore when the document changes.
-        // This ensures that on script switch or import, we get the new content.
         const parsed = parseContentToLines(firestoreScript.content || '');
         setLocalLines(parsed);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestoreScript]);
-
-
-  const updateFirestore = useCallback((field: 'content' | 'title' | 'logline', value: string) => {
-    if (scriptDocRef) {
-        setDoc(scriptDocRef, { 
-            [field]: value,
-            lastModified: serverTimestamp()
-        }, { merge: true });
-    }
-  }, [scriptDocRef]);
 
 
   useEffect(() => {
@@ -123,6 +122,15 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       updateFirestore('content', newContent);
     }
   }, [debouncedLines, localScript, updateFirestore]);
+
+  const updateFirestore = useCallback((field: 'content' | 'title' | 'logline', value: string) => {
+    if (scriptDocRef) {
+        setDoc(scriptDocRef, { 
+            [field]: value,
+            lastModified: serverTimestamp()
+        }, { merge: true });
+    }
+  }, [scriptDocRef]);
 
   const setLines = useCallback((linesOrContent: ScriptLine[] | string | ((prev: ScriptLine[]) => ScriptLine[])) => {
     if (typeof linesOrContent === 'string') {
