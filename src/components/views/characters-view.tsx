@@ -270,7 +270,7 @@ export default function CharactersView() {
       } else {
           const profileData = result.data;
           if (profileData.name && profileData.profile) {
-              const generatedChar = {
+              const generatedChar: Character = {
                   name: profileData.name,
                   profile: profileData.profile,
                   description: profileData.profile.split('\n')[0],
@@ -378,7 +378,7 @@ export default function CharactersView() {
          </div>
       )}
       <AiFab
-        actions={[]}
+        actions={['openChat']}
         customActions={[{
             label: 'Generate New Character',
             icon: <Sparkles className="mr-2 h-4 w-4" />,
