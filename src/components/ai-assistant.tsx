@@ -159,22 +159,22 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
           <span>AI Assistant</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-4">
-        <Tabs defaultValue="suggestions" className='flex-1 flex flex-col'>
+      <CardContent className="flex-1 flex flex-col gap-4 min-h-0">
+        <Tabs defaultValue="suggestions" className='flex-1 flex flex-col min-h-0'>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
             <TabsTrigger value="analysis">Deep Analysis</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
-          <TabsContent value="suggestions" className="mt-4 flex-1">
+          <TabsContent value="suggestions" className="mt-4 flex-1 flex flex-col min-h-0">
             <div className="flex flex-col gap-4 h-full">
                 <Button onClick={handleGetSuggestions} disabled={isSuggestionsLoading}>
                     <Lightbulb className="mr-2 h-4 w-4" />
                     {isSuggestionsLoading ? 'Thinking...' : 'Suggest Improvements'}
                 </Button>
-                <div className="flex-1 flex flex-col">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Suggestions</p>
-                    <ScrollArea className="h-[calc(100vh-25rem)] rounded-md border p-4">
+                <div className="flex-1 flex flex-col min-h-0">
+                    <p className="text-sm font-medium text-muted-foreground mb-2 flex-shrink-0">Suggestions</p>
+                    <ScrollArea className="flex-grow rounded-md border p-4">
                         {isSuggestionsLoading && (
                         <div className="space-y-4">
                             <Skeleton className="h-12 w-full" />
@@ -199,15 +199,15 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
                 </div>
             </div>
           </TabsContent>
-          <TabsContent value="analysis" className="mt-4 flex-1">
+          <TabsContent value="analysis" className="mt-4 flex-1 flex flex-col min-h-0">
             <div className="flex flex-col gap-4 h-full">
                 <Button onClick={handleGetAnalysis} disabled={isAnalysisLoading}>
                     <Wand2 className="mr-2 h-4 w-4" />
                     {isAnalysisLoading ? 'Analyzing...' : 'Run Deep Analysis'}
                 </Button>
-                 <div className="flex-1 flex flex-col">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Analysis Results</p>
-                    <ScrollArea className="h-[calc(100vh-25rem)] rounded-md border">
+                 <div className="flex-1 flex flex-col min-h-0">
+                    <p className="text-sm font-medium text-muted-foreground mb-2 flex-shrink-0">Analysis Results</p>
+                    <ScrollArea className="flex-grow rounded-md border">
                         {isAnalysisLoading && (
                             <div className="space-y-4 p-4">
                                 <Skeleton className="h-12 w-full" />
@@ -300,3 +300,5 @@ export default function AiAssistant({ scriptContent }: AiAssistantProps) {
     </Card>
   );
 }
+
+    
