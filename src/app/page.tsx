@@ -10,6 +10,7 @@ import ScenesView from '@/components/views/scenes-view';
 import CharactersView from '@/components/views/characters-view';
 import NotesView from '@/components/views/notes-view';
 import MyScriptsView from '@/components/views/my-scripts-view';
+import LoglineView from '@/components/views/logline-view';
 import type { ScriptElement } from '@/components/script-editor';
 import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,7 +18,7 @@ import { useCurrentScript } from '@/context/current-script-context';
 import type { AiProofreadScriptOutput } from '@/ai/flows/ai-proofread-script';
 import { ScriptProvider } from '@/context/script-context';
 
-export type View = 'editor' | 'scenes' | 'characters' | 'notes' | 'my-scripts';
+export type View = 'editor' | 'scenes' | 'characters' | 'notes' | 'my-scripts' | 'logline';
 
 export type ProofreadSuggestion = AiProofreadScriptOutput['suggestions'][0];
 
@@ -46,6 +47,8 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
         return <CharactersView />;
       case 'notes':
         return <NotesView />;
+      case 'logline':
+        return <LoglineView />;
       case 'my-scripts':
         return <MyScriptsView setView={setView} />;
       default:

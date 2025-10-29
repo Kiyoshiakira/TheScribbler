@@ -20,15 +20,13 @@ import {
   CaseSensitive,
   Library,
   Clock,
-  Pencil,
+  NotebookPen,
 } from 'lucide-react';
 import type { View } from '@/app/page';
 import type { ScriptElement } from '../script-editor';
-import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
-import { LoglineDialog } from '../logline-dialog';
 import { ScrollArea } from '../ui/scroll-area';
 import { SettingsDialog } from '../settings-dialog';
 
@@ -67,8 +65,7 @@ export default function AppSidebar({
   estimatedMinutes,
 }: AppSidebarProps) {
   const { state: sidebarState } = useSidebar();
-  const { script, isScriptLoading } = useScript();
-  const [loglineDialogOpen, setLoglineDialogOpen] = useState(false);
+  const { isScriptLoading } = useScript();
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   
   const formatElementName = (name: string | null) => {
@@ -102,27 +99,6 @@ export default function AppSidebar({
               <CaseSensitive className="w-4 h-4 text-sidebar-primary flex-shrink-0" />
               <span className='font-semibold text-sm text-sidebar-foreground'>{formatElementName(activeScriptElement)}</span>
             </div>
-        </div>
-        <SidebarSeparator />
-         <div className="text-xs text-sidebar-foreground/70 px-2 font-medium [&[data-collapsed=true]]:text-center [&[data-collapsed=true]]:px-0" data-collapsed={sidebarState === 'collapsed'}>
-            {sidebarState === 'collapsed' ? 'Log' : 'Logline'}
-        </div>
-         <ScrollArea className="h-24 px-2">
-            <div className='text-sm text-sidebar-foreground/90'>
-                {isScriptLoading ? (
-                    <Skeleton className="h-10 w-full" />
-                ) : (
-                    <p className={cn("text-xs leading-normal", !script?.logline && "italic text-sidebar-foreground/50")}>
-                        {script?.logline || 'No logline yet. Generate one with AI!'}
-                    </p>
-                )}
-            </div>
-        </ScrollArea>
-        <div className='px-2'>
-            <Button size='sm' variant='outline' className='w-full bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-primary/20' onClick={() => setLoglineDialogOpen(true)}>
-                <Pencil className='w-3 h-3 mr-2'/>
-                {sidebarState === 'expanded' ? 'Edit Logline' : ''}
-            </Button>
         </div>
     </div>
   );
@@ -161,6 +137,16 @@ export default function AppSidebar({
             </SidebarMenuItem>
             <SidebarMenuItem>
             <SidebarMenuButton
+                onClick={() => setActiveView('logline')}
+                isActive={activeView === 'logline'}
+                tooltip="Logline"
+            >
+                <NotebookPen />
+                <span>Logline</span>
+            </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+            <SidebarMenuButton
                 onClick={() => setActiveView('scenes')}
                 isActive={activeView === 'scenes'}
                 tooltip="Scenes"
@@ -190,7 +176,11 @@ export default function AppSidebar({
             </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
-        <ScriptInfo />
+        {isScriptLoading ? (
+          <div className='p-2 space-y-2'><Skeleton className='h-24 w-full' /></div>
+        ) : (
+          <ScriptInfo />
+        )}
       </SidebarContent>
 
       <SidebarFooter>
@@ -204,7 +194,6 @@ export default function AppSidebar({
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-    <LoglineDialog open={loglineDialogOpen} onOpenChange={setLoglineDialogOpen} />
     <SettingsDialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen} />
     </>
   );

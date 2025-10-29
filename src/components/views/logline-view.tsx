@@ -3,32 +3,27 @@
 import { useState, useEffect } from "react";
 import { useScript } from "@/context/script-context";
 import { aiGenerateLogline } from "@/app/actions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles } from "lucide-react";
-import { Skeleton } from "./ui/skeleton";
+import { Loader2, Sparkles, NotebookPen } from "lucide-react";
+import { Skeleton } from "../ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
-interface LoglineDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
-export function LoglineDialog({ open, onOpenChange }: LoglineDialogProps) {
-    const { script, setScriptLogline, lines } = useScript();
+export default function LoglineView() {
+    const { script, setScriptLogline, lines, isScriptLoading } = useScript();
     const scriptContent = lines.map(l => l.text).join('\n');
     const [logline, setLogline] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
-        if(open && script?.logline) {
+        if (script?.logline) {
             setLogline(script.logline);
-        } else if (open && !script?.logline) {
+        } else {
             setLogline('');
         }
-    }, [open, script?.logline])
+    }, [script?.logline]);
 
     const handleGenerate = async () => {
         setIsGenerating(true);
@@ -56,34 +51,38 @@ export function LoglineDialog({ open, onOpenChange }: LoglineDialogProps) {
             title: "Logline Saved",
             description: "Your script's logline has been updated.",
         });
-        onOpenChange(false);
     }
 
-
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl">
-                <DialogHeader>
-                    <DialogTitle className="font-headline">Edit Logline</DialogTitle>
-                    <DialogDescription>
-                        Generate a new logline with AI or edit the current one. This is a one-sentence summary of your story.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                     {isGenerating ? (
+        <div className="max-w-4xl mx-auto space-y-6">
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold font-headline">Logline</h1>
+                <p className="text-muted-foreground">
+                    A logline is a one-sentence summary of your story. Use the AI to generate one based on your script, or write your own.
+                </p>
+            </div>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2">
+                        <NotebookPen className="w-5 h-5 text-primary" />
+                        Script Logline
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {isScriptLoading ? (
                         <div className="space-y-2">
-                           <Skeleton className="h-6 w-1/3" />
-                           <Skeleton className="h-20 w-full" />
+                           <Skeleton className="h-24 w-full" />
                         </div>
                      ) : (
                         <Textarea 
                             placeholder="A protagonist wants a goal, but faces an obstacle."
-                            className="min-h-[100px] text-base"
+                            className="min-h-[120px] text-base"
                             value={logline}
                             onChange={(e) => setLogline(e.target.value)}
                         />
                      )}
-                     <div className="flex justify-end">
+                     <div className="flex justify-end gap-2">
                          <Button variant="outline" onClick={handleGenerate} disabled={isGenerating}>
                             {isGenerating ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -92,13 +91,10 @@ export function LoglineDialog({ open, onOpenChange }: LoglineDialogProps) {
                             )}
                             Generate with AI
                         </Button>
+                        <Button onClick={handleSave}>Save Logline</Button>
                      </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSave}>Save Logline</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </CardContent>
+            </Card>
+        </div>
     )
 }
