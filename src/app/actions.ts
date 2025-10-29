@@ -16,6 +16,14 @@ import {
   aiProofreadScript,
   type AiProofreadScriptInput,
 } from '@/ai/flows/ai-proofread-script';
+import {
+    aiGenerateCharacterProfile,
+} from '@/ai/flows/ai-generate-character-profile';
+
+// This type is needed for the action, so we define it here.
+export interface AiGenerateCharacterProfileInput {
+    characterDescription: string;
+}
 
 export async function getAiSuggestions(
   input: AiSuggestSceneImprovementsInput
@@ -36,8 +44,21 @@ export async function getAiSuggestions(
   }
 }
 
-export async function getAiCharacterProfile() {
-  return { data: null, error: 'This function is deprecated.' };
+export async function getAiCharacterProfile(input: AiGenerateCharacterProfileInput) {
+    if (!process.env.GEMINI_API_KEY) {
+        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    }
+    try {
+        const result = await aiGenerateCharacterProfile(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+        data: null,
+        error: `An error occurred while generating the character profile: ${errorMessage}`,
+        };
+    }
 }
 
 

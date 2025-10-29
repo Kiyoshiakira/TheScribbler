@@ -12,61 +12,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 
-// Define Schemas and Tool directly in the orchestrator file
-const CharacterProfileInputSchema = z.object({
-  characterDescription: z
-    .string()
-    .describe('A brief description or traits of the character.'),
-});
-
-const CharacterProfileOutputSchema = z.object({
-  name: z.string().describe("The character's full name."),
-  profile: z
-    .string()
-    .describe(
-      'A detailed character profile that includes backstory, personality, motivations, and quirks.'
-    ),
-});
-
-const generateCharacterProfileTool = ai.defineTool(
-  {
-    name: 'generateCharacterProfile',
-    description: 'Generates a detailed character profile based on a brief description. Use this when the user wants to create or generate a character.',
-    inputSchema: CharacterProfileInputSchema,
-    outputSchema: CharacterProfileOutputSchema,
-  },
-  async input => {
-    const prompt = `You are an expert screenwriter and character creator.
-
-  Your task is to generate a detailed character profile based on a simple description.
-
-  **Instructions:**
-  1.  Create a plausible full name for the character.
-  2.  Write a rich, narrative-style character profile that includes:
-      -   **Backstory:** Key life events and formative experiences.
-      -   **Personality:** Core traits, strengths, flaws, and contradictions.
-      -   **Motivations:** Their primary goals, desires, and what drives them.
-      -   **Fears:** What they are most afraid of, both physically and emotionally.
-      -   **Quirks:** Interesting habits or unique characteristics that make them memorable.
-
-  **Character Description:**
-  \`\`\`
-  ${input.characterDescription}
-  \`\`\`
-  `;
-
-    const { output } = await ai.generate({
-      prompt: prompt,
-      model: 'googleai/gemini-2.5-flash-preview',
-      output: {
-        schema: CharacterProfileOutputSchema,
-      },
-    });
-    return output!;
-  }
-);
-
-
 const AiAgentOrchestratorInputSchema = z.object({
   request: z.string().describe('The user\'s natural language request.'),
   script: z.string().describe('The current state of the screenplay.'),
@@ -109,7 +54,7 @@ ${input.request}
 ${input.script}
 ---
 `,
-      tools: [generateCharacterProfileTool],
+      tools: [], // Tools are deprecated in favor of specific flows
       model: 'googleai/gemini-2.5-flash-preview',
     });
 

@@ -18,11 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { runAiAgent } from '@/app/actions';
+import { getAiCharacterProfile } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
 import React from 'react';
-import { useScript } from '@/context/script-context';
-
 
 interface Character {
   name: string;
@@ -71,7 +69,6 @@ const initialCharacters: Character[] = [
 const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id);
 
 function CharacterDialog({ character, onSave, trigger }: { character?: Character | null, onSave: (char: Character) => void, trigger: React.ReactNode }) {
-  const { scriptContent } = useScript();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [profile, setProfile] = useState('');
@@ -104,24 +101,21 @@ function CharacterDialog({ character, onSave, trigger }: { character?: Character
     setProfile('');
     setName('');
 
-    const result = await runAiAgent({
-      request: `Generate a character profile for: ${description}`,
-      script: scriptContent,
-    });
+    const result = await getAiCharacterProfile({ characterDescription: description });
     
     setIsGenerating(false);
     
-    if (result.error || !result.data?.toolResult) {
+    if (result.error || !result.data) {
       toast({
         variant: 'destructive',
         title: 'Error',
         description: result.error || 'Could not generate a structured character profile.',
       });
     } else {
-        const toolResult = result.data.toolResult as { name: string; profile: string };
-        if (toolResult.name && toolResult.profile) {
-            setName(toolResult.name);
-            setProfile(toolResult.profile);
+        const profileData = result.data;
+        if (profileData.name && profileData.profile) {
+            setName(profileData.name);
+            setProfile(profileData.profile);
         } else {
              toast({
                 variant: 'destructive',
