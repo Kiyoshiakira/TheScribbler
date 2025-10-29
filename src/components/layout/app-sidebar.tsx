@@ -20,13 +20,15 @@ import {
   Library,
   Clock,
   Sparkles,
+  Pencil,
 } from 'lucide-react';
-import type { View, ProofreadSuggestion } from '@/app/page';
+import type { View } from '@/app/page';
 import type { ScriptElement } from '../script-editor';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
+import { LoglineDialog } from '../logline-dialog';
 
 interface AppSidebarProps {
   activeView: View;
@@ -63,6 +65,8 @@ export default function AppSidebar({
   estimatedMinutes,
 }: AppSidebarProps) {
   const { state: sidebarState } = useSidebar();
+  const { script, setScriptLogline, isScriptLoading } = useScript();
+  const [loglineDialogOpen, setLoglineDialogOpen] = useState(false);
   
   const formatElementName = (name: string | null) => {
     if (!name) return 'N/A';
@@ -95,6 +99,25 @@ export default function AppSidebar({
               <CaseSensitive className="w-4 h-4 text-sidebar-primary flex-shrink-0" />
               <span className='font-semibold text-sm text-sidebar-foreground'>{formatElementName(activeScriptElement)}</span>
             </div>
+        </div>
+        <SidebarSeparator />
+         <div className="text-xs text-sidebar-foreground/70 px-2 font-medium [&[data-collapsed=true]]:text-center [&[data-collapsed=true]]:px-0" data-collapsed={sidebarState === 'collapsed'}>
+            {sidebarState === 'collapsed' ? 'Log' : 'Logline'}
+        </div>
+        <div className='px-2 text-sm text-sidebar-foreground/90'>
+             {isScriptLoading ? (
+                <Skeleton className="h-10 w-full" />
+             ) : (
+                <p className={cn("text-xs leading-normal", !script?.logline && "italic text-sidebar-foreground/50")}>
+                    {script?.logline || 'No logline yet. Generate one with AI!'}
+                </p>
+             )}
+        </div>
+        <div className='px-2'>
+            <Button size='sm' variant='outline' className='w-full bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-primary/20' onClick={() => setLoglineDialogOpen(true)}>
+                <Pencil className='w-3 h-3 mr-2'/>
+                {sidebarState === 'expanded' ? 'Edit Logline' : ''}
+            </Button>
         </div>
     </div>
   );
@@ -173,6 +196,7 @@ export default function AppSidebar({
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+    <LoglineDialog open={loglineDialogOpen} onOpenChange={setLoglineDialogOpen} />
     </>
   );
 }

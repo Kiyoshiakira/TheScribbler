@@ -24,6 +24,10 @@ import {
     aiGenerateNote as aiGenerateNoteFlow,
     type AiGenerateNoteInput,
 } from '@/ai/flows/ai-generate-note';
+import {
+    aiGenerateLogline as aiGenerateLoglineFlow,
+    type AiGenerateLoglineInput,
+} from '@/ai/flows/ai-generate-logline';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { adminApp } from '@/firebase/admin';
 
@@ -45,6 +49,23 @@ export async function getAiSuggestions(
       error: `An error occurred while fetching AI suggestions: ${errorMessage}`,
     };
   }
+}
+
+export async function aiGenerateLogline(input: AiGenerateLoglineInput) {
+    if (!process.env.GEMINI_API_KEY) {
+        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    }
+    try {
+        const result = await aiGenerateLoglineFlow(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+        data: null,
+        error: `An error occurred while generating the logline: ${errorMessage}`,
+        };
+    }
 }
 
 export async function getAiCharacterProfile(input: AiGenerateCharacterProfileInput) {

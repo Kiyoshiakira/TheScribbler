@@ -1,0 +1,68 @@
+'use server';
+/**
+ * @fileOverview An AI flow for generating a screenplay logline.
+ *
+ * - aiGenerateLogline - A function that generates a logline from a script.
+ * - AiGenerateLoglineInput - The input type for the function.
+ * - AiGenerateLoglineOutput - The return type for the function.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+
+const AiGenerateLoglineInputSchema = z.object({
+  screenplay: z.string().describe('The full screenplay text.'),
+});
+export type AiGenerateLoglineInput = z.infer<
+  typeof AiGenerateLoglineInputSchema
+>;
+
+const AiGenerateLoglineOutputSchema = z.object({
+  logline: z
+    .string()
+    .describe(
+      'A compelling, one-sentence logline that summarizes the screenplay.'
+    ),
+});
+export type AiGenerateLoglineOutput = z.infer<
+  typeof AiGenerateLoglineOutputSchema
+>;
+
+export async function aiGenerateLogline(
+  input: AiGenerateLoglineInput
+): Promise<AiGenerateLoglineOutput> {
+  return aiGenerateLoglineFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'aiGenerateLoglinePrompt',
+  input: { schema: AiGenerateLoglineInputSchema },
+  output: { schema: AiGenerateLoglineOutputSchema },
+  prompt: `You are an expert Hollywood script reader.
+
+  Your task is to read the provided screenplay and write a powerful, industry-standard logline.
+
+  **Instructions:**
+  1.  Identify the protagonist.
+  2.  Determine their primary goal.
+  3.  Identify the main obstacle or antagonist.
+  4.  Combine these elements into a single, concise, and compelling sentence.
+
+  **Screenplay to Analyze:**
+  \`\`\`
+  {{{screenplay}}}
+  \`\`\`
+  `,
+});
+
+const aiGenerateLoglineFlow = ai.defineFlow(
+  {
+    name: 'aiGenerateLoglineFlow',
+    inputSchema: AiGenerateLoglineInputSchema,
+    outputSchema: AiGenerateLoglineOutputSchema,
+  },
+  async input => {
+    const { output } = await prompt(input);
+    return output!;
+  }
+);

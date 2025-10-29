@@ -10,6 +10,7 @@ interface Script {
     id: string;
     title: string;
     content: string; // The raw string content for Firestore
+    logline?: string;
     [key: string]: any; 
 }
 
@@ -24,6 +25,7 @@ interface ScriptContextType {
   lines: ScriptLine[];
   setLines: (linesOrContent: ScriptLine[] | string | ((prev: ScriptLine[]) => ScriptLine[])) => void;
   setScriptTitle: (title: string) => void;
+  setScriptLogline: (logline: string) => void;
   isScriptLoading: boolean;
 }
 
@@ -32,6 +34,7 @@ export const ScriptContext = createContext<ScriptContextType>({
   lines: [],
   setLines: () => {},
   setScriptTitle: () => {},
+  setScriptLogline: () => {},
   isScriptLoading: true,
 });
 
@@ -101,7 +104,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   }, [firestoreScript]);
 
 
-  const updateFirestore = useCallback((field: 'content' | 'title', value: string) => {
+  const updateFirestore = useCallback((field: 'content' | 'title' | 'logline', value: string) => {
     if (scriptDocRef) {
         setDoc(scriptDocRef, { 
             [field]: value,
@@ -134,11 +137,17 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     updateFirestore('title', title);
   };
   
+  const setScriptLogline = (logline: string) => {
+      setLocalScript(prev => prev ? { ...prev, logline } : null);
+      updateFirestore('logline', logline);
+  }
+  
   const value = { 
     script: localScript,
     lines,
     setLines,
     setScriptTitle,
+    setScriptLogline,
     isScriptLoading: isDocLoading || !localScript
   };
 
