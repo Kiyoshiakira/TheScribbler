@@ -8,36 +8,22 @@ interface EditorViewProps {
   isStandalone: boolean;
 }
 
-export default function EditorView(props: EditorViewProps) {
-  const { lines, setLines } = useScript();
-  const [wordCount, setWordCount] = useState(0);
-  const [estimatedMinutes, setEstimatedMinutes] = useState(0);
+// This component no longer needs to manage word count and time,
+// as that logic is now centralized in AppLayout.
+export default function EditorView({ isStandalone }: EditorViewProps) {
   const [activeScriptElement, setActiveScriptElement] = useState<ScriptElement | null>(null);
-
-  useEffect(() => {
-    if (lines.length === 0) return;
-    const newScriptContent = lines.map(line => line.text.replace(/<br>/g, '')).join('\n');
-
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = newScriptContent.replace(/<br>/g, '\n');
-    const textOnly = tempDiv.textContent || tempDiv.innerText || '';
-    const words = textOnly.trim().split(/\s+/).filter(Boolean);
-    const count = words.length;
-    setWordCount(count);
-    
-    const minutes = Math.round((count / 160) * 10) / 10;
-    setEstimatedMinutes(minutes);
-  }, [lines]);
 
   const editorProps = {
     onActiveLineTypeChange: setActiveScriptElement,
-    setWordCount: setWordCount,
-    setEstimatedMinutes: setEstimatedMinutes,
+    // The setWordCount and setEstimatedMinutes props are no longer needed here
+    // but the editor component itself might still expect them. We'll pass dummy functions.
+    setWordCount: () => {},
+    setEstimatedMinutes: () => {},
   }
 
   return (
     <div className="relative h-full">
-      <ScriptEditor {...editorProps} isStandalone={false} />
+      <ScriptEditor {...editorProps} isStandalone={isStandalone} />
       <AiFab />
     </div>
   );

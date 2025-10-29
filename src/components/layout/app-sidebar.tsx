@@ -5,7 +5,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarContent
+  SidebarContent,
+  SidebarFooter
 } from '@/components/ui/sidebar';
 import {
   BookText,
@@ -14,7 +15,9 @@ import {
   Users,
   NotebookPen,
   LayoutDashboard,
-  User as UserIcon
+  User as UserIcon,
+  FileText,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
@@ -41,13 +44,43 @@ export const Logo = () => (
   </svg>
 );
 
+interface ScriptStats {
+  pageCount: number;
+  characterCount: number;
+  estimatedMinutes: number;
+}
+
+const StatDisplay = ({ icon, value, label, isLoading }: { icon: React.ReactNode, value: string | number, label: string, isLoading: boolean }) => (
+    <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center gap-2 text-sidebar-foreground/80">
+        {icon}
+        <span>{label}</span>
+      </div>
+      {isLoading ? <Skeleton className="h-4 w-8" /> : <span className="font-semibold">{value}</span>}
+    </div>
+);
+
+
+const ScriptStatsPanel = ({ stats, isLoading }: { stats: ScriptStats, isLoading: boolean }) => {
+    return (
+        <div className="space-y-2 rounded-lg bg-sidebar-accent p-3">
+             <StatDisplay icon={<FileText />} label="Pages" value={stats.pageCount} isLoading={isLoading} />
+             <StatDisplay icon={<Users />} label="Characters" value={stats.characterCount} isLoading={isLoading} />
+             <StatDisplay icon={<Clock />} label="Time" value={`${stats.estimatedMinutes} min`} isLoading={isLoading} />
+        </div>
+    )
+}
 
 export default function AppSidebar({
   activeView,
-  setView
+  setView,
+  stats,
+  isLoadingStats
 }: {
   activeView: View;
   setView: (view: View) => void;
+  stats: ScriptStats;
+  isLoadingStats: boolean;
 }) {
   const { isScriptLoading } = useScript();
   const { currentScriptId } = useCurrentScript();
@@ -103,12 +136,10 @@ export default function AppSidebar({
                 </SidebarMenuItem>
             ))}
         </SidebarMenu>
-        {(isScriptLoading && !isProfileView) ? (
-          <div className='p-2 space-y-2'><Skeleton className='h-24 w-full' /></div>
-        ) : (
-          null
-        )}
       </SidebarContent>
+      <SidebarFooter className="p-2">
+          {!noScriptLoaded && <ScriptStatsPanel stats={stats} isLoading={isLoadingStats || isScriptLoading} />}
+      </SidebarFooter>
     </Sidebar>
   );
 }
