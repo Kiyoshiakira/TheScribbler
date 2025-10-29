@@ -222,12 +222,17 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
   const handleTypeChange = (id: string, type: ScriptElement) => {
     setLines(prevLines => prevLines.map(line => {
       if (line.id === id) {
-        let newText = line.text.replace(/<[^>]*>?/gm, '');
-        if (type === 'parenthetical' && !/^\(.*\)$/.test(newText)) {
+        let newText = line.text.replace(/<[^>]*>?/gm, ''); // Strip HTML tags
+        
+        // Changing TO parenthetical
+        if (type === 'parenthetical' && !/^\(.*\)$/.test(newText.trim())) {
           newText = `(${newText})`;
-        } else if (line.type === 'parenthetical' && type !== 'parenthetical' && /^\(.*\)$/.test(newText)) {
+        } 
+        // Changing FROM parenthetical
+        else if (line.type === 'parenthetical' && type !== 'parenthetical' && /^\(.*\)$/.test(newText.trim())) {
           newText = newText.substring(1, newText.length - 1);
         }
+        
         return { ...line, type, text: newText };
       }
       return line;
@@ -522,3 +527,5 @@ export default function ScriptEditor({ onActiveLineTypeChange, isStandalone = fa
     </Card>
   );
 }
+
+    
