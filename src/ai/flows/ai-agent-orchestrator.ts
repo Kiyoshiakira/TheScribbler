@@ -85,7 +85,7 @@ ${input.request}
 ${input.script}
 ---
 `,
-      model: 'googleai/gemini-1.5-flash-latest',
+      model: 'googleai/gemini-2.5-flash',
       tools: [
         ai.defineTool(
           {
