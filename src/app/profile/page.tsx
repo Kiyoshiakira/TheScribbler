@@ -87,7 +87,6 @@ export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
-  const { setCurrentScriptId } = useCurrentScript();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -95,11 +94,6 @@ export default function ProfilePage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
-
-  React.useEffect(() => {
-    // When visiting the profile page, ensure no script is active.
-    setCurrentScriptId(null);
-  }, [setCurrentScriptId]);
 
   const userDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
