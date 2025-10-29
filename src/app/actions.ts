@@ -157,8 +157,8 @@ export async function getAiProofreadSuggestions(input: AiProofreadScriptInput) {
 export async function saveCharacter(
   userId: string,
   scriptId: string,
+  characterId: string | undefined,
   characterData: {
-    id?: string;
     name: string;
     description: string;
     profile?: string;
@@ -177,8 +177,8 @@ export async function saveCharacter(
     const charactersCollectionRef = db.collection(`users/${userId}/scripts/${scriptId}/characters`);
     const serverTimestamp = FieldValue.serverTimestamp();
 
-    if (characterData.id) {
-      const charDocRef = charactersCollectionRef.doc(characterData.id);
+    if (characterId) {
+      const charDocRef = charactersCollectionRef.doc(characterId);
       await charDocRef.set(
         {
           ...characterData,
@@ -186,7 +186,7 @@ export async function saveCharacter(
         },
         { merge: true }
       );
-      return { success: true, id: characterData.id };
+      return { success: true, id: characterId };
     } else {
       const newCharDocRef = await charactersCollectionRef.add({
         ...characterData,

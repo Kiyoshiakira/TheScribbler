@@ -90,6 +90,7 @@ function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, is
     setIsSaving(true);
     await onSave({
       ...(character || {}),
+      id: character?.id,
       name,
       description,
       profile,
@@ -229,7 +230,15 @@ export default function CharactersView() {
     }
 
     const isNew = !charToSave.id;
-    const result = await saveCharacter(user.uid, currentScriptId, charToSave);
+    const plainCharData = {
+      name: charToSave.name,
+      description: charToSave.description,
+      profile: charToSave.profile,
+      imageUrl: charToSave.imageUrl,
+      scenes: charToSave.scenes,
+    };
+    
+    const result = await saveCharacter(user.uid, currentScriptId, charToSave.id, plainCharData);
 
     if (result.success) {
       toast({
