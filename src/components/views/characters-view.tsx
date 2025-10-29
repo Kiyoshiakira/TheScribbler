@@ -24,7 +24,7 @@ import { collection, doc, addDoc, setDoc, serverTimestamp } from 'firebase/fires
 import { useCurrentScript } from '@/context/current-script-context';
 import AiFab from '../ai-fab';
 
-interface Character {
+export interface Character {
   id?: string;
   name: string;
   description: string;
@@ -219,7 +219,13 @@ export default function CharactersView() {
   const { data: characters, isLoading: areCharactersLoading } = useCollection<Character>(charactersCollection);
 
   const handleOpenDialog = (character: Character | null) => {
-    setEditingCharacter(character);
+    // Remove timestamp properties before passing to the dialog
+    if (character) {
+      const { createdAt, updatedAt, ...rest } = character;
+      setEditingCharacter(rest);
+    } else {
+      setEditingCharacter(null);
+    }
     setDialogOpen(true);
   };
 
@@ -236,11 +242,10 @@ export default function CharactersView() {
       profile: charToSave.profile,
       imageUrl: charToSave.imageUrl,
       scenes: charToSave.scenes,
-      updatedAt: serverTimestamp(),
     };
   
     if (isNew) {
-      const docData = { ...plainCharData, createdAt: serverTimestamp() };
+      const docData = { ...plainCharData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
       addDoc(charactersCollection, docData).catch(serverError => {
         const permissionError = new FirestorePermissionError({
           path: charactersCollection.path,
@@ -251,11 +256,12 @@ export default function CharactersView() {
       });
     } else {
       const charDocRef = doc(charactersCollection, charToSave.id);
-      setDoc(charDocRef, plainCharData, { merge: true }).catch(serverError => {
+      const updateData = { ...plainCharData, updatedAt: serverTimestamp() };
+      setDoc(charDocRef, updateData, { merge: true }).catch(serverError => {
         const permissionError = new FirestorePermissionError({
           path: charDocRef.path,
           operation: 'update',
-          requestResourceData: plainCharData,
+          requestResourceData: updateData,
         });
         errorEmitter.emit('permission-error', permissionError);
       });
@@ -422,3 +428,5 @@ export default function CharactersView() {
     </div>
   );
 }
+
+    
