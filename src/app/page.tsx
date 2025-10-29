@@ -15,12 +15,14 @@ import { useUser } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCurrentScript } from '@/context/current-script-context';
 import type { AiProofreadScriptOutput } from '@/ai/flows/ai-proofread-script';
+import { ScriptProvider } from '@/context/script-context';
 
 export type View = 'editor' | 'scenes' | 'characters' | 'notes' | 'my-scripts';
 
 export type ProofreadSuggestion = AiProofreadScriptOutput['suggestions'][0];
 
 function AppLayout({ setView, view }: { setView: (view: View) => void, view: View}) {
+  const { currentScriptId } = useCurrentScript();
   const [activeScriptElement, setActiveScriptElement] =
     React.useState<ScriptElement | null>(null);
 
@@ -55,25 +57,51 @@ function AppLayout({ setView, view }: { setView: (view: View) => void, view: Vie
         />;
     }
   };
+  
+  if (!currentScriptId) {
+    // This can happen briefly during loading, or if no scripts exist.
+    // MyScriptsView will handle the "no scripts" case.
+    return (
+       <SidebarProvider>
+            <div className="flex h-screen bg-background">
+                <AppSidebar
+                    activeView={view}
+                    setActiveView={setView}
+                    activeScriptElement={null}
+                    wordCount={0}
+                    estimatedMinutes={0}
+                />
+                <div className="flex flex-1 flex-col overflow-hidden">
+                    <AppHeader setView={setView} />
+                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+                         <MyScriptsView setView={setView} />
+                    </main>
+                </div>
+            </div>
+        </SidebarProvider>
+    );
+  }
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen bg-background">
-        <AppSidebar
-          activeView={view}
-          setActiveView={setView}
-          activeScriptElement={view === 'editor' ? activeScriptElement : null}
-          wordCount={wordCount}
-          estimatedMinutes={estimatedMinutes}
-        />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <AppHeader setView={setView} />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            {renderView()}
-          </main>
+    <ScriptProvider scriptId={currentScriptId}>
+      <SidebarProvider>
+        <div className="flex h-screen bg-background">
+          <AppSidebar
+            activeView={view}
+            setActiveView={setView}
+            activeScriptElement={view === 'editor' ? activeScriptElement : null}
+            wordCount={wordCount}
+            estimatedMinutes={estimatedMinutes}
+          />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <AppHeader setView={setView} />
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+              {renderView()}
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </ScriptProvider>
   );
 }
 
