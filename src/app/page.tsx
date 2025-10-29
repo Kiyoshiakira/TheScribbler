@@ -95,12 +95,16 @@ function MainApp() {
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
       if (currentScriptId) {
-        setView('editor');
+        // Only default to editor if the view hasn't been changed by the user.
+        // This prevents overriding navigation clicks during initial load.
+        if (view === 'profile') { // A common default before script is loaded
+          setView('editor');
+        }
       } else {
         router.push('/profile');
       }
     }
-  }, [currentScriptId, isCurrentScriptLoading, router]);
+  }, [currentScriptId, isCurrentScriptLoading, router, view]);
 
 
   if (isCurrentScriptLoading) {
