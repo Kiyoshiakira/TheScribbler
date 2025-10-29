@@ -96,7 +96,7 @@ function LoginCard() {
       <CardHeader className="text-center">
         <div className="mx-auto mb-4 flex items-center gap-2">
           <Logo />
-          <h1 className="text-2xl font-bold font-headline">ScriptSync</h1>
+          <h1 className="text-2xl font-bold font-headline">ScriptScribbler</h1>
         </div>
         <CardTitle className="font-headline text-2xl">Welcome</CardTitle>
         <CardDescription>

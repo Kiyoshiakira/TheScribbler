@@ -33,7 +33,7 @@ interface Character {
   imageUrl?: string;
 }
 
-const CHARACTERS_STORAGE_KEY = 'scriptsync-characters';
+const CHARACTERS_STORAGE_KEY = 'scriptscribbler-characters';
 
 const initialCharacters: Character[] = [
   {

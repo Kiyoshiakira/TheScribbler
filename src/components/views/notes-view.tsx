@@ -49,7 +49,7 @@ interface Note {
   imageUrl?: string;
 }
 
-const NOTES_STORAGE_KEY = 'scriptsync-notes';
+const NOTES_STORAGE_KEY = 'scriptscribbler-notes';
 
 const initialNotes: Note[] = [
   {

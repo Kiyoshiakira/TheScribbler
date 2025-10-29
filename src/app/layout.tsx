@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'ScriptSync',
+  title: 'ScriptScribbler',
   description: 'Collaborative screenwriting with AI-powered tools.',
 };
 

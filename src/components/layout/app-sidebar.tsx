@@ -68,7 +68,7 @@ export default function AppSidebar({ activeView, setActiveView, activeScriptElem
       <SidebarHeader>
         <div className="flex items-center gap-2 p-2">
             <Logo />
-            <h1 className="text-xl font-bold font-headline">ScriptSync</h1>
+            <h1 className="text-xl font-bold font-headline">ScriptScribbler</h1>
         </div>
       </SidebarHeader>
       <SidebarMenu className="flex-1 overflow-y-auto p-2">

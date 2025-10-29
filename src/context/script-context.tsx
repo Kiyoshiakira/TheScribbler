@@ -25,7 +25,7 @@ The moment is broken. Jane returns to her screen, a faint smile on her lips. Leo
 FADE OUT.
 `;
 
-const SCRIPT_STORAGE_KEY = 'scriptsync-content';
+const SCRIPT_STORAGE_KEY = 'scriptscribbler-content';
 
 interface ScriptContextType {
   scriptContent: string;
