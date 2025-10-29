@@ -119,6 +119,12 @@ export default function AiFab() {
     }
   };
 
+  const openProofreadDialogWithSuggestions = (suggestions: ProofreadSuggestion[]) => {
+      setProofreadSuggestions(suggestions);
+      setProofreadDialogOpen(true);
+      setChatDialogOpen(false); // Close chat dialog if it's open
+  }
+
   const handleGetProofread = async () => {
     setIsProofreading(true);
     setProofreadSuggestions([]);
@@ -358,7 +364,7 @@ export default function AiFab() {
             </DialogDescription>
           </DialogHeader>
           <div className='flex-1 min-h-0'>
-            <AiAssistant />
+            <AiAssistant openProofreadDialog={openProofreadDialogWithSuggestions} />
           </div>
         </DialogContent>
       </Dialog>

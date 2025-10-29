@@ -14,6 +14,11 @@ import {
   aiGenerateCharacterProfile,
   type AiGenerateCharacterProfileOutput,
 } from './ai-generate-character-profile';
+import {
+  aiProofreadScript,
+  type AiProofreadScriptOutput,
+} from './ai-proofread-script';
+
 
 const AiGenerateCharacterProfileOutputSchema = z.object({
   name: z.string().describe("The character's full name."),
@@ -23,6 +28,16 @@ const AiGenerateCharacterProfileOutputSchema = z.object({
       'A detailed character profile that includes backstory, personality, motivations, and quirks.'
     ),
 });
+
+
+const AiProofreadScriptOutputSchema = z.object({
+  suggestions: z.array(z.object({
+    originalText: z.string(),
+    correctedText: z.string(),
+    explanation: z.string(),
+  })),
+});
+
 
 const AiAgentOrchestratorInputSchema = z.object({
   request: z.string().describe("The user's natural language request."),
@@ -83,8 +98,9 @@ Your goal is to help the user modify their script and other project elements.
 Analyze the user's request and the current script content.
 
 - If the user is asking to create a character, use the generateCharacter tool.
-- If the user is asking for a change to the script, rewrite the script content and provide a response explaining what you did.
-- If the user is asking a question or for analysis, respond directly with text.
+- If the user is asking to proofread, check formatting, or find errors, use the proofreadScript tool.
+- If the user is asking for a direct change to the script content (and not just proofreading), rewrite the script and provide a response explaining what you did.
+- If the user is asking a general question or for analysis, respond directly with text.
 
 **User Request:**
 ${'{{{request}}}'}
@@ -114,12 +130,23 @@ ${'{{{script}}}'}
             }),
             outputSchema: AiGenerateCharacterProfileOutputSchema,
           },
-          async (input): Promise<AiGenerateCharacterProfileOutput> => {
+          async (toolInput): Promise<AiGenerateCharacterProfileOutput> => {
             return await aiGenerateCharacterProfile({
-              characterDescription: input.description,
+              characterDescription: toolInput.description,
             });
           }
         ),
+        ai.defineTool(
+          {
+            name: 'proofreadScript',
+            description: 'Proofreads the script for formatting, spelling, and grammatical errors.',
+            inputSchema: z.object({}), // No input needed from the LLM, we have the script already
+            outputSchema: AiProofreadScriptOutputSchema,
+          },
+          async (): Promise<AiProofreadScriptOutput> => {
+            return await aiProofreadScript({ script: input.script });
+          }
+        )
       ],
     });
     return llmResponse.output();
@@ -150,13 +177,23 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     const toolCalls = structuredOutput.toolCalls();
 
     if (toolCalls.length > 0) {
-      const toolCall = toolCalls[0];
-      if (toolCall.name === 'generateCharacter') {
-        const characterData = await toolCall.run();
-        toolResult = {
-          type: 'character',
-          data: characterData,
-        };
+      for (const toolCall of toolCalls) {
+        if (toolCall.name === 'generateCharacter') {
+          const characterData = await toolCall.run();
+          toolResult = {
+            type: 'character',
+            data: characterData,
+          };
+          break; 
+        }
+        if (toolCall.name === 'proofreadScript') {
+          const proofreadData = await toolCall.run();
+          toolResult = {
+            type: 'proofread',
+            data: proofreadData,
+          };
+          break;
+        }
       }
     }
 

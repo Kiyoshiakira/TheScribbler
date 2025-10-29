@@ -22,7 +22,20 @@ interface ChatMessage {
   text: string;
 }
 
-export default function AiAssistant() {
+// This type is defined in ai-fab but we need it here as well.
+// In a larger app, this would be in a shared types file.
+interface ProofreadSuggestion {
+    originalText: string;
+    correctedText: string;
+    explanation: string;
+}
+
+interface AiAssistantProps {
+    openProofreadDialog: (suggestions: ProofreadSuggestion[]) => void;
+}
+
+
+export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
   const { lines, setLines } = useContext(ScriptContext);
   const scriptContent = lines.map(l => l.text).join('\n');
   const { toast } = useToast();
@@ -116,6 +129,13 @@ export default function AiAssistant() {
             description: saveResult.error,
           });
         }
+      }
+      
+      if (result.data.toolResult?.type === 'proofread') {
+          const suggestions = result.data.toolResult.data.suggestions;
+          if (suggestions && suggestions.length > 0) {
+            openProofreadDialog(suggestions);
+          }
       }
     }
   };
