@@ -4,23 +4,17 @@ import { useScript } from "@/context/script-context";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useCurrentScript } from "@/context/current-script-context";
 import { collection, query, orderBy } from "firebase/firestore";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Users, StickyNote, Clapperboard, Edit, NotebookPen, BookOpen } from 'lucide-react';
-import Image from "next/image";
-import type { View } from "@/app/page";
 import type { Character } from "./characters-view";
 import type { Note } from "./notes-view";
 import type { Scene } from "./scenes-view";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import AppHeader from "../layout/app-header";
-
-interface DashboardViewProps {
-    setView: (view: View) => void;
-}
+import Link from "next/link";
 
 
 function StatCard({ title, value, icon, isLoading }: { title: string, value: number, icon: React.ReactNode, isLoading: boolean }) {
@@ -37,7 +31,7 @@ function StatCard({ title, value, icon, isLoading }: { title: string, value: num
     )
 }
 
-export default function DashboardView({ setView }: DashboardViewProps) {
+export default function DashboardView() {
     const { script, isScriptLoading } = useScript();
     const { user } = useUser();
     const firestore = useFirestore();
@@ -79,9 +73,11 @@ export default function DashboardView({ setView }: DashboardViewProps) {
                             <p className="text-lg text-muted-foreground italic">
                                 {script?.logline || "No logline has been set for this script yet."}
                             </p>
-                            <Button variant="outline" size="sm" onClick={() => setView('logline')}>
-                                <Edit className="mr-2 h-4 w-4" /> Edit
-                            </Button>
+                            <Link href="/logline" passHref>
+                                <Button variant="outline" size="sm">
+                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                </Button>
+                            </Link>
                         </div>
                     </>
                 )}
@@ -96,12 +92,16 @@ export default function DashboardView({ setView }: DashboardViewProps) {
             
             {/* Action Buttons */}
             <div className="flex items-center gap-4">
-                <Button size="lg" onClick={() => setView('editor')}>
-                    <BookOpen className="mr-2" /> Open Editor
-                </Button>
-                 <Button size="lg" variant="secondary" onClick={() => setView('logline')}>
-                    <NotebookPen className="mr-2" /> Edit Logline
-                </Button>
+                <Link href="/editor" passHref>
+                  <Button size="lg">
+                      <BookOpen className="mr-2" /> Open Editor
+                  </Button>
+                </Link>
+                 <Link href="/logline" passHref>
+                    <Button size="lg" variant="secondary">
+                        <NotebookPen className="mr-2" /> Edit Logline
+                    </Button>
+                 </Link>
             </div>
 
             {/* Collapsible Lists */}

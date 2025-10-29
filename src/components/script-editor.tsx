@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Film, ExternalLink, SearchCheck, Clock } from 'lucide-react';
+import { Film, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useScript } from '@/context/script-context';
 import { Skeleton } from './ui/skeleton';
-import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import type { ProofreadSuggestion } from '@/app/page';
 
 export type ScriptElement = 'scene-heading' | 'action' | 'character' | 'parenthetical' | 'dialogue' | 'transition';
 
@@ -127,19 +125,6 @@ const ScriptLineComponent = ({
 };
 
 ScriptLineComponent.displayName = 'ScriptLineComponent';
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
 
 export default function ScriptEditor({ 
   onActiveLineTypeChange, 
@@ -298,7 +283,7 @@ export default function ScriptEditor({
   }
   
   const handlePopOut = () => {
-    window.open('/editor', '_blank', 'width=800,height=600');
+    window.open('/editor-standalone', '_blank', 'width=800,height=600');
     setContextMenu(null);
   };
 

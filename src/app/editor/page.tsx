@@ -1,15 +1,11 @@
 'use client';
-import ScriptEditor from '@/components/script-editor';
-import { ScriptProvider } from '@/context/script-context';
-import { Toaster } from '@/components/ui/toaster';
+import AppLayout from "@/components/layout/AppLayout";
+import EditorView from "@/components/views/editor-view";
 
 export default function EditorPage() {
-  return (
-    <ScriptProvider>
-      <main className="h-screen w-screen bg-background">
-        <ScriptEditor isStandalone={true} />
-        <Toaster />
-      </main>
-    </ScriptProvider>
-  );
+    return (
+        <AppLayout activeView="editor">
+            <EditorView isStandalone={false} />
+        </AppLayout>
+    )
 }

@@ -20,7 +20,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { type View } from '@/app/page';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
@@ -51,11 +50,8 @@ interface Script {
     } | null;
 }
 
-interface MyScriptsViewProps {
-    setView: (view: any) => void;
-}
 
-export default function MyScriptsView({ setView }: MyScriptsViewProps) {
+export default function MyScriptsView() {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -91,7 +87,7 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
                 description: 'A new untitled script has been added to your collection.',
             });
             setCurrentScriptId(newScriptRef.id);
-            router.push('/');
+            router.push('/dashboard');
         } catch (error: any) {
             console.error("Error creating script: ", error);
             toast({
@@ -104,7 +100,7 @@ export default function MyScriptsView({ setView }: MyScriptsViewProps) {
 
     const handleOpenScript = (scriptId: string) => {
         setCurrentScriptId(scriptId);
-        router.push('/');
+        router.push('/dashboard');
     };
     
     const handleSelectiveDelete = async (scriptId: string) => {

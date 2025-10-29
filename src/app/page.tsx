@@ -2,184 +2,36 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/layout/app-sidebar';
-import AppHeader from '@/components/layout/app-header';
-import EditorView from '@/components/views/editor-view';
-import ScenesView from '@/components/views/scenes-view';
-import CharactersView from '@/components/views/characters-view';
-import NotesView from '@/components/views/notes-view';
-import LoglineView from '@/components/views/logline-view';
-import DashboardView from '@/components/views/dashboard-view';
-import type { ScriptElement } from '@/components/script-editor';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
-import type { AiProofreadScriptOutput } from '@/ai/flows/ai-proofread-script';
-import { ScriptProvider } from '@/context/script-context';
-import type { Character } from '@/components/views/characters-view';
-import type { Scene } from '@/components/views/scenes-view';
-import type { Note } from '@/components/views/notes-view';
-import MyScriptsView from '@/components/views/my-scripts-view';
-
-export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline';
-
-export type ProofreadSuggestion = AiProofreadScriptOutput['suggestions'][0];
-
-function AppLayout({ setView, view }: { setView: (view: View) => void, view: View}) {
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const { currentScriptId } = useCurrentScript();
-  const [activeScriptElement, setActiveScriptElement] =
-    React.useState<ScriptElement | null>(null);
-
-  // State lifted from ScriptEditor
-  const [wordCount, setWordCount] = React.useState(0);
-  const [estimatedMinutes, setEstimatedMinutes] = React.useState(0);
-  
-  // Data fetching for export
-    const charactersCollection = useMemoFirebase(
-        () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'characters') : null),
-        [firestore, user, currentScriptId]
-    );
-    const { data: characters } = useCollection<Character>(charactersCollection);
-
-    const notesCollection = useMemoFirebase(
-        () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'notes') : null),
-        [firestore, user, currentScriptId]
-    );
-    const { data: notes } = useCollection<Note>(notesCollection);
-
-    const scenesCollection = useMemoFirebase(
-        () => (user && firestore && currentScriptId ? query(collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'scenes'), orderBy('sceneNumber')) : null),
-        [firestore, user, currentScriptId]
-    );
-    const { data: scenes } = useCollection<Scene>(scenesCollection);
-    
-  const renderView = () => {
-    if (!currentScriptId) {
-        return <MyScriptsView setView={setView} />;
-    }
-    
-    return (
-       <ScriptProvider scriptId={currentScriptId!}>
-          {
-            {
-              'dashboard': <DashboardView setView={setView} />,
-              'editor': <EditorView 
-                  onActiveLineTypeChange={setActiveScriptElement}
-                  setWordCount={setWordCount}
-                  setEstimatedMinutes={setEstimatedMinutes}
-                  isStandalone={false}
-              />,
-              'scenes': <ScenesView />,
-              'characters': <CharactersView />,
-              'notes': <NotesView />,
-              'logline': <LoglineView />,
-            }[view]
-          }
-       </ScriptProvider>
-    )
-  };
-  
-  const MainContent = () => (
-    <SidebarProvider>
-      <div className="flex h-screen bg-background">
-        <AppSidebar
-          activeView={view}
-          setActiveView={setView}
-          activeScriptElement={view === 'editor' ? activeScriptElement : null}
-          wordCount={wordCount}
-          estimatedMinutes={estimatedMinutes}
-        />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <AppHeader 
-            setView={setView} 
-            characters={characters}
-            scenes={scenes}
-            notes={notes}
-          />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            {renderView()}
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-
-   return <MainContent />;
-}
-
-function MainApp() {
-  const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
-  const [view, setView] = React.useState<View>('dashboard');
-  const router = useRouter();
-
-  React.useEffect(() => {
-    // This effect runs when script context changes.
-    // If loading completes and there's no script, navigate to profile.
-    if (!isCurrentScriptLoading && !currentScriptId) {
-      router.push('/profile');
-    }
-  }, [isCurrentScriptLoading, currentScriptId, router]);
-
-
-  // While waiting for user/script context, show a full-page loader.
-  if (isCurrentScriptLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // If loading is done but we still have no script ID, we're about to redirect.
-  // Showing the loader prevents a flash of an invalid state.
-  if (!currentScriptId) {
-     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <p className="text-muted-foreground">Redirecting to your scripts...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  return <AppLayout view={view} setView={setView} />;
-}
-
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
   const { user, isUserLoading } = useUser();
+  const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
+    if (isUserLoading || isCurrentScriptLoading) {
+      return; // Wait until all loading is complete
     }
-  }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-        </div>
+    if (!user) {
+      router.push('/login');
+    } else if (currentScriptId) {
+      router.push('/dashboard');
+    } else {
+      router.push('/profile');
+    }
+  }, [user, isUserLoading, currentScriptId, isCurrentScriptLoading, router]);
+
+  // Show a full-page loader while determining where to redirect.
+  return (
+    <div className="flex h-screen w-screen items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <p className="text-muted-foreground">Loading your workspace...</p>
       </div>
-    );
-  }
-
-  return <MainApp />;
+    </div>
+  );
 }

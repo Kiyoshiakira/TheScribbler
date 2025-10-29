@@ -5,12 +5,10 @@ import {
   ChevronDown,
   Download,
   FileJson,
-  Link as LinkIcon,
   LogOut,
-  Share2,
+  Settings,
   Upload,
   User as UserIcon,
-  Settings
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -32,8 +30,7 @@ import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
 import { parseScriteFile } from '@/lib/scrite-parser';
-import { collection, writeBatch, doc, serverTimestamp, getDocs } from 'firebase/firestore';
-import type { View } from '@/app/page';
+import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import Link from 'next/link';
 import { SettingsDialog } from '../settings-dialog';
 import JSZip from 'jszip';
@@ -41,16 +38,10 @@ import type { Character } from '../views/characters-view';
 import type { Scene } from '../views/scenes-view';
 import type { Note } from '../views/notes-view';
 import { useRouter } from 'next/navigation';
+import { useCurrentScript } from '@/context/current-script-context';
 
 
-interface AppHeaderProps {
-  setView: (view: any) => void;
-  characters?: Character[] | null;
-  scenes?: Scene[] | null;
-  notes?: Note[] | null;
-}
-
-export default function AppHeader({ setView, characters, scenes, notes }: AppHeaderProps) {
+export default function AppHeader() {
   const auth = useAuth();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -59,6 +50,13 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const { currentScriptId } = useCurrentScript();
+
+  // Data fetching for export
+  // In a real app with better state management, this would come from a layout context
+  const [characters, setCharacters] = useState<Character[] | null>(null);
+  const [scenes, setScenes] = useState<Scene[] | null>(null);
+  const [notes, setNotes] = useState<Note[] | null>(null);
 
 
   const handleSignOut = async () => {
@@ -66,22 +64,6 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
         await signOut(auth);
         router.push('/login');
     }
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      toast({
-        title: "Link Copied",
-        description: "The link to your script has been copied to your clipboard.",
-      });
-    }).catch(err => {
-      console.error('Failed to copy link: ', err);
-      toast({
-        variant: 'destructive',
-        title: "Copy Failed",
-        description: "Could not copy the link to your clipboard.",
-      });
-    });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,7 +131,7 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
           title: 'Import Successful',
           description: `"${projectData.title}" has been added to My Scripts.`,
         });
-        setView('profile');
+        router.push('/profile');
 
     } catch (error) {
         console.error('Scribbler import failed:', error);
@@ -222,7 +204,7 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
           title: 'Import Successful',
           description: `"${scriptTitle}" has been added to My Scripts.`,
         });
-        setView('profile');
+        router.push('/profile');
 
       } catch (error) {
          console.error('--- DEBUG: Import Parsing Failed ---', error);
@@ -342,16 +324,22 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
       <SidebarTrigger className="flex md:hidden" />
       <div className="flex items-center gap-2">
-        <Book className="h-6 w-6 text-muted-foreground" />
-        {isScriptLoading || !script ? (
-            <Skeleton className="h-7 w-64" />
+        {currentScriptId ? (
+          <>
+            <Book className="h-6 w-6 text-muted-foreground" />
+            {isScriptLoading || !script ? (
+                <Skeleton className="h-7 w-64" />
+            ) : (
+                <Input
+                  key={script?.id}
+                  defaultValue={script?.title}
+                  onBlur={(e) => setScriptTitle(e.target.value)}
+                  className="text-lg md:text-xl font-semibold border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 font-headline"
+                />
+            )}
+          </>
         ) : (
-            <Input
-              key={script?.id}
-              defaultValue={script?.title}
-              onBlur={(e) => setScriptTitle(e.target.value)}
-              className="text-lg md:text-xl font-semibold border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 font-headline"
-            />
+            <h1 className="text-xl font-bold font-headline">My Scripts</h1>
         )}
       </div>
       <div className="ml-auto flex items-center gap-2 md:gap-4">
@@ -383,7 +371,7 @@ export default function AppHeader({ setView, characters, scenes, notes }: AppHea
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button>
+            <Button disabled={!currentScriptId}>
               <Download className="h-4 w-4 md:mr-2" />
               <span className='hidden md:inline'>Export</span>
               <ChevronDown className="h-4 w-4 ml-0 md:ml-2" />
