@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +20,7 @@ import { getAiCharacterProfile, saveCharacter } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
 import React from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { useCurrentScript } from '@/context/current-script-context';
 import AiFab from '../ai-fab';
 
@@ -36,15 +35,17 @@ interface Character {
   updatedAt?: any;
 }
 
-function CharacterDialog({ character, onSave, onGenerate, trigger, isGenerating }: { character?: Character | null, onSave: (char: Character, isNew: boolean) => void, onGenerate: (desc: string) => Promise<Character | null>, trigger: React.ReactNode, isGenerating?: boolean }) {
+function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, isGenerating }: { character: Character | null, onSave: (char: Character) => void, onGenerate: (desc: string) => Promise<Character | null>, open: boolean, onOpenChange: (open: boolean) => void, isGenerating: boolean }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [profile, setProfile] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [open, setOpen] = React.useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const { toast } = useToast();
+  
+  const isNewCharacter = !character?.id;
 
   useEffect(() => {
     if (open) {
@@ -54,18 +55,15 @@ function CharacterDialog({ character, onSave, onGenerate, trigger, isGenerating 
       setImageUrl(character?.imageUrl || '');
     }
   }, [open, character]);
-  
-  useEffect(() => {
-      if (isGenerating !== undefined) {
-          setOpen(isGenerating);
-      }
-  }, [isGenerating]);
 
   const handleGenerate = async () => {
     if (!description) {
-        // toast is handled by parent
-        onGenerate('');
-        return;
+      toast({
+          variant: 'destructive',
+          title: 'Description needed',
+          description: 'Please enter a brief character description to generate a profile.',
+      });
+      return;
     }
     setIsAiGenerating(true);
     setProfile('');
@@ -90,17 +88,16 @@ function CharacterDialog({ character, onSave, onGenerate, trigger, isGenerating 
       return;
     }
     setIsSaving(true);
-    const isNew = !character?.id;
     await onSave({
-      ...character,
+      ...(character || {}),
       name,
       description,
       profile,
       imageUrl,
       scenes: character?.scenes || 0,
-    }, isNew);
+    });
     setIsSaving(false);
-    setOpen(false);
+    onOpenChange(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,15 +112,12 @@ function CharacterDialog({ character, onSave, onGenerate, trigger, isGenerating 
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">{character ? 'Edit Character' : 'Add New Character'}</DialogTitle>
+          <DialogTitle className="font-headline">{isNewCharacter ? 'Add New Character' : 'Edit Character'}</DialogTitle>
           <DialogDescription>
-            {character ? 'Edit the details for this character.' : 'Create a new character profile. Use the AI generator for a detailed starting point.'}
+            {isNewCharacter ? 'Create a new character profile. Use the AI generator for a detailed starting point.' : 'Edit the details for this character.'}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-4 gap-4 py-4">
@@ -213,7 +207,8 @@ export default function CharactersView() {
   const { currentScriptId } = useCurrentScript();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
 
   const charactersCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'characters') : null),
@@ -222,12 +217,18 @@ export default function CharactersView() {
 
   const { data: characters, isLoading: areCharactersLoading } = useCollection<Character>(charactersCollection);
 
-  const handleSaveCharacter = async (charToSave: Character, isNew: boolean) => {
+  const handleOpenDialog = (character: Character | null) => {
+    setEditingCharacter(character);
+    setDialogOpen(true);
+  };
+
+  const handleSaveCharacter = async (charToSave: Character) => {
     if (!user || !currentScriptId) {
       toast({ variant: 'destructive', title: 'Error', description: 'Cannot save character: no active script.' });
       return;
     }
 
+    const isNew = !charToSave.id;
     const result = await saveCharacter(user.uid, currentScriptId, charToSave);
 
     if (result.success) {
@@ -244,47 +245,50 @@ export default function CharactersView() {
     }
   };
   
-    const handleGenerateCharacter = async (description: string): Promise<Character | null> => {
-        if (!description) {
-            toast({
-                variant: 'destructive',
-                title: 'Description needed',
-                description: 'Please enter a brief character description to generate a profile.',
-            });
-            return null;
-        }
-        setIsGenerating(true);
-        
-        const result = await getAiCharacterProfile({ characterDescription: description });
-        
-        setIsGenerating(false);
+  const handleGenerateCharacter = async (description: string): Promise<Character | null> => {
+      if (!description) {
+          toast({
+              variant: 'destructive',
+              title: 'Description needed',
+              description: 'Please enter a brief character description to generate a profile.',
+          });
+          return null;
+      }
+      setIsGenerating(true);
+      
+      const result = await getAiCharacterProfile({ characterDescription: description });
+      
+      setIsGenerating(false);
 
-        if (result.error || !result.data) {
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: result.error || 'Could not generate a structured character profile.',
-            });
-            return null;
-        } else {
-            const profileData = result.data;
-            if (profileData.name && profileData.profile) {
-                return {
-                    name: profileData.name,
-                    profile: profileData.profile,
-                    description: profileData.profile.split('\n')[0],
-                    scenes: 0
-                }
-            } else {
-                toast({
-                    variant: 'destructive',
-                    title: 'AI Response Error',
-                    description: 'The AI did not return a valid name and profile. Please try again.',
-                });
-                return null;
-            }
-        }
-    };
+      if (result.error || !result.data) {
+          toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: result.error || 'Could not generate a structured character profile.',
+          });
+          return null;
+      } else {
+          const profileData = result.data;
+          if (profileData.name && profileData.profile) {
+              const generatedChar = {
+                  name: profileData.name,
+                  profile: profileData.profile,
+                  description: profileData.profile.split('\n')[0],
+                  scenes: 0
+              };
+              setEditingCharacter(generatedChar);
+              setDialogOpen(true);
+              return generatedChar;
+          } else {
+              toast({
+                  variant: 'destructive',
+                  title: 'AI Response Error',
+                  description: 'The AI did not return a valid name and profile. Please try again.',
+              });
+              return null;
+          }
+      }
+  };
 
 
   if (areCharactersLoading) {
@@ -318,62 +322,51 @@ export default function CharactersView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold font-headline">Characters</h1>
-        <CharacterDialog
-          onSave={handleSaveCharacter}
-          onGenerate={handleGenerateCharacter}
-          character={null}
-          trigger={
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Character
-            </Button>
-          }
-        />
+        <Button onClick={() => handleOpenDialog(null)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Character
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {characters && characters.map((character) => {
           return (
-            <CharacterDialog
+            <Card
               key={character.id}
-              character={character}
-              onSave={handleSaveCharacter}
-              onGenerate={handleGenerateCharacter}
-              trigger={
-                <Card className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader className="p-0">
-                    <div className="aspect-square w-full bg-muted overflow-hidden">
-                      {character.imageUrl ? (
-                        <Image
-                          src={character.imageUrl}
-                          alt={`Portrait of ${character.name}`}
-                          width={200}
-                          height={200}
-                          className="w-full h-full object-cover"
-                          data-ai-hint={'character portrait'}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-3">
-                    <CardTitle className="font-headline text-base truncate">{character.name}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1 truncate">{character.description}</p>
-                  </CardContent>
-                  <CardFooter className="p-3 bg-muted/50 flex justify-between text-xs">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <User className="h-3 w-3" />
-                      <span>Profile</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="h-3 w-3 text-primary" />
-                      <span className="font-medium">{character.scenes} Scenes</span>
-                    </div>
-                  </CardFooter>
-                </Card>
-              }
-            />
+              className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleOpenDialog(character)}
+            >
+              <CardHeader className="p-0">
+                <div className="aspect-square w-full bg-muted overflow-hidden">
+                  {character.imageUrl ? (
+                    <Image
+                      src={character.imageUrl}
+                      alt={`Portrait of ${character.name}`}
+                      width={200}
+                      height={200}
+                      className="w-full h-full object-cover"
+                      data-ai-hint={'character portrait'}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-3">
+                <CardTitle className="font-headline text-base truncate">{character.name}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1 truncate">{character.description}</p>
+              </CardContent>
+              <CardFooter className="p-3 bg-muted/50 flex justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  <span>Profile</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <FileText className="h-3 w-3 text-primary" />
+                  <span className="font-medium">{character.scenes} Scenes</span>
+                </div>
+              </CardFooter>
+            </Card>
           );
         })}
       </div>
@@ -384,22 +377,26 @@ export default function CharactersView() {
             <p className="mt-1 text-sm">Add a character to get started, or import a script.</p>
          </div>
       )}
-       <AiFab
+      <AiFab
         actions={[]}
         customActions={[{
             label: 'Generate New Character',
             icon: <Sparkles className="mr-2 h-4 w-4" />,
-            onClick: () => handleGenerateCharacter('A surprising and complex character'),
+            onClick: () => {
+              setEditingCharacter(null); // Ensure we're creating a new character
+              setDialogOpen(true);
+            },
             isLoading: isGenerating,
         }]}
-       />
-        <CharacterDialog
-          onSave={handleSaveCharacter}
-          onGenerate={handleGenerateCharacter}
-          character={null}
-          isGenerating={isGenerating}
-          trigger={<></>}
-        />
+      />
+      <CharacterDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        character={editingCharacter}
+        onSave={handleSaveCharacter}
+        onGenerate={handleGenerateCharacter}
+        isGenerating={isGenerating}
+      />
     </div>
   );
 }
