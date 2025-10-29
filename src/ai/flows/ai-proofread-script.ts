@@ -52,9 +52,9 @@ const prompt = ai.definePrompt({
 
   Your task is to analyze the provided screenplay and identify errors. You MUST NOT make creative changes to the story, characters, or dialogue. Your focus is exclusively on correctness.
 
-  Analyze the following categories:
-  1.  **Grammar and Spelling:** Find and correct typos and grammatical mistakes.
-  2.  **Formatting:** Ensure standard screenplay formatting is used (e.g., character names are capitalized, scene headings are correct).
+  Analyze the following categories in order:
+  1.  **Formatting:** Ensure standard screenplay formatting is used (e.g., character names are capitalized, scene headings are correct).
+  2.  **Grammar and Spelling:** Find and correct typos and grammatical mistakes.
   3.  **Continuity:** Look for logical inconsistencies. For example, a character's name changing, an object appearing or disappearing without reason, or referencing an event that hasn't happened.
 
   For each error you find, provide the original text, the corrected version, and a brief explanation.

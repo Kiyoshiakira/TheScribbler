@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext, ReactNode } from 'react';
+import { useState, useContext, ReactNode, useEffect } from 'react';
 import {
   Sparkles,
   Lightbulb,
@@ -79,6 +79,12 @@ const AnalysisSection = ({ title, items, icon }: { title: string, items: Analysi
     </AccordionItem>
 );
 
+const PROOFREAD_STATUS_MESSAGES = [
+    "Analyzing script for formatting...",
+    "Checking grammar and spelling...",
+    "Verifying continuity...",
+    "Finalizing suggestions...",
+];
 
 export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis', 'proofread', 'openChat'], customActions = [] }: AiFabProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -98,6 +104,21 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
   const { toast } = useToast();
   const { lines, setLines: setScriptLines } = useScript();
   const scriptContent = lines.map(l => l.text).join('\n');
+  
+  const [proofreadStatus, setProofreadStatus] = useState(PROOFREAD_STATUS_MESSAGES[0]);
+
+  useEffect(() => {
+    let statusInterval: NodeJS.Timeout;
+    if (isProofreading) {
+      let i = 0;
+      statusInterval = setInterval(() => {
+        i = (i + 1) % PROOFREAD_STATUS_MESSAGES.length;
+        setProofreadStatus(PROOFREAD_STATUS_MESSAGES[i]);
+      }, 2000);
+    }
+    return () => clearInterval(statusInterval);
+  }, [isProofreading]);
+
 
   const handleGetSuggestions = async () => {
     setIsSuggestionsLoading(true);
@@ -147,6 +168,7 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
 
   const handleGetProofread = async () => {
     setIsProofreading(true);
+    setProofreadStatus(PROOFREAD_STATUS_MESSAGES[0]);
     setProofreadSuggestions([]);
     setProofreadDialogOpen(true);
     setPopoverOpen(false);
@@ -159,7 +181,7 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
     } else if (result.data) {
         setProofreadSuggestions(result.data.suggestions);
          if (result.data.suggestions.length === 0) {
-            toast({ title: 'Proofreader', description: 'No suggestions found. Looks good!' });
+            // No need to toast here, the dialog will show the "no errors" message
         }
     }
   }
@@ -293,10 +315,8 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
              <div className="space-y-4 py-4">
                 {isSuggestionsLoading ? (
-                <div className="space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-4/5" />
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
                 ) : suggestions.length > 0 ? (
                 <ul className="space-y-3">
@@ -309,7 +329,7 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
                 </ul>
                 ) : (
                 <div className="text-center text-sm text-muted-foreground py-8">
-                    No suggestions available at the moment.
+                    The AI didn't have any suggestions at this time.
                 </div>
                 )}
             </div>
@@ -330,10 +350,8 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
           </DialogHeader>
            <ScrollArea className="max-h-[60vh] -mx-6 px-6">
                 {isAnalysisLoading ? (
-                    <div className="space-y-4 p-4">
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-4/5" />
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : analysis ? (
                     <Accordion type="multiple" defaultValue={['Plot', 'Characters', 'Dialogue']} className="w-full py-4">
@@ -349,7 +367,7 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
                     </Accordion>
                 ) : (
                     <div className="text-center text-sm text-muted-foreground py-8 px-4">
-                        Analysis results will appear here.
+                        The AI couldn't generate an analysis. Please try again.
                     </div>
                 )}
             </ScrollArea>
@@ -360,7 +378,7 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
       <Dialog open={proofreadDialogOpen} onOpenChange={setProofreadDialogOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-headline flex items-center gap-2"><Sparkles className='w-5 h-5 text-primary' /> AI Proofreader Suggestions</DialogTitle>
+            <DialogTitle className="font-headline flex items-center gap-2"><Sparkles className='w-5 h-5 text-primary' /> AI Proofreader</DialogTitle>
             <DialogDescription>
               Review the suggestions below. You can apply or dismiss each correction.
             </DialogDescription>
@@ -368,9 +386,10 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
           <ScrollArea className="max-h-[60vh] -mx-6 px-6">
             <div className="space-y-4 py-4">
                 {isProofreading ? (
-                    <div className="space-y-4 py-4">
-                        <Skeleton className="h-24 w-full" />
-                        <Skeleton className="h-24 w-full" />
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                        <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
+                        <h3 className="mt-4 text-lg font-medium">Proofreading...</h3>
+                        <p>{proofreadStatus}</p>
                     </div>
                 ) : proofreadSuggestions.length > 0 ? (
                     proofreadSuggestions.map((suggestion, index) => (
@@ -396,9 +415,9 @@ export default function AiFab({ actions = ['suggestImprovements', 'deepAnalysis'
                     ))
                 ) : (
                     <div className="text-center py-12 text-muted-foreground">
-                        <Check className="w-12 h-12 mx-auto" />
+                        <Check className="w-12 h-12 mx-auto text-green-500" />
                         <h3 className="mt-4 text-lg font-medium">No errors found!</h3>
-                        <p>The proofreader didn't find any suggestions.</p>
+                        <p>The proofreader didn't find any suggestions to make.</p>
                     </div>
                 )}
             </div>
