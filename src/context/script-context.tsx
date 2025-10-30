@@ -1,10 +1,13 @@
 'use client';
 
 import React, { createContext, useState, useEffect, ReactNode, useContext, useCallback } from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection, setDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import type { ScriptElement } from '@/components/script-editor';
+import type { Character } from '@/components/views/characters-view';
+import type { Scene } from '@/components/views/scenes-view';
+import type { Note } from '@/components/views/notes-view';
 
 interface Script {
     id: string;
@@ -23,6 +26,9 @@ export interface ScriptLine {
 interface ScriptContextType {
   script: Script | null;
   lines: ScriptLine[];
+  characters: Character[] | null;
+  scenes: Scene[] | null;
+  notes: Note[] | null;
   setLines: (linesOrContent: ScriptLine[] | string | ((prev: ScriptLine[]) => ScriptLine[])) => void;
   setScriptTitle: (title: string) => void;
   setScriptLogline: (logline: string) => void;
@@ -32,6 +38,9 @@ interface ScriptContextType {
 export const ScriptContext = createContext<ScriptContextType>({
   script: null,
   lines: [],
+  characters: null,
+  scenes: null,
+  notes: null,
   setLines: () => {},
   setScriptTitle: () => {},
   setScriptLogline: () => {},
@@ -50,24 +59,19 @@ const parseContentToLines = (content: string): ScriptLine[] => {
         const trimmedText = text.trim();
         let type: ScriptElement = 'action'; // Default to action
 
-        const isAllUpperCase = trimmedText === trimmedText.toUpperCase() && trimmedText !== '';
+        const isAllUpperCase = trimmedText === trimmedText.toUpperCase() && trimmedText !== '' && !/\d/.test(trimmedText);
         const prevLine = parsedLines[i - 1];
-        const prevLineIsEmpty = prevLine ? prevLine.text.trim() === '' : true;
-
-        if (trimmedText.startsWith('INT.') || trimmedText.startsWith('EXT.')) {
+        
+        if (trimmedText.startsWith('INT.') || trimmedText.startsWith('EXT.') || trimmedText.startsWith('EST.')) {
             type = 'scene-heading';
-        } else if (trimmedText.endsWith('TO:')) {
+        } else if (trimmedText.endsWith(' TO:')) {
             type = 'transition';
         } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
             type = 'parenthetical';
-        } else if (isAllUpperCase && (prevLineIsEmpty || prevLine?.type === 'action' || prevLine?.type === 'transition' || prevLine?.type === 'scene-heading')) {
-             // Heuristic: A line in all caps on its own is likely a character name.
-             // We check that it doesn't contain lowercase letters to be more certain.
-             if (!/[a-z]/.test(trimmedText)) {
-                type = 'character';
-             }
-        } else if (prevLine?.type === 'character' || prevLine?.type === 'parenthetical') {
+        } else if (prevLine && (prevLine.type === 'character' || prevLine.type === 'parenthetical')) {
             type = 'dialogue';
+        } else if (isAllUpperCase && text.length < 35) {
+             type = 'character';
         }
         
         parsedLines.push({
@@ -96,6 +100,28 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
   const [debouncedLines] = useDebounce(lines, 1000);
 
+  const charactersCollectionRef = useMemoFirebase(
+    () => (user && firestore && scriptId ? collection(firestore, 'users', user.uid, 'scripts', scriptId, 'characters') : null),
+    [firestore, user, scriptId]
+  );
+  const { data: characters, isLoading: areCharactersLoading } = useCollection<Character>(charactersCollectionRef);
+
+  const scenesCollection = useMemoFirebase(
+    () => (user && firestore && scriptId ? collection(firestore, 'users', user.uid, 'scripts', scriptId, 'scenes') : null),
+    [firestore, user, scriptId]
+  );
+  const scenesQuery = useMemoFirebase(
+    () => (scenesCollection ? query(scenesCollection, orderBy('sceneNumber', 'asc')) : null),
+    [scenesCollection]
+  );
+  const { data: scenes, isLoading: areScenesLoading } = useCollection<Scene>(scenesQuery);
+  
+  const notesCollection = useMemoFirebase(
+    () => (user && firestore && scriptId ? collection(firestore, 'users', user.uid, 'scripts', scriptId, 'notes') : null),
+    [firestore, user, scriptId]
+  );
+  const { data: notes, isLoading: areNotesLoading } = useCollection<Note>(notesCollection);
+
   const updateFirestore = useCallback((field: 'content' | 'title' | 'logline', value: string) => {
     if (scriptDocRef) {
         setDoc(scriptDocRef, { 
@@ -106,12 +132,8 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   }, [scriptDocRef]);
   
   useEffect(() => {
-    // Syncs firestore data to local state. This is the source of truth from the DB.
     if (firestoreScript) {
-        // Update local script if it's different
         setLocalScript(firestoreScript);
-
-        // Only update lines if the content is truly different to avoid re-parsing and losing cursor position.
         const currentContent = lines.map(line => line.text.replace(/<br>/g, '')).join('\n');
         if (firestoreScript.content !== currentContent) {
            const parsed = parseContentToLines(firestoreScript.content || '');
@@ -123,10 +145,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
 
   useEffect(() => {
-    // Saves user edits back to Firestore.
     const newContent = debouncedLines.map(line => line.text.replace(/<br>/g, '')).join('\n');
-    
-    // Only update if there's content to save and it's different from what's in our local truth (the script object).
     if (debouncedLines.length > 0 && localScript && newContent !== localScript.content) {
       updateFirestore('content', newContent);
     }
@@ -154,10 +173,13 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   const value = { 
     script: localScript,
     lines,
+    characters,
+    scenes,
+    notes,
     setLines,
     setScriptTitle,
     setScriptLogline,
-    isScriptLoading: isDocLoading || !localScript
+    isScriptLoading: isDocLoading || areCharactersLoading || areScenesLoading || areNotesLoading || !localScript
   };
 
   return (

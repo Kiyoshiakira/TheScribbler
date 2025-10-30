@@ -101,7 +101,8 @@ function AppLayoutContent() {
         setView('dashboard');
       }
     }
-  }, [isCurrentScriptLoading, currentScriptId]); // Removed `view` from dependencies to prevent unwanted loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCurrentScriptLoading, currentScriptId]); 
 
 
   const handleSetView = (newView: View | 'settings' | 'profile-edit') => {
@@ -143,9 +144,6 @@ function AppLayoutContent() {
                 <AppHeader 
                     activeView={view} 
                     setView={handleSetView}
-                    characters={characters || []}
-                    scenes={scenes || []}
-                    notes={notes || []}
                 />
                  <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     {renderView()}

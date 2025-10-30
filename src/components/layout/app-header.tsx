@@ -33,9 +33,6 @@ import { parseScriteFile } from '@/lib/scrite-parser';
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import JSZip from 'jszip';
-import type { Character } from '../views/characters-view';
-import type { Scene } from '../views/scenes-view';
-import type { Note } from '../views/notes-view';
 import { useCurrentScript } from '@/context/current-script-context';
 import type { View } from './AppLayout';
 
@@ -43,17 +40,14 @@ import type { View } from './AppLayout';
 interface AppHeaderProps {
   activeView: View;
   setView: (view: View | 'settings' | 'profile-edit') => void;
-  characters: Character[];
-  scenes: Scene[];
-  notes: Note[];
 }
 
-export default function AppHeader({ activeView, setView, characters, scenes, notes }: AppHeaderProps) {
+export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const auth = useAuth();
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  const { script, setScriptTitle, isScriptLoading } = useScript();
+  const { script, characters, scenes, notes, setScriptTitle, isScriptLoading } = useScript();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
@@ -397,5 +391,3 @@ export default function AppHeader({ activeView, setView, characters, scenes, not
     </>
   );
 }
-
-    
