@@ -148,7 +148,7 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
                                                 <p className="text-sm text-muted-foreground truncate">{char.description}</p>
                                             </div>
                                         </div>
-                                    )) : <p className="text-sm text-muted-foreground">No characters added yet.</p>}
+                                    )) : <div className="text-sm text-muted-foreground">No characters added yet.</div>}
                                      {characters && characters.length > 5 && (
                                         <Button variant="link" className="p-0 h-auto" onClick={() => setView('characters')}>View all {characters.length} characters...</Button>
                                     )}
@@ -175,10 +175,10 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
                                                     <div className="font-semibold">{note.title}</div>
                                                     <Badge variant="secondary">{note.category}</Badge>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{note.content}</p>
+                                                <div className="text-sm text-muted-foreground mt-1 line-clamp-2">{note.content}</div>
                                             </div>
                                         </div>
-                                    )) : <p className="text-sm text-muted-foreground">No notes added yet.</p>}
+                                    )) : <div className="text-sm text-muted-foreground">No notes added yet.</div>}
                                     {notes && notes.length > 3 && (
                                         <Button variant="link" className="p-0 h-auto" onClick={() => setView('notes')}>View all {notes.length} notes...</Button>
                                     )}

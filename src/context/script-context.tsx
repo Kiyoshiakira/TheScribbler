@@ -49,7 +49,7 @@ export const ScriptContext = createContext<ScriptContextType>({
 
 // A more robust function to parse the raw script content into lines
 const parseContentToLines = (content: string): ScriptLine[] => {
-    if (typeof content !== 'string') return [];
+    if (typeof content !== 'string' || !content) return [];
     
     const rawLines = content.split('\n');
     const parsedLines: ScriptLine[] = [];
@@ -67,13 +67,10 @@ const parseContentToLines = (content: string): ScriptLine[] => {
             type = 'transition';
         } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
             type = 'parenthetical';
-        } else if (isAllUpperCase && i > 0 && parsedLines[i - 1].type === 'action' && text.length < 35) {
+        } else if (isAllUpperCase && i > 0 && (parsedLines[i - 1]?.type === 'action' || parsedLines[i - 1]?.type === 'scene-heading' || parsedLines[i-1]?.type === 'transition') && text.length < 35) {
              type = 'character';
-        } else if (i > 0 && (parsedLines[i-1].type === 'character' || parsedLines[i-1].type === 'parenthetical')) {
+        } else if (i > 0 && (parsedLines[i-1]?.type === 'character' || parsedLines[i-1]?.type === 'parenthetical') && text !== '') {
             type = 'dialogue';
-        }
-        else {
-             type = 'action';
         }
         
         parsedLines.push({
@@ -145,14 +142,14 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     if (firestoreScript) {
         setLocalScript(firestoreScript);
         const currentContent = lines.map(line => line.text.replace(/<br>/g, '')).join('\n');
-        if (firestoreScript.content !== currentContent) {
+        if (isInitialLoad && firestoreScript.content !== currentContent) {
            const parsed = parseContentToLines(firestoreScript.content || '');
            setLocalLines(parsed);
+           setIsInitialLoad(false);
         }
-        if (isInitialLoad) setIsInitialLoad(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firestoreScript]);
+  }, [firestoreScript, isInitialLoad]);
 
 
   useEffect(() => {
@@ -197,7 +194,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     setLines,
     setScriptTitle,
     setScriptLogline,
-    isScriptLoading: isDocLoading || areCharactersLoading || areScenesLoading || areNotesLoading || !localScript
+    isScriptLoading: isInitialLoad || isDocLoading || areCharactersLoading || areScenesLoading || areNotesLoading
   };
 
   return (

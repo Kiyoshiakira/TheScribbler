@@ -17,12 +17,15 @@ import {
   LayoutDashboard,
   FileText,
   Clock,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
 import { Skeleton } from '../ui/skeleton';
 import type { View } from './AppLayout';
 import { useCurrentScript } from '@/context/current-script-context';
+import { useUser } from '@/firebase';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 export const Logo = () => (
   <svg
@@ -77,12 +80,13 @@ const ScriptStatsPanel = () => {
 
 interface AppSidebarProps {
   activeView: View;
-  setView: (view: View) => void;
+  setView: (view: View | 'profile-edit') => void;
 }
 
 export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
   const { currentScriptId } = useCurrentScript();
   const noScriptLoaded = !currentScriptId;
+  const { user, isUserLoading } = useUser();
 
   const scriptMenuItems = [
     { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -96,7 +100,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
   return (
     <Sidebar variant="sidebar" collapsible="icon" side="left">
       <SidebarHeader>
-        <button className="flex items-center gap-2 p-2" onClick={() => setView(noScriptLoaded ? 'profile' : 'dashboard')}>
+        <button className="flex items-center gap-2 p-2" onClick={() => setView('profile')}>
             <Logo />
             <h1 className="text-xl font-bold font-headline">ScriptScribbler</h1>
         </button>
@@ -121,7 +125,23 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">
-          {currentScriptId && <ScriptStatsPanel />}
+          {currentScriptId && !noScriptLoaded && <ScriptStatsPanel />}
+          <div className="flex items-center gap-2 p-2 mt-2 border-t border-sidebar-border cursor-pointer hover:bg-sidebar-accent rounded-md" onClick={() => setView('profile')}>
+            {isUserLoading ? (
+              <>
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <Skeleton className="h-5 w-24" />
+              </>
+            ) : user ? (
+              <>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.photoURL || undefined} />
+                  <AvatarFallback>{user.displayName?.charAt(0) || <User />}</AvatarFallback>
+                </Avatar>
+                <span className="font-semibold truncate">{user.displayName}</span>
+              </>
+            ) : null}
+          </div>
       </SidebarFooter>
     </Sidebar>
   );
