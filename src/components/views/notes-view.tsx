@@ -221,7 +221,7 @@ export default function NotesView() {
         toast({ variant: 'destructive', title: 'Error', description: result.error || 'Could not generate a note.' });
         setIsGenerating(false);
     } else {
-        setEditingNote(result.data);
+        setEditingNote(result.data as Note);
         setDialogOpen(true); // Open the dialog with the generated content
         setIsGenerating(false);
     }

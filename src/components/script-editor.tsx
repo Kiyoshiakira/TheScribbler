@@ -6,6 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 
+export type ScriptElement = 'scene-heading' | 'action' | 'character' | 'parenthetical' | 'dialogue' | 'transition';
+
+export interface ScriptLine {
+  id: string;
+  type: ScriptElement;
+  text: string;
+}
+
 interface ScriptEditorProps {
   isStandalone?: boolean;
 }

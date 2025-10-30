@@ -21,7 +21,7 @@ import { useScript } from '@/context/script-context';
 import { getAiSuggestions } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
-interface Scene {
+export interface Scene {
   id: string;
   sceneNumber: number;
   setting: string;
