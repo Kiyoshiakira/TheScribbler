@@ -549,7 +549,7 @@ export default function AiFab({
                 bubbleMode === 'ai' && activeView === 'menu' && "w-64",
                 bubbleMode === 'ai' && activeView === 'chat' && "w-[15rem] h-[18rem] flex flex-col",
                 bubbleMode === 'ai' && (activeView === 'suggestions' || activeView === 'analysis' || activeView === 'proofread') && "w-[28rem] h-auto max-h-[32rem] flex flex-col",
-                bubbleMode === 'collab' && "w-[28rem] h-[32rem] flex flex-col"
+                bubbleMode === 'collab' && "w-[15rem] h-[18rem] flex flex-col"
             )}
             side="top"
             align="end"
