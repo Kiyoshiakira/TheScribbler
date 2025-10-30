@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Film, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -25,10 +25,6 @@ const SCRIPT_ELEMENTS_CYCLE: ScriptElement[] = [
   'transition',
 ];
 
-interface ScriptEditorProps {
-  isStandalone: boolean;
-}
-
 interface ScriptLineComponentProps {
   line: ScriptLine;
   onTextChange: (id: string, text: string) => void;
@@ -37,77 +33,105 @@ interface ScriptLineComponentProps {
   isFocused: boolean;
 }
 
-const ScriptLineComponent = React.memo(({
-  line,
-  onTextChange,
-  onKeyDown,
-  isFocused,
-  onContextMenu,
-}: ScriptLineComponentProps) => {
-  const ref = React.useRef<HTMLDivElement>(null);
+const getElementStyling = (type: ScriptElement | undefined | null) => {
+    switch (type) {
+        case 'scene-heading':
+        return 'pl-6 font-bold uppercase';
+        case 'action':
+        return 'pl-6';
+        case 'character':
+        return 'pl-32 uppercase';
+        case 'parenthetical':
+        return 'pl-28';
+        case 'dialogue':
+        return 'pl-20';
+        case 'transition':
+        return 'text-right pr-6 uppercase';
+        default:
+        // Fallback to 'action' style for any unknown or undefined type
+        return 'pl-6';
+    }
+};
 
-  useEffect(() => {
-    if (isFocused && ref.current) {
-        ref.current.focus();
-        // Move cursor to the end of the line
+class ScriptLineComponent extends React.Component<ScriptLineComponentProps> {
+  private el = React.createRef<HTMLDivElement>();
+
+  shouldComponentUpdate(nextProps: ScriptLineComponentProps) {
+    // Only re-render if the line type changes, it gains/loses focus,
+    // or if the text is changed externally (not by the user typing in this component).
+    if (
+      nextProps.line.type !== this.props.line.type ||
+      nextProps.isFocused !== this.props.isFocused ||
+      this.el.current?.innerHTML !== nextProps.line.text
+    ) {
+      return true;
+    }
+    return false;
+  }
+  
+  componentDidMount() {
+      this.focusAndMoveCursorToEnd();
+  }
+
+  componentDidUpdate(prevProps: ScriptLineComponentProps) {
+    if (this.props.isFocused && !prevProps.isFocused) {
+       this.focusAndMoveCursorToEnd();
+    }
+  }
+  
+  focusAndMoveCursorToEnd = () => {
+    if (this.props.isFocused && this.el.current) {
+        this.el.current.focus();
         const range = document.createRange();
         const sel = window.getSelection();
         if (sel) {
-            range.selectNodeContents(ref.current);
+            range.selectNodeContents(this.el.current);
             range.collapse(false); // false for end, true for start
             sel.removeAllRanges();
             sel.addRange(range);
         }
     }
-  }, [isFocused]);
+  };
 
-  const getElementStyling = (type: ScriptElement | undefined | null) => {
-    switch (type) {
-      case 'scene-heading':
-        return 'pl-6 font-bold uppercase';
-      case 'action':
-        return 'pl-6';
-      case 'character':
-        return 'pl-32 uppercase';
-      case 'parenthetical':
-        return 'pl-28';
-      case 'dialogue':
-        return 'pl-20';
-      case 'transition':
-        return 'text-right pr-6 uppercase';
-      default:
-        // Fallback to 'action' style for any unknown or undefined type
-        return 'pl-6';
+  handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const newText = e.currentTarget.innerHTML;
+    // We update parent state on input, but don't trigger a re-render from here
+    // This allows typing to be smooth.
+    if (this.props.line.text !== newText) {
+        this.props.onTextChange(this.props.line.id, newText);
     }
   };
 
-  const handleBlur = (e: React.FormEvent<HTMLDivElement>) => {
+  handleBlur = (e: React.FormEvent<HTMLDivElement>) => {
     let newText = e.currentTarget.innerHTML;
     // Sanitize the text by removing trailing <br> and replacing &nbsp;
     newText = newText.replace(/<br\s*\/?>$/i, '').replace(/&nbsp;/g, ' ');
-    if (line.text !== newText) {
-      onTextChange(line.id, newText);
+    if (this.props.line.text !== newText) {
+      this.props.onTextChange(this.props.line.id, newText);
     }
   };
 
-  return (
-    <div
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      onKeyDown={(e) => onKeyDown(e, line.id)}
-      onBlur={handleBlur}
-      onContextMenu={(e) => onContextMenu(e, line.id)}
-      className={cn(
-        'outline-none rounded-sm py-0.5 min-h-[1.5em]',
-        getElementStyling(line.type)
-      )}
-      dangerouslySetInnerHTML={{ __html: line.text }}
-    ></div>
-  );
-});
+  render() {
+    const { line, onKeyDown, onContextMenu } = this.props;
 
-ScriptLineComponent.displayName = 'ScriptLineComponent';
+    return (
+      <div
+        ref={this.el}
+        contentEditable
+        suppressContentEditableWarning
+        onKeyDown={(e) => onKeyDown(e, line.id)}
+        onInput={this.handleInput}
+        onBlur={this.handleBlur}
+        onContextMenu={(e) => onContextMenu(e, line.id)}
+        className={cn(
+          'outline-none rounded-sm py-0.5 min-h-[1.5em]',
+          getElementStyling(line.type)
+        )}
+        dangerouslySetInnerHTML={{ __html: line.text }}
+      ></div>
+    );
+  }
+}
 
 export default function ScriptEditor({
   isStandalone = false
@@ -178,17 +202,14 @@ export default function ScriptEditor({
             const range = selection.getRangeAt(0);
             const lineElement = e.currentTarget;
 
-            // Create a temporary range to get content BEFORE the caret
             const preCaretRange = document.createRange();
             preCaretRange.selectNodeContents(lineElement);
             preCaretRange.setEnd(range.startContainer, range.startOffset);
             
-            // Create a temporary div to hold the HTML content
             const tempDiv = document.createElement('div');
             tempDiv.appendChild(preCaretRange.cloneContents());
             beforeEnter = tempDiv.innerHTML;
 
-            // Create a temporary range to get content AFTER the caret
             const postCaretRange = document.createRange();
             postCaretRange.selectNodeContents(lineElement);
             postCaretRange.setStart(range.endContainer, range.endOffset);
@@ -197,7 +218,6 @@ export default function ScriptEditor({
             tempDiv2.appendChild(postCaretRange.cloneContents());
             afterEnter = tempDiv2.innerHTML;
         } else {
-            // Fallback if no selection is found (e.g., just set everything to before)
             beforeEnter = currentLine.text;
         }
 
