@@ -547,7 +547,7 @@ export default function AiFab({
             className={cn(
                 "mb-2 p-0",
                 bubbleMode === 'ai' && activeView === 'menu' && "w-64",
-                bubbleMode === 'ai' && activeView === 'chat' && "w-[24rem] h-[28rem] flex flex-col",
+                bubbleMode === 'ai' && activeView === 'chat' && "w-[24rem] h-[28rem] sm:w-[20rem] sm:h-[24rem] flex flex-col",
                 bubbleMode === 'ai' && (activeView === 'suggestions' || activeView === 'analysis' || activeView === 'proofread') && "w-[28rem] h-auto max-h-[32rem] flex flex-col",
                 bubbleMode === 'collab' && "w-[28rem] h-[32rem] flex flex-col"
             )} 

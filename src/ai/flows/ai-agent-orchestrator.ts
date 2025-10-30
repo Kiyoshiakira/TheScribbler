@@ -129,16 +129,22 @@ const reformatScriptTool = ai.defineTool(
     }
 );
 
-const orchestratorPrompt = `You are an expert AI assistant for a screenwriting application.
-Your goal is to help the user modify their script and other project elements.
+const orchestratorPrompt = `You are an expert AI assistant for a screenwriting application. Your primary goal is to help the user modify their script and other project elements by correctly choosing an action.
 
-Analyze the user's request and the current script content to determine the user's intent.
+Analyze the user's request and the current script content to determine the correct action. You have two types of actions: direct script modification or calling a tool.
 
-- **IF the user asks for a direct change to the story or dialogue (e.g., "change the character's name", "make this scene more suspenseful", "add a line of dialogue")**, you MUST rewrite the script yourself. This is the highest priority. In this case, do not call a tool, and instead just provide the full new content in the 'modifiedScript' field of your response.
+**HIGHEST PRIORITY: DIRECT SCRIPT MODIFICATION**
+- **IF the user asks for a direct change to the story or dialogue (e.g., "change the character's name", "make this scene more suspenseful", "add a line of dialogue")**, you MUST rewrite the script yourself.
+- In this case, **DO NOT CALL A TOOL**. Your action is to provide the full new script content in the 'modifiedScript' field of your response.
+
+**SECOND PRIORITY: TOOL CALLING**
+If the request is not a direct story change, you MUST select one of the following tools:
 - **IF the user asks to create a character**, use the \`generateCharacter\` tool.
 - **IF the user asks to proofread, check for errors, or find mistakes**, use the \`proofreadScript\` tool.
 - **IF the user asks to reformat, clean up the layout, or fix formatting (e.g., "it's too squished")**, use the \`reformatScript\` tool.
-- **IF the user is asking a general question or for analysis**, respond directly with text and do not use a tool.
+
+**LOWEST PRIORITY: GENERAL CONVERSATION**
+- **IF the user is asking a general question or for analysis that doesn't fit any of the above**, respond directly with text and do not use a tool or modify the script.
 
 **User Request:**
 {{{request}}}
@@ -157,8 +163,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     outputSchema: AiAgentOrchestratorOutputSchema,
   },
   async (input) => {
-    // STEP 1: Tool-Selection-Only Generation
-    // Force the model to decide on an action (call a tool or write a script) without generating conversational text yet.
+    // STEP 1: Let the model decide whether to call a tool OR modify the script directly.
     let decision = await ai.generate({
       prompt: orchestratorPrompt,
       input,
@@ -166,12 +171,11 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
       output: {
         format: 'json',
         schema: z.object({
-          thoughts: z.string().describe("A brief analysis of the user's request to decide on a course of action."),
           modifiedScript: z
             .string()
             .optional()
             .describe(
-              "If the request requires a direct script change, this is the FULL new script. Omit if calling a tool."
+              "If the request requires a direct script change, this is the FULL new script. Omit this field entirely if calling a tool."
             ),
         }),
       },
@@ -182,7 +186,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
 
     // STEP 2: Execute the chosen tool, if any.
     if (decision.toolRequests.length > 0) {
-        const toolRequest = decision.toolRequests[0]; // Assume one tool for now
+        const toolRequest = decision.toolRequests[0];
         const toolOutput = await toolRequest.run();
         
         let toolType: string | null = null;
@@ -199,9 +203,8 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
         };
     }
     
-    // If we have a result (either from a direct script modification or a tool), we generate a final response.
+    // STEP 3: Generate the final conversational response based on the action taken.
     if (modifiedScript || toolResult) {
-        // STEP 3: Generate the final conversational response based on the action taken.
         const finalResponse = await ai.generate({
             prompt: `You are an expert AI assistant. Based on the user's request, an action was just performed.
             - If a script was modified, state that you've made the requested changes to the script.
@@ -229,7 +232,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
         };
     }
 
-    // If no tool was called and no script was modified, it's likely a general question.
+    // STEP 4: If no tool was called and no script was modified, it's a general question.
     const generalResponse = await ai.generate({
         prompt: `You are an expert AI assistant. The user asked: "${input.request}". The script content is: ---{{{script}}}---. Provide a helpful, conversational answer to their question.`,
         input,
