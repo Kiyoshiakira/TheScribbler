@@ -148,7 +148,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     setLines,
     setScriptTitle,
     setScriptLogline,
-    isScriptLoading: isInitialLoad || isDocLoading || areCharactersLoading || areScenesLoading || areNotesLoading,
+    isScriptLoading: isInitialLoad || isDocLoading,
     characters,
     scenes,
     notes,
