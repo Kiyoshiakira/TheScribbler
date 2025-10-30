@@ -79,10 +79,15 @@ function AppLayoutContent() {
 
   return (
     <>
-      <AppHeader activeView={view} setView={handleSetView} />
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        {renderView()}
-      </main>
+      <div className="flex h-screen bg-background">
+        <AppSidebar activeView={view} setView={handleSetView} />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <AppHeader activeView={view} setView={handleSetView} />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            {renderView()}
+          </main>
+        </div>
+      </div>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       {user && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} user={user} profile={null} />}
     </>
@@ -108,12 +113,7 @@ export default function AppLayout() {
     return (
       <ScriptProvider key={currentScriptId} scriptId={currentScriptId}>
         <SidebarProvider>
-          <div className="flex h-screen bg-background">
-            <AppSidebar />
-            <div className="flex flex-1 flex-col overflow-hidden">
-                <AppLayoutContent />
-            </div>
-          </div>
+            <AppLayoutContent />
         </SidebarProvider>
       </ScriptProvider>
     );
@@ -122,12 +122,7 @@ export default function AppLayout() {
   // Render without ScriptProvider if no script is selected
   return (
     <SidebarProvider>
-        <div className="flex h-screen bg-background">
-            <AppSidebar />
-            <div className="flex flex-1 flex-col overflow-hidden">
-                <AppLayoutContent />
-            </div>
-        </div>
+        <AppLayoutContent />
     </SidebarProvider>
   );
 }

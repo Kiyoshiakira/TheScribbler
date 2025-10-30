@@ -75,14 +75,14 @@ const ScriptStatsPanel = () => {
     )
 }
 
-export default function AppSidebar() {
+interface AppSidebarProps {
+  activeView: View;
+  setView: (view: View) => void;
+}
+
+export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
   const { currentScriptId } = useCurrentScript();
   const noScriptLoaded = !currentScriptId;
-
-  // This is a placeholder for the actual activeView and setView logic, which is managed in AppLayoutContent
-  // The sidebar buttons will still work because the click is handled by the parent layout
-  const activeView = 'dashboard';
-  const setView = (v: any) => {}; 
 
   const scriptMenuItems = [
     { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
