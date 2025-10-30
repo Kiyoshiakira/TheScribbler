@@ -86,7 +86,7 @@ export async function aiAgentOrchestrator(
 const generateCharacterTool = ai.defineTool(
   {
     name: 'generateCharacter',
-    description: 'Generates a new character profile based on a description.',
+    description: 'Generates a new character profile based on a user description. Use this when the user explicitly asks to create, make, or generate a character.',
     inputSchema: z.object({
       description: z
         .string()
@@ -104,7 +104,7 @@ const generateCharacterTool = ai.defineTool(
 const proofreadScriptTool = ai.defineTool(
     {
         name: 'proofreadScript',
-        description: 'Proofreads the script for formatting, spelling, and grammatical errors.',
+        description: 'Proofreads the script for objective errors like spelling, grammar, and continuity mistakes. This tool does NOT change the story or structure.',
         inputSchema: z.object({
             script: z.string().describe('The full script to proofread.'),
         }),
@@ -118,7 +118,7 @@ const proofreadScriptTool = ai.defineTool(
 const reformatScriptTool = ai.defineTool(
     {
         name: 'reformatScript',
-        description: 'Reformats the entire script into standard screenplay format. Use this when the user asks to "reformat", "clean up", or "fix formatting".',
+        description: 'Reformats the entire script into standard screenplay format. Use this when the user asks to "reformat", "clean up", "fix formatting", or says the script is "squished" or "unstructured".',
         inputSchema: z.object({
             script: z.string().describe('The full script content to reformat.'),
         }),
@@ -132,13 +132,13 @@ const reformatScriptTool = ai.defineTool(
 const orchestratorPrompt = `You are an expert AI assistant for a screenwriting application.
 Your goal is to help the user modify their script and other project elements.
 
-Analyze the user's request and the current script content.
+Analyze the user's request and the current script content to determine the user's intent.
 
-- If the user is asking to create a character, use the generateCharacter tool.
-- If the user is asking to proofread, check formatting, or find errors, use the proofreadScript tool with the current script content.
-- If the user is asking to reformat, clean up, or fix the formatting of the script, use the reformatScript tool.
-- If the user is asking for a direct change to the script content (and not just proofreading or reformatting), rewrite the script and provide a response explaining what you did.
-- If the user is asking a general question or for analysis, respond directly with text.
+- **IF the user asks to create a character**, use the \`generateCharacter\` tool.
+- **IF the user asks to proofread, check for errors, or find mistakes**, use the \`proofreadScript\` tool.
+- **IF the user asks to reformat, clean up the layout, or fix formatting (e.g., "it's too squished")**, use the \`reformatScript\` tool.
+- **IF the user asks for a direct change to the story or dialogue (and not just reformatting or proofreading)**, you must rewrite the script yourself and provide the full new content in the 'modifiedScript' field.
+- **IF the user is asking a general question or for analysis**, respond directly with text and do not use a tool.
 
 **User Request:**
 {{{request}}}
@@ -263,5 +263,3 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     };
   }
 );
-
-    
