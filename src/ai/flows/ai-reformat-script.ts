@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const AiReformatScriptInputSchema = z.object({
   rawScript: z.string().describe('The raw, potentially poorly formatted, script text.'),
@@ -64,7 +65,12 @@ const aiReformatScriptFlow = ai.defineFlow(
     outputSchema: AiReformatScriptOutputSchema,
   },
   async input => {
-    const { output } = await prompt(input);
+    const { output } = await ai.generate({
+      prompt: prompt.prompt,
+      input: input,
+      output: { schema: AiReformatScriptOutputSchema },
+      model: googleAI('gemini-1.5-pro-latest'),
+    });
     return output!;
   }
 );
