@@ -113,8 +113,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
                         onClick={() => setView(item.view)}
                         isActive={activeView === item.view}
                         tooltip={item.label}
-                        aria-disabled={noScriptLoaded && item.view !== 'dashboard' && item.view !== 'profile'}
-                        className={cn(noScriptLoaded && item.view !== 'dashboard' && item.view !== 'profile' && "cursor-not-allowed opacity-50")}
+                        // The aria-disabled and className logic is now handled by the AppLayout
                     >
                         <item.icon />
                         <span>{item.label}</span>

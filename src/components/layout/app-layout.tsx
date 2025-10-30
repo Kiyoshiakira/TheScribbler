@@ -28,6 +28,7 @@ function AppLayoutContent() {
 
   const { user, isUserLoading } = useUser();
   
+  // This effect ensures the correct view is shown based on script presence.
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
         if (currentScriptId) {
@@ -60,6 +61,17 @@ function AppLayoutContent() {
   };
 
   const renderView = () => {
+    if (isUserLoading || isCurrentScriptLoading) {
+      return (
+        <div className="flex h-full w-full items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <p className="text-muted-foreground">Loading workspace...</p>
+            </div>
+        </div>
+      );
+    }
+
     if (!currentScriptId) {
       return <ProfileView setView={handleSetView} />;
     }
