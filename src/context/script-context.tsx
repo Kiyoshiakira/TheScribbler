@@ -59,20 +59,20 @@ const parseContentToLines = (content: string): ScriptLine[] => {
         const trimmedText = text.trim();
         let type: ScriptElement = 'action'; // Default to action
 
-        const isAllUpperCase = trimmedText === trimmedText.toUpperCase() && trimmedText !== '' && !/^[0-9()., -]+$/.test(trimmedText);
-        const prevLine = parsedLines[i - 1];
-        
+        const isAllUpperCase = trimmedText === trimmedText.toUpperCase() && trimmedText !== '' && !/[0-9]/.test(trimmedText);
+
         if (trimmedText.startsWith('INT.') || trimmedText.startsWith('EXT.') || trimmedText.startsWith('EST.')) {
             type = 'scene-heading';
         } else if (trimmedText.endsWith(' TO:')) {
             type = 'transition';
         } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
             type = 'parenthetical';
-        } else if (prevLine && (prevLine.type === 'character' || prevLine.type === 'parenthetical') && trimmedText !== '') {
-            type = 'dialogue';
-        } else if (isAllUpperCase && text.length < 35 && text.startsWith('  ')) {
+        } else if (isAllUpperCase && i > 0 && parsedLines[i - 1].type === 'action' && text.length < 35) {
              type = 'character';
-        } else {
+        } else if (i > 0 && (parsedLines[i-1].type === 'character' || parsedLines[i-1].type === 'parenthetical')) {
+            type = 'dialogue';
+        }
+        else {
              type = 'action';
         }
         
@@ -156,14 +156,14 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
 
   useEffect(() => {
-    if (isInitialLoad || debouncedLines.length === 0) {
+    if (isInitialLoad || isDocLoading) {
         return;
     }
     const newContent = debouncedLines.map(line => line.text.replace(/<br\s*\/?>/gi, '')).join('\n');
     if (localScript && newContent !== localScript.content) {
       updateFirestore('content', newContent);
     }
-  }, [debouncedLines, localScript, isInitialLoad, updateFirestore]);
+  }, [debouncedLines, localScript, isInitialLoad, isDocLoading, updateFirestore]);
 
   const setLines = useCallback((linesOrContent: ScriptLine[] | string | ((prev: ScriptLine[]) => ScriptLine[])) => {
     if (typeof linesOrContent === 'string') {
