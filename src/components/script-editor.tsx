@@ -99,7 +99,7 @@ const ScriptLineComponent = React.memo(({
       onBlur={handleBlur}
       onContextMenu={(e) => onContextMenu(e, line.id)}
       className={cn(
-        'outline-none focus:bg-primary/10 rounded-sm py-0.5 min-h-[1.5em]',
+        'outline-none rounded-sm py-0.5 min-h-[1.5em]',
         getElementStyling(line.type)
       )}
       dangerouslySetInnerHTML={{ __html: line.text }}
