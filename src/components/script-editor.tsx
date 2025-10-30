@@ -91,9 +91,9 @@ const ScriptLineComponent = ({
         case 'action':
             return 'pl-[1.5in] pr-[1in]';
         case 'character':
-            return 'uppercase pl-[3.5in] pr-[1in]';
+            return 'uppercase pl-[3.5in]';
         case 'parenthetical':
-            return 'pl-[3in] pr-[1in]';
+            return 'pl-[3in]';
         case 'dialogue':
             return 'pl-[2.5in] pr-[2.5in]';
         case 'transition':
@@ -126,7 +126,7 @@ const ScriptLineComponent = ({
       onBlur={handleBlur}
       onContextMenu={(e) => onContextMenu(e, line.id)}
       className={cn(
-        'w-full outline-none focus:bg-primary/10 rounded-sm py-0.5 min-h-[1.5em]',
+        'outline-none focus:bg-primary/10 rounded-sm py-0.5 min-h-[1.5em]',
         getElementStyling(line.type)
       )}
       dangerouslySetInnerHTML={{ __html: line.text }}
