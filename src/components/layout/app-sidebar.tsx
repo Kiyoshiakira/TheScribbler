@@ -111,9 +111,9 @@ export default function AppSidebar({
                         onClick={() => setView(item.view)}
                         isActive={activeView === item.view}
                         tooltip={item.label}
-                        aria-disabled={noScriptLoaded}
-                        className={cn(noScriptLoaded && item.view !== 'dashboard' && "cursor-not-allowed opacity-50")}
-                        disabled={noScriptLoaded && item.view !== 'dashboard'}
+                        aria-disabled={noScriptLoaded && item.view !== 'dashboard' && item.view !== 'profile'}
+                        className={cn(noScriptLoaded && item.view !== 'dashboard' && item.view !== 'profile' && "cursor-not-allowed opacity-50")}
+                        disabled={noScriptLoaded && item.view !== 'dashboard' && item.view !== 'profile'}
                     >
                         <item.icon />
                         <span>{item.label}</span>

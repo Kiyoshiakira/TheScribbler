@@ -68,7 +68,7 @@ const parseContentToLines = (content: string): ScriptLine[] => {
             type = 'transition';
         } else if (trimmedText.startsWith('(') && trimmedText.endsWith(')')) {
             type = 'parenthetical';
-        } else if (prevLine && (prevLine.type === 'character' || prevLine.type === 'parenthetical')) {
+        } else if (prevLine && (prevLine.type === 'character' || prevLine.type === 'parenthetical') && trimmedText !== '') {
             type = 'dialogue';
         } else if (isAllUpperCase && text.length < 35 && text.startsWith('  ')) {
              type = 'character';
@@ -92,6 +92,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   const firestore = useFirestore();
   const [localScript, setLocalScript] = useState<Script | null>(null);
   const [lines, setLocalLines] = useState<ScriptLine[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const scriptDocRef = useMemoFirebase(
     () => (user && firestore && scriptId ? doc(firestore, 'users', user.uid, 'scripts', scriptId) : null),
@@ -148,20 +149,21 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
            const parsed = parseContentToLines(firestoreScript.content || '');
            setLocalLines(parsed);
         }
+        if (isInitialLoad) setIsInitialLoad(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestoreScript]);
 
 
   useEffect(() => {
-    if (debouncedLines.length === 0 && !isDocLoading && localScript?.content === '') {
+    if (isInitialLoad || debouncedLines.length === 0) {
         return;
     }
     const newContent = debouncedLines.map(line => line.text.replace(/<br\s*\/?>/gi, '')).join('\n');
     if (localScript && newContent !== localScript.content) {
       updateFirestore('content', newContent);
     }
-  }, [debouncedLines, localScript, isDocLoading, updateFirestore]);
+  }, [debouncedLines, localScript, isInitialLoad, updateFirestore]);
 
   const setLines = useCallback((linesOrContent: ScriptLine[] | string | ((prev: ScriptLine[]) => ScriptLine[])) => {
     if (typeof linesOrContent === 'string') {

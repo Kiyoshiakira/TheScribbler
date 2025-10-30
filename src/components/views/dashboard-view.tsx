@@ -117,10 +117,8 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
             {/* Header */}
             <div className="space-y-2">
                 <h2 className="text-3xl font-bold font-headline">Current Script: {isScriptLoading ? <Skeleton className="h-9 w-48 inline-block" /> : script?.title}</h2>
-                <div className="flex items-center gap-4">
-                    <div className="text-lg text-muted-foreground italic">
-                        {isScriptLoading ? <Skeleton className="h-6 w-96" /> : (script?.logline || "No logline has been set for this script yet.")}
-                    </div>
+                <div className="text-lg text-muted-foreground italic">
+                    {isScriptLoading ? <Skeleton className="h-6 w-96" /> : (script?.logline || "No logline has been set for this script yet.")}
                 </div>
             </div>
 
