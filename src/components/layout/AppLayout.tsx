@@ -53,7 +53,7 @@ function AppLayoutInternal() {
     }
     return null;
   }, [user, firestore]);
-  const { data: userProfile } = useDoc(userProfileRef);
+  const { data: userProfile } = useDoc(userProfileRef, { revalidateOnFocus: false });
 
   const handleSetView = (newView: View | 'settings' | 'profile-edit') => {
     if (newView === 'settings') {

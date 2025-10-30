@@ -107,7 +107,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
   ] as const;
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon" side="left">
+    <Sidebar collapsible="icon" side="left">
       <SidebarHeader>
         <button className="flex items-center gap-2 p-2" onClick={() => setView('profile')}>
             <Logo />
@@ -123,7 +123,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
                         isActive={activeView === item.view}
                         tooltip={item.label}
                         aria-disabled={noScriptLoaded}
-                        className={cn(noScriptLoaded && 'opacity-50 cursor-not-allowed')}
+                        className={cn(noScriptLoaded && item.view !== 'dashboard' && 'opacity-50 cursor-not-allowed')}
                     >
                         <item.icon />
                         <span>{item.label}</span>
