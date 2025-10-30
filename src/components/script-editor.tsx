@@ -37,7 +37,7 @@ interface ScriptLineComponentProps {
   isFocused: boolean;
 }
 
-const ScriptLineComponent = ({
+const ScriptLineComponent = React.memo(({
   line,
   onTextChange,
   onKeyDown,
@@ -49,17 +49,18 @@ const ScriptLineComponent = ({
   useEffect(() => {
     if (isFocused && ref.current) {
         ref.current.focus();
+        // Move cursor to the end of the line
         const range = document.createRange();
         const sel = window.getSelection();
         if (sel) {
             range.selectNodeContents(ref.current);
-            range.collapse(false);
+            range.collapse(false); // false for end, true for start
             sel.removeAllRanges();
             sel.addRange(range);
         }
     }
   }, [isFocused]);
-  
+
   const getElementStyling = (type: ScriptElement) => {
     switch (type) {
         case 'scene-heading':
@@ -87,7 +88,7 @@ const ScriptLineComponent = ({
       onTextChange(line.id, newText);
     }
   };
-  
+
   return (
     <div
       ref={ref}
@@ -103,11 +104,11 @@ const ScriptLineComponent = ({
       dangerouslySetInnerHTML={{ __html: line.text }}
     ></div>
   );
-};
+});
 
 ScriptLineComponent.displayName = 'ScriptLineComponent';
 
-export default function ScriptEditor({ 
+export default function ScriptEditor({
   isStandalone = false
  }: ScriptEditorProps) {
   const { lines, setLines, isScriptLoading } = useScript();
@@ -122,7 +123,7 @@ export default function ScriptEditor({
     }
   }, [lines, activeLineId]);
 
-  const handleTextChange = (id: string, text: string) => {
+  const handleTextChange = useCallback((id: string, text: string) => {
     setLines(prevLines => {
       const newLines = [...prevLines];
       const index = newLines.findIndex(line => line.id === id);
@@ -131,22 +132,22 @@ export default function ScriptEditor({
       }
       return newLines;
     });
-  };
+  }, [setLines]);
 
   const handleTypeChange = (id: string, type: ScriptElement) => {
     setLines(prevLines => prevLines.map(line => {
       if (line.id === id) {
         let newText = line.text.replace(/<[^>]*>?/gm, ''); // Strip HTML tags
-        
+
         // Changing TO parenthetical
         if (type === 'parenthetical' && !/^\(.*\)$/.test(newText.trim())) {
           newText = `(${newText})`;
-        } 
+        }
         // Changing FROM parenthetical
         else if (line.type === 'parenthetical' && type !== 'parenthetical' && /^\(.*\)$/.test(newText.trim())) {
           newText = newText.substring(1, newText.length - 1);
         }
-        
+
         return { ...line, type, text: newText };
       }
       return line;
@@ -174,13 +175,13 @@ export default function ScriptEditor({
         if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             const container = range.startContainer;
-            
+
             const tempDiv = document.createElement("div");
             tempDiv.innerHTML = currentLine.text;
 
             const preCaretRange = document.createRange();
             preCaretRange.selectNodeContents(tempDiv);
-            
+
             const endContainer = (container.nodeType === Node.TEXT_NODE) ? container : tempDiv.childNodes[range.endOffset];
             preCaretRange.setEnd(endContainer, range.endOffset);
 
@@ -190,7 +191,7 @@ export default function ScriptEditor({
 
         const newLines = [...lines];
         newLines[currentIndex] = { ...currentLine, text: beforeEnter };
-        
+
         let nextType: ScriptElement = 'action';
         const currentType = currentLine.type;
         if (currentType === 'scene-heading') nextType = 'action';
@@ -200,7 +201,7 @@ export default function ScriptEditor({
 
         const newLine: ScriptLine = { id: `line-${Date.now()}`, type: nextType, text: afterEnter };
         newLines.splice(currentIndex + 1, 0, newLine);
-        
+
         setLines(newLines);
 
         setTimeout(() => {
@@ -222,7 +223,7 @@ export default function ScriptEditor({
         if (currentIndex === 0) return;
         const prevLine = lines[currentIndex - 1];
         if (!prevLine) return;
-        
+
         const newLines = lines.filter(line => line.id !== id);
         setLines(newLines);
 
@@ -231,13 +232,13 @@ export default function ScriptEditor({
         }, 0);
     }
   };
-  
+
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>, lineId: string) => {
     e.preventDefault();
     setActiveLineId(lineId);
     setContextMenu({ x: e.clientX, y: e.clientY, lineId });
   }
-  
+
   const handlePopOut = () => {
     window.open('/editor-standalone', '_blank', 'width=800,height=600');
     setContextMenu(null);
@@ -246,7 +247,7 @@ export default function ScriptEditor({
   const formatElementName = (name: string) => {
     return name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
-  
+
   if (isScriptLoading) {
     return (
         <div className="h-full flex flex-col p-6 space-y-4">
@@ -261,8 +262,8 @@ export default function ScriptEditor({
   }
 
   return (
-    <div 
-        ref={editorRef} 
+    <div
+        ref={editorRef}
         className={cn(
             "flex-1 relative",
             isStandalone ? "bg-background p-4" : ""
@@ -276,18 +277,18 @@ export default function ScriptEditor({
         )}>
             <DropdownMenu open={!!contextMenu} onOpenChange={() => setContextMenu(null)}>
                 <DropdownMenuTrigger asChild>
-                    <div 
-                        style={{ 
+                    <div
+                        style={{
                             position: 'fixed',
-                            left: contextMenu ? contextMenu.x : 0, 
+                            left: contextMenu ? contextMenu.x : 0,
                             top: contextMenu ? contextMenu.y : 0,
                         }}
                     />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="start">
                     {SCRIPT_ELEMENTS_CYCLE.map(element => (
-                        <DropdownMenuItem 
-                            key={element} 
+                        <DropdownMenuItem
+                            key={element}
                             onClick={() => contextMenu && handleTypeChange(contextMenu.lineId, element)}
                         >
                             {formatElementName(element)}
