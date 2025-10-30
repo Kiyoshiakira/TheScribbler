@@ -262,7 +262,7 @@ export default function ProfileView({ setView }: ProfileViewProps) {
                              ) : (
                                 <>
                                  <h1 className='text-3xl font-bold font-headline'>{user?.displayName}</h1>
-                                 <p className='text-muted-foreground'>{userProfile?.bio || 'No bio yet.'}</p>
+                                 <div className='text-muted-foreground'>{userProfile?.bio || 'No bio yet.'}</div>
                                 </>
                              )}
                         </div>

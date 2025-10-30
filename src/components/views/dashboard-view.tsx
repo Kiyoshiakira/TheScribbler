@@ -160,7 +160,7 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
                                                 <AvatarFallback>{char.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-semibold">{char.name}</p>
+                                                <div className="font-semibold">{char.name}</div>
                                                 <p className="text-sm text-muted-foreground truncate">{char.description}</p>
                                             </div>
                                         </div>
@@ -188,7 +188,7 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
                                         <div key={note.id} className="flex items-start gap-4 p-2 rounded-md hover:bg-muted/50">
                                             <div className="flex-1">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="font-semibold">{note.title}</p>
+                                                    <div className="font-semibold">{note.title}</div>
                                                     <Badge variant="secondary">{note.category}</Badge>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{note.content}</p>
