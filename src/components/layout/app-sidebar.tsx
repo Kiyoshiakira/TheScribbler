@@ -113,7 +113,8 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
                         onClick={() => setView(item.view)}
                         isActive={activeView === item.view}
                         tooltip={item.label}
-                        // The aria-disabled and className logic is now handled by the AppLayout
+                        aria-disabled={noScriptLoaded}
+                        className={cn(noScriptLoaded && 'opacity-50 cursor-not-allowed')}
                     >
                         <item.icon />
                         <span>{item.label}</span>
