@@ -59,13 +59,6 @@ const ScriptLineComponent = ({
         }
     }
   }, [isFocused]);
-
-  useEffect(() => {
-    // This is the critical part that was removed. It ensures the div has content.
-    if (ref.current && ref.current.innerHTML !== line.text) {
-      ref.current.innerHTML = line.text;
-    }
-  }, [line.text]);
   
   const getElementStyling = (type: ScriptElement) => {
     switch (type) {
@@ -107,6 +100,7 @@ const ScriptLineComponent = ({
         'outline-none focus:bg-primary/10 rounded-sm py-0.5 min-h-[1.5em]',
         getElementStyling(line.type)
       )}
+      dangerouslySetInnerHTML={{ __html: line.text }}
     ></div>
   );
 };
