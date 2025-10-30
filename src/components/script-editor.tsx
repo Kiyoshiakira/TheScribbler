@@ -63,20 +63,20 @@ const ScriptLineComponent = React.memo(({
 
   const getElementStyling = (type: ScriptElement) => {
     switch (type) {
-        case 'scene-heading':
-            return 'uppercase font-bold pl-6';
-        case 'action':
-            return 'pl-6';
-        case 'character':
-            return 'uppercase pl-32';
-        case 'parenthetical':
-            return 'pl-28';
-        case 'dialogue':
-            return 'pl-20';
-        case 'transition':
-            return 'uppercase text-right pr-6';
-        default:
-            return 'pl-6';
+      case 'scene-heading':
+        return 'pl-6';
+      case 'action':
+        return 'pl-6';
+      case 'character':
+        return 'pl-32';
+      case 'parenthetical':
+        return 'pl-28';
+      case 'dialogue':
+        return 'pl-20';
+      case 'transition':
+        return 'text-right pr-6';
+      default:
+        return 'pl-6';
     }
   };
 
