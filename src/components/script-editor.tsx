@@ -61,7 +61,7 @@ const ScriptLineComponent = React.memo(({
     }
   }, [isFocused]);
 
-  const getElementStyling = (type: ScriptElement) => {
+  const getElementStyling = (type: ScriptElement | undefined | null) => {
     switch (type) {
       case 'scene-heading':
         return 'pl-6 font-bold uppercase';
@@ -76,6 +76,7 @@ const ScriptLineComponent = React.memo(({
       case 'transition':
         return 'text-right pr-6 uppercase';
       default:
+        // Fallback to 'action' style for any unknown or undefined type
         return 'pl-6';
     }
   };

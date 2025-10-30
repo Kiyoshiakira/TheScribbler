@@ -72,6 +72,8 @@ const parseContentToLines = (content: string): ScriptLine[] => {
             type = 'dialogue';
         } else if (isAllUpperCase && text.length < 35 && text.startsWith('  ')) {
              type = 'character';
+        } else {
+             type = 'action';
         }
         
         parsedLines.push({
