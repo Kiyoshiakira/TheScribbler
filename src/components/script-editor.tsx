@@ -38,33 +38,31 @@ interface ScriptLineComponentProps {
 }
 
 const ScriptRuler = () => {
-    // Re-engineered based on user feedback for a more accurate, compact, and professional look.
-    // Uses repeating linear gradients for crisp, efficient tick marks.
     return (
         <div
-            className="relative h-5 w-full bg-no-repeat"
+            className="relative h-4 w-full bg-no-repeat mb-4"
             style={{
                 backgroundImage: `
-                    repeating-linear-gradient(to right, hsl(var(--muted-foreground)) 0, hsl(var(--muted-foreground)) 1px, transparent 1px, transparent 0.125in),
-                    repeating-linear-gradient(to right, hsl(var(--muted-foreground)) 0, hsl(var(--muted-foreground)) 1px, transparent 1px, transparent 0.25in),
-                    repeating-linear-gradient(to right, hsl(var(--muted-foreground)) 0, hsl(var(--muted-foreground)) 1px, transparent 1px, transparent 0.5in),
+                    repeating-linear-gradient(to right, hsl(var(--muted-foreground)/0.3) 0, hsl(var(--muted-foreground)/0.3) 1px, transparent 1px, transparent 0.125in),
+                    repeating-linear-gradient(to right, hsl(var(--muted-foreground)/0.5) 0, hsl(var(--muted-foreground)/0.5) 1px, transparent 1px, transparent 0.25in),
+                    repeating-linear-gradient(to right, hsl(var(--muted-foreground)/0.7) 0, hsl(var(--muted-foreground)/0.7) 1px, transparent 1px, transparent 0.5in),
                     repeating-linear-gradient(to right, hsl(var(--muted-foreground)) 0, hsl(var(--muted-foreground)) 1px, transparent 1px, transparent 1in)
                 `,
                 backgroundSize: `
-                    100% 25%,
-                    100% 40%,
-                    100% 55%,
-                    100% 70%
+                    100% 20%,
+                    100% 35%,
+                    100% 50%,
+                    100% 75%
                 `,
                 backgroundPosition: 'bottom',
             }}
         >
-            <div className="absolute bottom-0 h-px w-full bg-muted-foreground"></div>
+            <div className="absolute -bottom-px h-px w-full bg-muted-foreground"></div>
             {[...Array(8)].map((_, i) => (
                 <div
                     key={i}
-                    className="absolute -bottom-1 text-xs text-muted-foreground"
-                    style={{ left: `calc(${i + 1}in - 3px)` }}
+                    className="absolute -bottom-5 text-xs text-muted-foreground"
+                    style={{ left: `calc(${i + 1}in - 4px)` }}
                 >
                     {i + 1}
                 </div>
@@ -106,19 +104,19 @@ const ScriptLineComponent = ({
   const getElementStyling = (type: ScriptElement) => {
     switch (type) {
         case 'scene-heading':
-            return 'uppercase font-bold pl-[1.5in] pr-[1in]';
+            return 'uppercase font-bold ml-[1.5in] mr-[1in]';
         case 'action':
-            return 'pl-[1.5in] pr-[1in]';
+            return 'ml-[1.5in] mr-[1in]';
         case 'character':
-            return 'uppercase pl-[3.5in] pr-[1in]';
+            return 'uppercase text-center ml-[3.5in] mr-[1in]';
         case 'parenthetical':
-            return 'pl-[3in] pr-[1in]';
+            return 'ml-[3in] mr-[1in] text-center';
         case 'dialogue':
-            return 'pl-[2.5in] pr-[2.5in]';
+            return 'ml-[2.5in] mr-[2.5in]';
         case 'transition':
-            return 'uppercase text-right pr-[1in]';
+            return 'uppercase text-right ml-[1.5in] mr-[1in]';
         default:
-            return 'pl-[1.5in] pr-[1in]';
+            return 'ml-[1.5in] mr-[1in]';
     }
   };
 
