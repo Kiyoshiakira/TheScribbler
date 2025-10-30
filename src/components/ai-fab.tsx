@@ -543,15 +543,15 @@ export default function AiFab({
             {bubbleMode === 'ai' ? <Sparkles className="w-6 h-6" /> : <Users className="w-6 h-6" />}
           </Button>
         </PopoverTrigger>
-        <PopoverContent 
+        <PopoverContent
             className={cn(
                 "mb-2 p-0",
                 bubbleMode === 'ai' && activeView === 'menu' && "w-64",
-                bubbleMode === 'ai' && activeView === 'chat' && "w-[20rem] h-[25rem] flex flex-col",
+                bubbleMode === 'ai' && activeView === 'chat' && "w-[15rem] h-[18rem] flex flex-col",
                 bubbleMode === 'ai' && (activeView === 'suggestions' || activeView === 'analysis' || activeView === 'proofread') && "w-[28rem] h-auto max-h-[32rem] flex flex-col",
                 bubbleMode === 'collab' && "w-[28rem] h-[32rem] flex flex-col"
-            )} 
-            side="top" 
+            )}
+            side="top"
             align="end"
         >
           {renderContent()}
