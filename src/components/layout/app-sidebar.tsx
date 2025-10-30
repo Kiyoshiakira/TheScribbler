@@ -123,7 +123,7 @@ export default function AppSidebar({
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">
-          {!noScriptLoaded && <ScriptStatsPanel stats={stats} isLoading={isLoadingStats || isScriptLoading} />}
+          {currentScriptId && <ScriptStatsPanel stats={stats} isLoading={isLoadingStats || isScriptLoading} />}
       </SidebarFooter>
     </Sidebar>
   );
