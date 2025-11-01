@@ -26,7 +26,7 @@ function AppLayoutInternal() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const [view, setView] = React.useState<View>('profile');
+  const [view, setView] = React.useState<View>(() => currentScriptId ? 'dashboard' : 'profile');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
 
@@ -36,17 +36,13 @@ function AppLayoutInternal() {
     }
     return null;
   }, [user, firestore]);
-  const { data: userProfile } = useDoc(userProfileRef);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
-      if (currentScriptId && view === 'profile') {
-        setView('dashboard');
-      } else if (!currentScriptId) {
-        setView('profile');
-      }
+      setView(currentScriptId ? 'dashboard' : 'profile');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentScriptId, isCurrentScriptLoading]);
 
 
@@ -65,7 +61,8 @@ function AppLayoutInternal() {
   };
 
   const renderView = () => {
-    if (!currentScriptId && view !== 'profile') {
+    // If there's no script, always show the profile view.
+    if (!currentScriptId) {
       return <ProfileView setView={handleSetView} />;
     }
 
@@ -81,7 +78,7 @@ function AppLayoutInternal() {
     }
   };
 
-  if (isUserLoading || isCurrentScriptLoading) {
+  if (isUserLoading || isCurrentScriptLoading || (user && isProfileLoading)) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -113,6 +110,7 @@ function AppLayoutInternal() {
 export default function AppLayout() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
 
+  // Show a top-level loader while we determine if there's a script
   if (isCurrentScriptLoading) {
       return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -124,6 +122,8 @@ export default function AppLayout() {
       );
   }
   
+  // Conditionally wrap with ScriptProvider ONLY if a script is active.
+  // This prevents errors in views that don't need script data.
   return (
     <SidebarProvider>
       {currentScriptId ? (
