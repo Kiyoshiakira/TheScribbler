@@ -26,27 +26,23 @@ function AppLayoutInternal() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  // Set the initial view based on whether a script is loaded.
-  const [view, setView] = React.useState<View>(() => currentScriptId ? 'dashboard' : 'profile');
-  
+  const [view, setView] = React.useState<View>('profile');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
 
-  // This effect synchronizes the view if the script ID is removed (e.g., deleted or user signs out)
+  // This effect synchronizes the view state based on script loading status.
+  // It only runs when the loading states or script ID change.
   React.useEffect(() => {
     if (!isCurrentScriptLoading) {
       if (currentScriptId) {
-        // If a script becomes active, switch to the dashboard if we're on the profile view.
-        if (view === 'profile') {
-          setView('dashboard');
-        }
+        // A script is loaded, default to dashboard.
+        setView('dashboard');
       } else {
-        // If the script is removed, always go back to the profile view.
+        // No script is loaded, default to profile.
         setView('profile');
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentScriptId, isCurrentScriptLoading]);
+  }, [isCurrentScriptLoading, currentScriptId]);
   
   const userProfileRef = useMemoFirebase(() => {
     if (user && firestore) {
@@ -54,7 +50,7 @@ function AppLayoutInternal() {
     }
     return null;
   }, [user, firestore]);
-  const { data: userProfile } = useDoc(userProfileRef, { revalidateOnFocus: false });
+  const { data: userProfile } = useDoc(userProfileRef);
 
   const handleSetView = (newView: View | 'settings' | 'profile-edit') => {
     if (newView === 'settings') {
