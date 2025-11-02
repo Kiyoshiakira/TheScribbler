@@ -6,7 +6,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarContent,
-  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -141,9 +140,6 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
             ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2">
-          {currentScriptId && !noScriptLoaded && <ScriptStatsPanel />}
-      </SidebarFooter>
     </Sidebar>
   );
 }
