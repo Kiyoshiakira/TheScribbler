@@ -76,8 +76,13 @@ function AppLayoutInternal() {
     } else if (newView === 'profile-edit') {
       setProfileOpen(true);
     } else {
-      console.log(`[AppLayout] View changed to: ${newView}`);
-      setView(newView);
+       // Allow navigation only if a script is loaded, or if navigating to the profile
+      if (currentScriptId || newView === 'profile') {
+        console.log(`[AppLayout] View changed to: ${newView}`);
+        setView(newView);
+      } else {
+        console.log(`[AppLayout] View change to ${newView} blocked. No script loaded.`);
+      }
     }
   };
 
@@ -146,8 +151,6 @@ function AppLayoutInternal() {
 export default function AppLayout() {
   const { currentScriptId, isCurrentScriptLoading } = useCurrentScript();
 
-  // The loading screen is handled inside AppLayoutInternal, but we can show a minimal one here
-  // to avoid a flash of content.
   if (isCurrentScriptLoading) {
       return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -158,16 +161,14 @@ export default function AppLayout() {
         </div>
       );
   }
-  
+
   return (
     <SidebarProvider>
-      {/* Conditionally wrap with ScriptProvider only when a script is loaded */}
       {currentScriptId ? (
         <ScriptProvider key={currentScriptId} scriptId={currentScriptId}>
-            <AppLayoutInternal />
+          <AppLayoutInternal />
         </ScriptProvider>
       ) : (
-        // Render without ScriptProvider if no script is selected
         <AppLayoutInternal />
       )}
     </SidebarProvider>
