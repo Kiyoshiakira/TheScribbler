@@ -72,6 +72,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     const processImportedContent = async (title: string, content: string) => {
         if (!firestore || !user) return;
         const { dismiss, update } = toast({
+            id: 'import-toast',
             title: 'Importing Script...',
             description: 'Starting the import process.',
         });
@@ -153,6 +154,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const handleScribblerImport = async (file: File) => {
     if (!firestore || !user) return;
     const { dismiss, update } = toast({
+      id: 'scribbler-import-toast',
       title: 'Importing Scribbler File...',
       description: 'Reading the project archive.',
     });
@@ -219,7 +221,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const arrayBuffer = e.target?.result as ArrayBuffer;
-      const { dismiss, update } = toast({ title: 'Importing Scrite File...', description: 'Reading file content.' });
+      const { dismiss, update } = toast({ id: 'scrite-import-toast', title: 'Importing Scrite File...', description: 'Reading file content.' });
 
       try {
         update({ id: 'scrite-import-toast', description: 'Parsing and analyzing the file structure.' });
@@ -404,7 +406,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   return (
     <>
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-      <SidebarTrigger className="flex md:hidden" />
+      <SidebarTrigger className="flex md:hidden" aria-label="Toggle sidebar" />
       <div className="flex flex-1 items-center gap-2 min-w-0">
         {isProfileView ? (
              <h1 className="text-xl font-bold font-headline truncate">My Profile</h1>

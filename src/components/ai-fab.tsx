@@ -495,13 +495,13 @@ export default function AiFab({
                                             <p className="text-green-600">"{suggestion.correctedText}"</p>
                                         </CardContent>
                                         <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
-                                            <Button size="sm" variant="outline" onClick={() => dismissSuggestion(suggestion)}>
-                                            <X className="w-4 h-4 mr-2" />
-                                            Dismiss
+                                            <Button size="sm" variant="outline" onClick={() => dismissSuggestion(suggestion)} aria-label={`Dismiss suggestion: ${suggestion.originalText}`}>
+                                                <X className="w-4 h-4 mr-2" />
+                                                Dismiss
                                             </Button>
-                                            <Button size="sm" onClick={() => applySuggestion(suggestion)}>
-                                            <Check className="w-4 h-4 mr-2" />
-                                            Apply
+                                            <Button size="sm" onClick={() => applySuggestion(suggestion)} aria-label={`Apply suggestion: replace ${suggestion.originalText} with ${suggestion.correctedText}`}>
+                                                <Check className="w-4 h-4 mr-2" />
+                                                Apply
                                             </Button>
                                         </CardFooter>
                                     </Card>
@@ -541,6 +541,7 @@ export default function AiFab({
               size="icon"
               className="rounded-full w-14 h-14 shadow-lg fixed bottom-8 right-8 z-50"
               disabled
+              aria-label="AI features disabled"
             >
               <Sparkles className="w-6 h-6" />
             </Button>
@@ -571,6 +572,7 @@ export default function AiFab({
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            aria-label={bubbleMode === 'ai' ? "Open AI menu" : "Open Collaboration Hub"}
           >
             {bubbleMode === 'ai' ? <Sparkles className="w-6 h-6" /> : <Users className="w-6 h-6" />}
           </Button>
@@ -727,11 +729,11 @@ export default function AiFab({
                       <p className="text-green-600">"{suggestion.correctedText}"</p>
                     </CardContent>
                     <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
-                      <Button size="sm" variant="outline" onClick={() => dismissSuggestion(suggestion)}>
+                      <Button size="sm" variant="outline" onClick={() => dismissSuggestion(suggestion)} aria-label={`Dismiss suggestion: ${suggestion.originalText}`}>
                         <X className="w-4 h-4 mr-2" />
                         Dismiss
                       </Button>
-                      <Button size="sm" onClick={() => applySuggestion(suggestion)}>
+                      <Button size="sm" onClick={() => applySuggestion(suggestion)} aria-label={`Apply suggestion: replace ${suggestion.originalText} with ${suggestion.correctedText}`}>
                         <Check className="w-4 h-4 mr-2" />
                         Apply
                       </Button>
