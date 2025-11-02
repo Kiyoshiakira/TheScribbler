@@ -18,7 +18,7 @@ import AiFab from '../ai-fab';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
 import { useScript } from '@/context/script-context';
-import { getAiSuggestions } from '@/app/actions';
+import { runGetAiSuggestions } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
 interface Scene {
@@ -63,7 +63,7 @@ export default function ScenesView() {
     setIsSuggestionsLoading(true);
     setSuggestions([]);
     setSuggestionsDialogOpen(true);
-    const result = await getAiSuggestions({ screenplay: script.content });
+    const result = await runGetAiSuggestions({ screenplay: script.content });
     setIsSuggestionsLoading(false);
 
     if (result.error) {

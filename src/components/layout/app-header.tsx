@@ -35,7 +35,7 @@ import { useRouter } from 'next/navigation';
 import JSZip from 'jszip';
 import { useCurrentScript } from '@/context/current-script-context';
 import type { View } from './AppLayout';
-import { aiReformatScript } from '@/app/actions';
+import { runAiReformatScript } from '@/app/actions';
 import { useGooglePicker } from '@/hooks/use-google-picker';
 
 
@@ -75,7 +75,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         
         try {
              toast({ title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
-             const reformatResult = await aiReformatScript({ rawScript: content });
+             const reformatResult = await runAiReformatScript({ rawScript: content });
 
              if (reformatResult.error || !reformatResult.data) {
                 throw new Error(reformatResult.error || 'AI reformatting failed.');
@@ -209,7 +209,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         const parsedData = await parseScriteFile(arrayBuffer);
         
         toast({ title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
-        const reformatResult = await aiReformatScript({ rawScript: parsedData.script });
+        const reformatResult = await runAiReformatScript({ rawScript: parsedData.script });
         
         if (reformatResult.error || !reformatResult.data) {
             throw new Error(reformatResult.error || 'AI reformatting failed.');

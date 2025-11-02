@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getAiCharacterProfile } from '@/app/actions';
+import { runGetAiCharacterProfile } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
 import React from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -284,7 +284,7 @@ export default function CharactersView() {
       }
       setIsGenerating(true);
       
-      const result = await getAiCharacterProfile({ characterDescription: description });
+      const result = await runGetAiCharacterProfile({ characterDescription: description });
       
       setIsGenerating(false);
 

@@ -35,7 +35,7 @@ import {
 import { SCRIPT_TOKEN_LIMIT } from '@/constants';
 
 
-export async function aiReformatScript(input: AiReformatScriptInput) {
+export async function runAiReformatScript(input: AiReformatScriptInput) {
     if (!process.env.GEMINI_API_KEY) {
         return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
     }
@@ -52,7 +52,7 @@ export async function aiReformatScript(input: AiReformatScriptInput) {
     }
 }
 
-export async function getAiSuggestions(
+export async function runGetAiSuggestions(
   input: AiSuggestSceneImprovementsInput
 ) {
   if (!process.env.GEMINI_API_KEY) {
@@ -71,7 +71,7 @@ export async function getAiSuggestions(
   }
 }
 
-export async function aiGenerateLogline(input: AiGenerateLoglineInput) {
+export async function runAiGenerateLogline(input: AiGenerateLoglineInput) {
     if (!process.env.GEMINI_API_KEY) {
         return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
     }
@@ -88,7 +88,7 @@ export async function aiGenerateLogline(input: AiGenerateLoglineInput) {
     }
 }
 
-export async function getAiCharacterProfile(input: AiGenerateCharacterProfileInput) {
+export async function runGetAiCharacterProfile(input: AiGenerateCharacterProfileInput) {
     if (!process.env.GEMINI_API_KEY) {
         return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
     }
@@ -105,7 +105,7 @@ export async function getAiCharacterProfile(input: AiGenerateCharacterProfileInp
     }
 }
 
-export async function aiGenerateNote(input: AiGenerateNoteInput) {
+export async function runAiGenerateNote(input: AiGenerateNoteInput) {
     if (!process.env.GEMINI_API_KEY) {
         return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
     }
@@ -123,7 +123,7 @@ export async function aiGenerateNote(input: AiGenerateNoteInput) {
 }
 
 
-export async function getAiDeepAnalysis(input: AiDeepAnalysisInput) {
+export async function runGetAiDeepAnalysis(input: AiDeepAnalysisInput) {
   if (!process.env.GEMINI_API_KEY) {
     return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
   }
@@ -157,7 +157,7 @@ export async function runAiAgent(input: AiAgentOrchestratorInput) {
     }
 }
 
-export async function getAiProofreadSuggestions(input: AiProofreadScriptInput) {
+export async function runGetAiProofreadSuggestions(input: AiProofreadScriptInput) {
     if (!process.env.GEMINI_API_KEY) {
         return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
     }

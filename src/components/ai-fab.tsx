@@ -21,7 +21,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useScript } from '@/context/script-context';
-import { getAiSuggestions, getAiDeepAnalysis, getAiProofreadSuggestions } from '@/app/actions';
+import { runGetAiSuggestions, runGetAiDeepAnalysis, runGetAiProofreadSuggestions } from '@/app/actions';
 import type { AiDeepAnalysisOutput } from '@/ai/flows/ai-deep-analysis';
 import AiAssistant from './ai-assistant';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -172,7 +172,7 @@ export default function AiFab({
         setActiveView('suggestions');
     }
     setPopoverOpen(true);
-    const result = await getAiSuggestions({ screenplay: scriptContent });
+    const result = await runGetAiSuggestions({ screenplay: scriptContent });
     setIsSuggestionsLoading(false);
 
     if (result.error) {
@@ -197,7 +197,7 @@ export default function AiFab({
         setActiveView('analysis');
     }
     setPopoverOpen(true);
-    const result = await getAiDeepAnalysis({ screenplay: scriptContent });
+    const result = await runGetAiDeepAnalysis({ screenplay: scriptContent });
     setIsAnalysisLoading(false);
 
     if (result.error) {
@@ -233,7 +233,7 @@ export default function AiFab({
         setActiveView('proofread');
     }
     setPopoverOpen(true);
-    const result = await getAiProofreadSuggestions({ script: scriptContent });
+    const result = await runGetAiProofreadSuggestions({ script: scriptContent });
     setIsProofreading(false);
 
     if (result.error) {

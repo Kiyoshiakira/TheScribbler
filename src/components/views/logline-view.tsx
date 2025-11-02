@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useScript } from "@/context/script-context";
-import { aiGenerateLogline } from "@/app/actions";
+import { runAiGenerateLogline } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,7 @@ export default function LoglineView() {
             return;
         }
         setIsGenerating(true);
-        const result = await aiGenerateLogline({ screenplay: script.content });
+        const result = await runAiGenerateLogline({ screenplay: script.content });
         setIsGenerating(false);
 
         if (result.error || !result.data) {
