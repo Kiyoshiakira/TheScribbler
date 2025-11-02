@@ -15,14 +15,10 @@ import {
   Users,
   NotebookPen,
   LayoutDashboard,
-  FileText,
-  Clock,
   User,
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useScript } from '@/context/script-context';
-import { Skeleton } from '../ui/skeleton';
 import type { View } from './AppLayout';
 import { useCurrentScript } from '@/context/current-script-context';
 
@@ -43,39 +39,6 @@ export const Logo = () => (
     <path d="M12 4v16" />
   </svg>
 );
-
-const StatDisplay = ({ icon, value, label, isLoading }: { icon: React.ReactNode, value: string | number, label: string, isLoading: boolean }) => (
-    <div className="flex items-center justify-between text-sm">
-      <div className="flex items-center gap-2 text-sidebar-foreground/80">
-        {icon}
-        <span>{label}</span>
-      </div>
-      {isLoading ? <Skeleton className="h-4 w-8" /> : <span className="font-semibold">{value}</span>}
-    </div>
-);
-
-const ScriptStatsPanel = () => {
-    const { script, characters, isScriptLoading } = useScript();
-
-    const wordCount = script?.content?.trim().split(/\s+/).filter(Boolean).length || 0;
-    const pageCount = Math.round(wordCount / 160); // Simple estimation
-    const estimatedMinutes = Math.round((wordCount / 160) * 10) / 10;
-    const characterCount = characters?.length || 0;
-
-    const stats = {
-      pageCount,
-      characterCount,
-      estimatedMinutes,
-    };
-    
-    return (
-        <div className="space-y-2 rounded-lg bg-sidebar-accent p-3">
-             <StatDisplay icon={<FileText />} label="Pages" value={stats.pageCount} isLoading={isScriptLoading} />
-             <StatDisplay icon={<Users />} label="Characters" value={stats.characterCount} isLoading={isScriptLoading} />
-             <StatDisplay icon={<Clock />} label="Time" value={`${stats.estimatedMinutes} min`} isLoading={isScriptLoading} />
-        </div>
-    )
-}
 
 interface AppSidebarProps {
   activeView: View;
@@ -107,7 +70,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" side="left">
       <SidebarHeader>
-        <button className="flex items-center gap-2 p-2" onClick={() => handleViewChange('profile')}>
+        <button className="flex items-center gap-2 p-2" onClick={() => handleViewChange('dashboard')}>
             <Logo />
             <h1 className="text-xl font-bold font-headline">ScriptScribbler</h1>
         </button>
