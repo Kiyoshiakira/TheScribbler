@@ -1,0 +1,1 @@
+export const SCRIPT_TOKEN_LIMIT = 1_000_000;

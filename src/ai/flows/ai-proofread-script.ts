@@ -10,8 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-
-const SCRIPT_TOKEN_LIMIT = 1000000; // 1 million characters
+import { SCRIPT_TOKEN_LIMIT } from '@/constants';
 
 const AiProofreadScriptInputSchema = z.object({
   script: z.string().describe('The screenplay text to proofread.'),
