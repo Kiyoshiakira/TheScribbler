@@ -12,6 +12,7 @@ import {
   SearchCheck,
   Check,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -28,6 +29,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import CollabAssistant from './collab-assistant';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 interface AnalysisItem {
@@ -100,6 +102,8 @@ const PROOFREAD_STATUS_MESSAGES = [
   'Verifying continuity...',
   'Finalizing suggestions...',
 ];
+
+const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
 
 export default function AiFab({
   actions = ['suggestImprovements', 'deepAnalysis', 'proofread', 'openChat'],
@@ -523,6 +527,34 @@ export default function AiFab({
         default:
             return null;
     }
+  }
+
+
+  if (!isAiEnabled) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              className="rounded-full w-14 h-14 shadow-lg fixed bottom-8 right-8 z-50"
+              disabled
+            >
+              <Sparkles className="w-6 h-6" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top" align="end">
+            <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                <div>
+                    <p className="font-semibold">AI Features Disabled</p>
+                    <p className="text-xs">Set GEMINI_API_KEY in your environment to enable.</p>
+                </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   }
 
 

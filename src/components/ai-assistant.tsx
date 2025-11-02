@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Mic, Send, Square } from 'lucide-react';
+import { Sparkles, Mic, Send, Square, AlertTriangle } from 'lucide-react';
 import { Input } from './ui/input';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,8 @@ interface ProofreadSuggestion {
 interface AiAssistantProps {
     openProofreadDialog: (suggestions: ProofreadSuggestion[]) => void;
 }
+
+const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
 
 
 export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
@@ -152,6 +154,18 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
       SpeechRecognition.startListening({ continuous: true });
     }
   };
+
+  if (!isAiEnabled) {
+    return (
+        <div className="h-full flex flex-col min-h-0 items-center justify-center text-center text-muted-foreground p-4">
+            <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground">AI Features Disabled</h3>
+            <p className="text-sm">
+                To enable the AI assistant, please set the GEMINI_API_KEY in your project's environment variables.
+            </p>
+        </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col min-h-0">

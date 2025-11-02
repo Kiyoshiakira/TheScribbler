@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
     NEXT_PUBLIC_GOOGLE_APP_ID: process.env.GOOGLE_APP_ID,
+    NEXT_PUBLIC_AI_ENABLED: (process.env.GEMINI_API_KEY || '').trim() !== '',
   },
   eslint: {
     ignoreDuringBuilds: true,
