@@ -15,7 +15,6 @@ const AiReformatScriptInputSchema = z.object({
   rawScript: z
     .string()
     .describe('The raw, potentially poorly formatted, script text.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiReformatScriptInput = z.infer<
   typeof AiReformatScriptInputSchema
@@ -68,7 +67,7 @@ const aiReformatScriptFlow = ai.defineFlow(
     outputSchema: AiReformatScriptOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,

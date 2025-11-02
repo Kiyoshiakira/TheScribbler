@@ -9,14 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Sparkles, NotebookPen } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { useSettings } from "@/context/settings-context";
 
 export default function LoglineView() {
     const { script, setScriptLogline, isScriptLoading } = useScript();
     const [logline, setLogline] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const { toast } = useToast();
-    const { settings } = useSettings();
 
     useEffect(() => {
         if (script?.logline) {
@@ -36,7 +34,7 @@ export default function LoglineView() {
             return;
         }
         setIsGenerating(true);
-        const result = await runAiGenerateLogline({ screenplay: script.content, model: settings.aiModel });
+        const result = await runAiGenerateLogline({ screenplay: script.content });
         setIsGenerating(false);
 
         if (result.error || !result.data) {

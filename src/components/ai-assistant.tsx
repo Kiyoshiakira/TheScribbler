@@ -17,7 +17,6 @@ import { useScript } from '@/context/script-context';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useSettings } from '@/context/settings-context';
 
 
 interface ChatMessage {
@@ -44,7 +43,6 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
   const { document, setBlocks } = useScript();
   const scriptContent = document?.blocks.map(b => b.text).join('\n\n') || '';
   const { toast } = useToast();
-  const { settings } = useSettings();
 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -87,7 +85,6 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
     const result = await runAiAgent({
       request: currentInput,
       script: scriptContent,
-      model: settings.aiModel,
     });
 
     setIsChatLoading(false);

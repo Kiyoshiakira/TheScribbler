@@ -1,29 +1,23 @@
 'use client';
 
-import React, { createContext, useState, useEffect, ReactNode, useContext, useCallback } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
 
 const SETTINGS_STORAGE_KEY = 'scriptscribbler-settings';
 
-export type AiModel = 'gemini-1.5-flash-latest' | 'gemini-1.5-pro-latest';
-
-interface Settings {
-  aiModel: AiModel;
-}
+interface Settings {}
 
 interface SettingsContextType {
   settings: Settings;
-  setAiModel: (model: AiModel) => void;
   isSettingsLoading: boolean;
 }
 
 export const SettingsContext = createContext<SettingsContextType>({
-  settings: { aiModel: 'gemini-1.5-pro-latest' },
-  setAiModel: () => {},
+  settings: {},
   isSettingsLoading: true,
 });
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>({ aiModel: 'gemini-1.5-pro-latest' });
+  const [settings, setSettings] = useState<Settings>({});
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
 
   useEffect(() => {
@@ -39,19 +33,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const setAiModel = useCallback((model: AiModel) => {
-    const newSettings = { ...settings, aiModel: model };
-    setSettings(newSettings);
-    try {
-      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
-    } catch (error) {
-      console.warn(`Error saving settings to localStorage:`, error);
-    }
-  }, [settings]);
-
   const value = {
     settings,
-    setAiModel,
     isSettingsLoading,
   };
 

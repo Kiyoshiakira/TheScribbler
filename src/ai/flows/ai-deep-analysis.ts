@@ -13,7 +13,6 @@ import {z} from 'genkit';
 
 const AiDeepAnalysisInputSchema = z.object({
   screenplay: z.string().describe('The screenplay text to analyze.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiDeepAnalysisInput = z.infer<typeof AiDeepAnalysisInputSchema>;
 
@@ -58,7 +57,7 @@ const aiDeepAnalysisFlow = ai.defineFlow(
     outputSchema: AiDeepAnalysisOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const {output} = await ai.generate({
       model,
       prompt: prompt.prompt,

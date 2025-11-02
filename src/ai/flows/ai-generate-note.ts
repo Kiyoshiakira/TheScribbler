@@ -13,7 +13,6 @@ import { z } from 'genkit';
 
 const AiGenerateNoteInputSchema = z.object({
   prompt: z.string().describe('A simple prompt to generate a note about.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiGenerateNoteInput = z.infer<typeof AiGenerateNoteInputSchema>;
 
@@ -71,7 +70,7 @@ const aiGenerateNoteFlow = ai.defineFlow(
     outputSchema: AiGenerateNoteOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,

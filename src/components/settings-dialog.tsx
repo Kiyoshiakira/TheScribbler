@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useSettings, type AiModel } from '@/context/settings-context';
+import { useSettings } from '@/context/settings-context';
 import { Skeleton } from './ui/skeleton';
 import { Separator } from './ui/separator';
 import { useUser } from '@/firebase';
@@ -33,21 +33,8 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const AVAILABLE_MODELS: { value: AiModel; label: string; description: string }[] = [
-  {
-    value: 'gemini-1.5-pro-latest',
-    label: 'Gemini 1.5 Pro',
-    description: 'Highest-quality model for complex reasoning.',
-  },
-  {
-    value: 'gemini-1.5-flash-latest',
-    label: 'Gemini 1.5 Flash',
-    description: 'Fast and cost-effective for most tasks.',
-  },
-];
-
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { settings, setAiModel, isSettingsLoading } = useSettings();
+  const { isSettingsLoading } = useSettings();
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
@@ -66,7 +53,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     const debugState = {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
-        settings: settings,
         userContext: {
             isUserLoading: userState.isUserLoading,
             user: userState.user ? { uid: userState.user.uid, email: userState.user.email, displayName: userState.user.displayName } : null,
@@ -88,7 +74,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         }
     };
     
-    const diagnosisResult = await runAiDiagnoseAppHealth({ appState: JSON.stringify(debugState, null, 2), model: settings.aiModel });
+    const diagnosisResult = await runAiDiagnoseAppHealth({ appState: JSON.stringify(debugState, null, 2) });
     
     let logContent = `============ ScriptScribbler Debug Log ============\n`;
     logContent += `Generated at: ${debugState.timestamp}\n\n`;
@@ -131,35 +117,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="ai-model-select">AI Model</Label>
-            {isSettingsLoading ? (
-              <Skeleton className="h-10 w-full" />
-            ) : (
-              <Select
-                value={settings.aiModel}
-                onValueChange={(value: AiModel) => setAiModel(value)}
-              >
-                <SelectTrigger id="ai-model-select">
-                  <SelectValue placeholder="Select a model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AVAILABLE_MODELS.map(model => (
-                    <SelectItem key={model.value} value={model.value}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{model.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {model.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <p className="text-xs text-muted-foreground">
-              The AI model used for generation, analysis, and other AI features.
-            </p>
+           <div className="space-y-2">
+            <Label>AI Model</Label>
+             <div className='p-3 border rounded-md bg-muted/50 text-sm text-muted-foreground'>
+                The application is configured to use the <strong>gemini-2.5-flash-latest</strong> model for all AI operations.
+             </div>
           </div>
 
           <Separator />

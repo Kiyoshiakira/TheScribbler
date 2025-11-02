@@ -15,7 +15,6 @@ const AiGenerateCharacterProfileInputSchema = z.object({
   characterDescription: z
     .string()
     .describe('A brief description or traits of the character.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiGenerateCharacterProfileInput = z.infer<
   typeof AiGenerateCharacterProfileInputSchema
@@ -70,7 +69,7 @@ const aiGenerateCharacterProfileFlow = ai.defineFlow(
     outputSchema: AiGenerateCharacterProfileOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,

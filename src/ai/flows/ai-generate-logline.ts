@@ -13,7 +13,6 @@ import { z } from 'genkit';
 
 const AiGenerateLoglineInputSchema = z.object({
   screenplay: z.string().describe('The full screenplay text.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiGenerateLoglineInput = z.infer<
   typeof AiGenerateLoglineInputSchema
@@ -64,7 +63,7 @@ const aiGenerateLoglineFlow = ai.defineFlow(
     outputSchema: AiGenerateLoglineOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,

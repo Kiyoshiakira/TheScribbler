@@ -14,7 +14,6 @@ import { SCRIPT_TOKEN_LIMIT } from '@/constants';
 
 const AiProofreadScriptInputSchema = z.object({
   script: z.string().describe('The screenplay text to proofread.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiProofreadScriptInput = z.infer<
   typeof AiProofreadScriptInputSchema
@@ -86,7 +85,7 @@ const aiProofreadScriptFlow = ai.defineFlow(
     if (input.script.length > SCRIPT_TOKEN_LIMIT) {
         return { suggestions: [] };
     }
-    const model = googleAI(input.model || process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,

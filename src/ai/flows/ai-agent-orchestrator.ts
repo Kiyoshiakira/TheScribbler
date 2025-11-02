@@ -53,7 +53,6 @@ const AiReformatScriptOutputSchema = z.object({
 const AiAgentOrchestratorInputSchema = z.object({
   request: z.string().describe("The user's natural language request."),
   script: z.string().describe('The current state of the screenplay.'),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiAgentOrchestratorInput = z.infer<
   typeof AiAgentOrchestratorInputSchema
@@ -100,7 +99,6 @@ const generateCharacterTool = ai.defineTool(
     outputSchema: AiGenerateCharacterProfileOutputSchema,
   },
   async (toolInput): Promise<AiGenerateCharacterProfileOutput> => {
-    // This is where you would pass the model if the underlying flow supports it
     return await aiGenerateCharacterProfile({
       characterDescription: toolInput.description,
     } as AiGenerateCharacterProfileInput);
@@ -170,31 +168,14 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     outputSchema: AiAgentOrchestratorOutputSchema,
   },
   async (input) => {
-    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     
-    // Pass the model to the underlying tool functions
-    const hydratedGenerateCharacterTool = ai.defineTool(
-      { ...generateCharacterTool.config },
-      (toolInput) => aiGenerateCharacterProfile({ characterDescription: toolInput.description, model: input.model })
-    );
-
-    const hydratedProofreadScriptTool = ai.defineTool(
-      { ...proofreadScriptTool.config },
-      ({ script }) => aiProofreadScript({ script, model: input.model })
-    );
-    
-    const hydratedReformatScriptTool = ai.defineTool(
-      { ...reformatScriptTool.config },
-      ({ script }) => aiReformatScript({ rawScript: script, model: input.model })
-    );
-
-
     // STEP 1: Let the model decide whether to call a tool OR modify the script directly.
     let decision = await ai.generate({
       model,
       prompt: orchestratorPrompt,
       input,
-      tools: [hydratedGenerateCharacterTool, hydratedProofreadScriptTool, hydratedReformatScriptTool],
+      tools: [generateCharacterTool, proofreadScriptTool, reformatScriptTool],
       output: {
         format: 'json',
         schema: z.object({

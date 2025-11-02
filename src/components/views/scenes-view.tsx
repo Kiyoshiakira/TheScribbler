@@ -20,7 +20,6 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useScript } from '@/context/script-context';
 import { runGetAiSuggestions } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useSettings } from '@/context/settings-context';
 
 export interface Scene {
   id: string;
@@ -39,7 +38,6 @@ export default function ScenesView() {
   const [suggestionsDialogOpen, setSuggestionsDialogOpen] = useState(false);
   const { script } = useScript();
   const { toast } = useToast();
-  const { settings } = useSettings();
 
   const scenesCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'scenes') : null),
@@ -65,7 +63,7 @@ export default function ScenesView() {
     setIsSuggestionsLoading(true);
     setSuggestions([]);
     setSuggestionsDialogOpen(true);
-    const result = await runGetAiSuggestions({ screenplay: script.content, model: settings.aiModel });
+    const result = await runGetAiSuggestions({ screenplay: script.content });
     setIsSuggestionsLoading(false);
 
     if (result.error) {

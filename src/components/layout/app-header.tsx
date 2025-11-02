@@ -39,7 +39,6 @@ import type { View } from './AppLayout';
 import { runAiReformatScript } from '@/app/actions';
 import { useGooglePicker } from '@/hooks/use-google-picker';
 import { cn } from '@/lib/utils';
-import { useSettings } from '@/context/settings-context';
 
 
 interface AppHeaderProps {
@@ -56,7 +55,6 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
-  const { settings } = useSettings();
 
   const userProfileRef = useMemoFirebase(() => {
     if (user && firestore) {
@@ -84,7 +82,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         
         try {
              update({ id: 'import-toast', title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
-             const reformatResult = await runAiReformatScript({ rawScript: content, model: settings.aiModel });
+             const reformatResult = await runAiReformatScript({ rawScript: content });
 
              if (reformatResult.error || !reformatResult.data) {
                 throw new Error(reformatResult.error || 'AI reformatting failed.');
@@ -233,7 +231,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         const parsedData = await parseScriteFile(arrayBuffer);
         
         update({ id: 'scrite-import-toast', title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
-        const reformatResult = await runAiReformatScript({ rawScript: parsedData.script, model: settings.aiModel });
+        const reformatResult = await runAiReformatScript({ rawScript: parsedData.script });
         
         if (reformatResult.error || !reformatResult.data) {
             throw new Error(reformatResult.error || 'AI reformatting failed.');

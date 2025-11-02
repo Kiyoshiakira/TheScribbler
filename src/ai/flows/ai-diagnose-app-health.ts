@@ -17,7 +17,6 @@ const AiDiagnoseAppHealthInputSchema = z.object({
     .describe(
       'A JSON string representing a snapshot of the application state.'
     ),
-  model: z.string().optional().describe('The AI model to use for the operation.'),
 });
 export type AiDiagnoseAppHealthInput = z.infer<
   typeof AiDiagnoseAppHealthInputSchema
@@ -73,7 +72,7 @@ const aiDiagnoseAppHealthFlow = ai.defineFlow(
     outputSchema: AiDiagnoseAppHealthOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
+    const model = googleAI('gemini-2.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,

@@ -30,7 +30,6 @@ import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import CollabAssistant from './collab-assistant';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { useSettings } from '@/context/settings-context';
 
 
 interface AnalysisItem {
@@ -138,7 +137,6 @@ export default function AiFab({
   const { toast } = useToast();
   const { document, setBlocks } = useScript();
   const scriptContent = document?.blocks.map(b => b.text).join('\n\n') || '';
-  const { settings } = useSettings();
 
   const [proofreadStatus, setProofreadStatus] = useState(PROOFREAD_STATUS_MESSAGES[0]);
 
@@ -178,7 +176,7 @@ export default function AiFab({
         setActiveView('suggestions');
     }
     setPopoverOpen(true);
-    const result = await runGetAiSuggestions({ screenplay: scriptContent, model: settings.aiModel });
+    const result = await runGetAiSuggestions({ screenplay: scriptContent });
     setIsSuggestionsLoading(false);
 
     if (result.error) {
@@ -203,7 +201,7 @@ export default function AiFab({
         setActiveView('analysis');
     }
     setPopoverOpen(true);
-    const result = await runGetAiDeepAnalysis({ screenplay: scriptContent, model: settings.aiModel });
+    const result = await runGetAiDeepAnalysis({ screenplay: scriptContent });
     setIsAnalysisLoading(false);
 
     if (result.error) {
@@ -239,7 +237,7 @@ export default function AiFab({
         setActiveView('proofread');
     }
     setPopoverOpen(true);
-    const result = await runGetAiProofreadSuggestions({ script: scriptContent, model: settings.aiModel });
+    const result = await runGetAiProofreadSuggestions({ script: scriptContent });
     setIsProofreading(false);
 
     if (result.error) {
