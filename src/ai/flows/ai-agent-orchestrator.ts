@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import {
   aiGenerateCharacterProfile,
@@ -18,12 +19,12 @@ import {
 import {
   aiProofreadScript,
   type AiProofreadScriptOutput,
-  type AiProofreadScriptInput,
+type AiProofreadScriptInput,
 } from './ai-proofread-script';
 import {
   aiReformatScript,
   type AiReformatScriptOutput,
-  type AiReformatScriptInput,
+type AiReformatScriptInput,
 } from './ai-reformat-script';
 
 const AiGenerateCharacterProfileOutputSchema = z.object({
@@ -99,6 +100,7 @@ const generateCharacterTool = ai.defineTool(
     outputSchema: AiGenerateCharacterProfileOutputSchema,
   },
   async (toolInput): Promise<AiGenerateCharacterProfileOutput> => {
+    // This is where you would pass the model if the underlying flow supports it
     return await aiGenerateCharacterProfile({
       characterDescription: toolInput.description,
     } as AiGenerateCharacterProfileInput);
@@ -169,12 +171,30 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
   },
   async (input) => {
     const model = googleAI(input.model || 'gemini-1.5-flash-latest');
+    
+    // Pass the model to the underlying tool functions
+    const hydratedGenerateCharacterTool = ai.defineTool(
+      { ...generateCharacterTool.config },
+      (toolInput) => aiGenerateCharacterProfile({ characterDescription: toolInput.description, model: input.model })
+    );
+
+    const hydratedProofreadScriptTool = ai.defineTool(
+      { ...proofreadScriptTool.config },
+      ({ script }) => aiProofreadScript({ script, model: input.model })
+    );
+    
+    const hydratedReformatScriptTool = ai.defineTool(
+      { ...reformatScriptTool.config },
+      ({ script }) => aiReformatScript({ rawScript: script, model: input.model })
+    );
+
+
     // STEP 1: Let the model decide whether to call a tool OR modify the script directly.
     let decision = await ai.generate({
       model,
       prompt: orchestratorPrompt,
       input,
-      tools: [generateCharacterTool, proofreadScriptTool, reformatScriptTool],
+      tools: [hydratedGenerateCharacterTool, hydratedProofreadScriptTool, hydratedReformatScriptTool],
       output: {
         format: 'json',
         schema: z.object({
