@@ -7,6 +7,9 @@ import { useDebounce } from 'use-debounce';
 import type { Character } from '@/components/views/characters-view';
 import type { Scene } from '@/components/views/scenes-view';
 import type { Note } from '@/components/views/notes-view';
+import { ScriptDocument, ScriptBlock } from '@/lib/editor-types';
+import { parseScreenplay, serializeScript } from '@/lib/screenplay-parser';
+
 
 interface Script {
     id: string;
@@ -18,7 +21,8 @@ interface Script {
 
 interface ScriptContextType {
   script: Script | null;
-  setLines: (content: string) => void;
+  document: ScriptDocument | null; // The structured document
+  setBlocks: (blocks: ScriptBlock[]) => void;
   setScriptTitle: (title: string) => void;
   setScriptLogline: (logline: string) => void;
   isScriptLoading: boolean;
@@ -29,7 +33,8 @@ interface ScriptContextType {
 
 export const ScriptContext = createContext<ScriptContextType>({
   script: null,
-  setLines: () => {},
+  document: null,
+  setBlocks: () => {},
   setScriptTitle: () => {},
   setScriptLogline: () => {},
   isScriptLoading: true,
@@ -43,6 +48,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   const firestore = useFirestore();
   
   const [localScript, setLocalScript] = useState<Script | null>(null);
+  const [localDocument, setLocalDocument] = useState<ScriptDocument | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   console.log(`[ScriptContext] Provider mounted for scriptId: ${scriptId}`);
@@ -61,7 +67,10 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   
   const { data: firestoreScript, isLoading: isDocLoading } = useDoc<Script>(scriptDocRef);
 
-  const [debouncedScript] = useDebounce(localScript, 1000);
+  const [debouncedDocument] = useDebounce(localDocument, 1000);
+  const [debouncedTitle] = useDebounce(localScript?.title, 1000);
+  const [debouncedLogline] = useDebounce(localScript?.logline, 1000);
+
 
   const charactersCollectionRef = useMemoFirebase(
     () => (user && firestore && scriptId ? collection(firestore, 'users', user.uid, 'scripts', scriptId, 'characters') : null),
@@ -86,7 +95,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   const { data: notes, isLoading: areNotesLoading } = useCollection<Note>(notesCollection);
 
   const updateFirestore = useCallback((dataToUpdate: Partial<Script>) => {
-    if (scriptDocRef) {
+    if (scriptDocRef && Object.keys(dataToUpdate).length > 0) {
         console.log('[ScriptContext] Saving changes to Firestore:', dataToUpdate);
         const payload = { 
             ...dataToUpdate,
@@ -103,51 +112,46 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     }
   }, [scriptDocRef]);
   
+  // Effect for initial data load
   useEffect(() => {
-    if (firestoreScript) {
-        if (isInitialLoad) {
-            console.log('[ScriptContext] Initial load complete. Setting local script from Firestore.');
-            setLocalScript(firestoreScript);
-            setIsInitialLoad(false);
-        } else {
-            // This logic is complex. The goal is to accept remote changes
-            // without overriding recent local typing. For now, we favor
-            // local changes by only updating if the content is truly different
-            // and the local state hasn't been modified recently.
-            if (localScript && firestoreScript.content !== localScript.content) {
-                console.log("[ScriptContext] Remote change detected, but local state is preserved to avoid overriding user input.");
-            }
-        }
+    if (firestoreScript && isInitialLoad) {
+        console.log('[ScriptContext] Initial load complete. Setting local script from Firestore.');
+        setLocalScript(firestoreScript);
+        setLocalDocument(parseScreenplay(firestoreScript.content));
+        setIsInitialLoad(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firestoreScript, isInitialLoad]);
 
-
+  // Debounced effect for saving content changes
   useEffect(() => {
-    // Do not save anything until the initial load is complete and we have data.
-    if (isInitialLoad || !debouncedScript || !firestoreScript) {
-      return;
-    }
-    
-    const changes: Partial<Script> = {};
-    if (debouncedScript.content !== firestoreScript.content) {
-      changes.content = debouncedScript.content;
-    }
-    if (debouncedScript.title !== firestoreScript.title) {
-      changes.title = debouncedScript.title;
-    }
-    if (debouncedScript.logline !== firestoreScript.logline) {
-      changes.logline = debouncedScript.logline;
-    }
+    if (isInitialLoad || !debouncedDocument) return;
 
-    // Only write to Firestore if there are actual changes to save.
-    if (Object.keys(changes).length > 0) {
-      updateFirestore(changes);
+    const newContent = serializeScript(debouncedDocument);
+    // Only save if content has actually changed from what's in Firestore
+    if (newContent.trim() !== firestoreScript?.content.trim()) {
+      updateFirestore({ content: newContent });
     }
-  }, [debouncedScript, firestoreScript, isInitialLoad, updateFirestore]);
+  }, [debouncedDocument, firestoreScript, isInitialLoad, updateFirestore]);
 
-  const setLines = useCallback((content: string) => {
-    setLocalScript(prev => prev ? { ...prev, content } : null);
+  // Debounced effect for saving title changes
+  useEffect(() => {
+    if (isInitialLoad || debouncedTitle === undefined) return;
+    if (debouncedTitle !== firestoreScript?.title) {
+        updateFirestore({ title: debouncedTitle });
+    }
+  }, [debouncedTitle, firestoreScript, isInitialLoad, updateFirestore]);
+
+  // Debounced effect for saving logline changes
+  useEffect(() => {
+    if (isInitialLoad || debouncedLogline === undefined) return;
+    if (debouncedLogline !== firestoreScript?.logline) {
+        updateFirestore({ logline: debouncedLogline });
+    }
+  }, [debouncedLogline, firestoreScript, isInitialLoad, updateFirestore]);
+
+
+  const setBlocks = useCallback((blocks: ScriptBlock[]) => {
+    setLocalDocument({ blocks });
   }, []);
 
   const setScriptTitle = useCallback((title: string) => {
@@ -163,7 +167,8 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
   const value = { 
     script: localScript,
-    setLines,
+    document: localDocument,
+    setBlocks,
     setScriptTitle,
     setScriptLogline,
     isScriptLoading,

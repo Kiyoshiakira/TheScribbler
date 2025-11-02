@@ -2,23 +2,34 @@
 
 import React from 'react';
 import { useScript } from '@/context/script-context';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
+import ScriptBlockComponent from './script-block';
+import type { ScriptBlock } from '@/lib/editor-types';
 
 interface ScriptEditorProps {
   isStandalone?: boolean;
 }
 
 export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps) {
-  const { script, setLines, isScriptLoading } = useScript();
+  const { document, setBlocks, isScriptLoading } = useScript();
 
-  if (isScriptLoading) {
+  const handleBlockChange = (blockId: string, newText: string) => {
+    if (document) {
+      const newBlocks = document.blocks.map(block =>
+        block.id === blockId ? { ...block, text: newText } : block
+      );
+      setBlocks(newBlocks);
+    }
+  };
+
+  if (isScriptLoading || !document) {
     return (
-      <div className="p-8 space-y-4">
-        <Skeleton className="h-7 w-3/4" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-12 w-full" />
+      <div className="p-8 space-y-4 max-w-3xl mx-auto">
+        <Skeleton className="h-6 w-1/2" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-6 w-1/4 mx-auto" />
+        <Skeleton className="h-10 w-3/4" />
         <Skeleton className="h-6 w-1/2" />
       </div>
     );
@@ -27,16 +38,17 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
   return (
     <div
       className={cn(
-        'relative h-full w-full font-code',
-        isStandalone ? 'p-4' : 'p-8' // Add more padding for a doc-like feel
+        'relative h-full w-full font-code max-w-3xl mx-auto',
+        isStandalone ? 'p-4' : 'p-8 md:p-16' // Add more padding for a doc-like feel
       )}
     >
-      <Textarea
-        value={script?.content || ''}
-        onChange={(e) => setLines(e.target.value)}
-        className="h-full w-full resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base leading-relaxed"
-        placeholder="A new story begins..."
-      />
+      {document.blocks.map(block => (
+        <ScriptBlockComponent
+          key={block.id}
+          block={block}
+          onChange={handleBlockChange}
+        />
+      ))}
     </div>
   );
 }
