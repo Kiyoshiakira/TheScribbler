@@ -70,6 +70,9 @@ const aiGenerateLoglineFlow = ai.defineFlow(
       prompt: prompt.prompt,
       input: input,
       output: { schema: AiGenerateLoglineOutputSchema },
+      config: {
+        timeout: 30000,
+      }
     });
     if (!output) {
       throw new Error('AI failed to return a valid logline. The output did not match the expected format.');

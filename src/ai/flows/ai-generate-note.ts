@@ -3,7 +3,7 @@
  * @fileOverview A dedicated AI flow for generating notes.
  *
  * - aiGenerateNote - A function that generates a note based on a prompt.
- * - AiGenerateNoteInput - The input type for the function.
+ * - AiGenerateNoteInput - The input type for the function 遅く
  * - AiGenerateNoteOutput - The return type for the function.
  */
 
@@ -73,6 +73,9 @@ const aiGenerateNoteFlow = ai.defineFlow(
       prompt: prompt.prompt,
       input: input,
       output: { schema: AiGenerateNoteOutputSchema },
+      config: {
+        timeout: 30000,
+      }
     });
     if (!output) {
       throw new Error('AI failed to return a valid note. The output did not match the expected format.');

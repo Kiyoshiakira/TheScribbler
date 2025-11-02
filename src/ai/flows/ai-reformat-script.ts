@@ -68,12 +68,15 @@ const aiReformatScriptFlow = ai.defineFlow(
     outputSchema: AiReformatScriptOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-flash-latest');
+    const model = googleAI(input.model || process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest');
     const { output } = await ai.generate({
       model,
       prompt: prompt.prompt,
       input: input,
       output: { schema: AiReformatScriptOutputSchema },
+      config: {
+        timeout: 30000,
+      }
     });
     if (!output) {
       throw new Error(

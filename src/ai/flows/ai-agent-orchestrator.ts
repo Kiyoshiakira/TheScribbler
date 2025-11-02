@@ -9,7 +9,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import {
   aiGenerateCharacterProfile,
@@ -187,6 +186,9 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
             ),
         }),
       },
+      config: {
+        timeout: 30000,
+      }
     });
 
     let toolResult: any = null;
@@ -239,6 +241,9 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
               ),
           }),
         },
+        config: {
+            timeout: 30000,
+        }
       });
 
       return {
@@ -254,6 +259,9 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
       model,
       prompt: `You are an expert AI assistant. The user asked: "${input.request}". The script content is: ---{{{script}}}---. Provide a helpful, conversational answer to their question.`,
       input,
+      config: {
+        timeout: 30000,
+      }
     });
 
     return {
