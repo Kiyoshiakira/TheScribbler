@@ -12,7 +12,9 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 const AiReformatScriptInputSchema = z.object({
-  rawScript: z.string().describe('The raw, potentially poorly formatted, script text.'),
+  rawScript: z
+    .string()
+    .describe('The raw, potentially poorly formatted, script text.'),
 });
 export type AiReformatScriptInput = z.infer<
   typeof AiReformatScriptInputSchema
@@ -71,6 +73,11 @@ const aiReformatScriptFlow = ai.defineFlow(
       output: { schema: AiReformatScriptOutputSchema },
       model: googleAI('gemini-1.5-pro'),
     });
-    return output!;
+    if (!output) {
+      throw new Error(
+        'AI failed to reformat the script. The output did not match the expected format.'
+      );
+    }
+    return output;
   }
 );

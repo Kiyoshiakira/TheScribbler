@@ -69,6 +69,9 @@ const aiGenerateCharacterProfileFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to return a valid character profile. The output did not match the expected format.');
+    }
+    return output;
   }
 );

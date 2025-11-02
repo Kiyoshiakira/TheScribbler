@@ -91,6 +91,9 @@ const aiProofreadScriptFlow = ai.defineFlow(
       output: { schema: AiProofreadScriptOutputSchema },
       model: googleAI('gemini-1.5-pro'),
     });
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to return valid proofreading suggestions. The output did not match the expected format.');
+    }
+    return output;
   }
 );

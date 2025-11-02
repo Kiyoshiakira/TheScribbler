@@ -63,6 +63,9 @@ const aiGenerateLoglineFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to return a valid logline. The output did not match the expected format.');
+    }
+    return output;
   }
 );

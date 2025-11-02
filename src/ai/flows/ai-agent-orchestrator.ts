@@ -19,8 +19,8 @@ import {
   type AiProofreadScriptOutput,
 } from './ai-proofread-script';
 import {
-    aiReformatScript,
-    type AiReformatScriptOutput,
+  aiReformatScript,
+  type AiReformatScriptOutput,
 } from './ai-reformat-script';
 
 const AiGenerateCharacterProfileOutputSchema = z.object({
@@ -43,9 +43,8 @@ const AiProofreadScriptOutputSchema = z.object({
 });
 
 const AiReformatScriptOutputSchema = z.object({
-    formattedScript: z.string(),
+  formattedScript: z.string(),
 });
-
 
 const AiAgentOrchestratorInputSchema = z.object({
   request: z.string().describe("The user's natural language request."),
@@ -86,7 +85,8 @@ export async function aiAgentOrchestrator(
 const generateCharacterTool = ai.defineTool(
   {
     name: 'generateCharacter',
-    description: 'Generates a new character profile based on a user description. Use this when the user explicitly asks to create, make, or generate a character.',
+    description:
+      'Generates a new character profile based on a user description. Use this when the user explicitly asks to create, make, or generate a character.',
     inputSchema: z.object({
       description: z
         .string()
@@ -102,31 +102,33 @@ const generateCharacterTool = ai.defineTool(
 );
 
 const proofreadScriptTool = ai.defineTool(
-    {
-        name: 'proofreadScript',
-        description: 'Proofreads the script for objective errors like spelling, grammar, and continuity mistakes. This tool does NOT change the story or structure.',
-        inputSchema: z.object({
-            script: z.string().describe('The full script to proofread.'),
-        }),
-        outputSchema: AiProofreadScriptOutputSchema,
-    },
-    async ({script}): Promise<AiProofreadScriptOutput> => {
-        return await aiProofreadScript({ script });
-    }
+  {
+    name: 'proofreadScript',
+    description:
+      'Proofreads the script for objective errors like spelling, grammar, and continuity mistakes. This tool does NOT change the story or structure.',
+    inputSchema: z.object({
+      script: z.string().describe('The full script to proofread.'),
+    }),
+    outputSchema: AiProofreadScriptOutputSchema,
+  },
+  async ({ script }): Promise<AiProofreadScriptOutput> => {
+    return await aiProofreadScript({ script });
+  }
 );
 
 const reformatScriptTool = ai.defineTool(
-    {
-        name: 'reformatScript',
-        description: 'Reformats the entire script into standard screenplay format. Use this when the user asks to "reformat", "clean up", "fix formatting", or says the script is "squished" or "unstructured".',
-        inputSchema: z.object({
-            script: z.string().describe('The full script content to reformat.'),
-        }),
-        outputSchema: AiReformatScriptOutputSchema,
-    },
-     async ({script}): Promise<AiReformatScriptOutput> => {
-        return await aiReformatScript({ rawScript: script });
-    }
+  {
+    name: 'reformatScript',
+    description:
+      'Reformats the entire script into standard screenplay format. Use this when the user asks to "reformat", "clean up", "fix formatting", or says the script is "squished" or "unstructured".',
+    inputSchema: z.object({
+      script: z.string().describe('The full script content to reformat.'),
+    }),
+    outputSchema: AiReformatScriptOutputSchema,
+  },
+  async ({ script }): Promise<AiReformatScriptOutput> => {
+    return await aiReformatScript({ rawScript: script });
+  }
 );
 
 const orchestratorPrompt = `You are an expert AI assistant for a screenwriting application. Your primary goal is to help the user modify their script and other project elements by correctly choosing an action.
@@ -155,7 +157,6 @@ If the request is not a direct story change, you MUST select one of the followin
 ---
 `;
 
-
 const aiAgentOrchestratorFlow = ai.defineFlow(
   {
     name: 'aiAgentOrchestratorFlow',
@@ -175,7 +176,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
             .string()
             .optional()
             .describe(
-              "If the request requires a direct script change, this is the FULL new script. Omit this field entirely if calling a tool."
+              'If the request requires a direct script change, this is the FULL new script. Omit this field entirely if calling a tool.'
             ),
         }),
       },
@@ -186,27 +187,28 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
 
     // STEP 2: Execute the chosen tool, if any.
     if (decision.toolRequests.length > 0) {
-        const toolRequest = decision.toolRequests[0];
-        const toolOutput = await toolRequest.run();
-        
-        let toolType: string | null = null;
-        if (toolRequest.name === 'generateCharacter') toolType = 'character';
-        if (toolRequest.name === 'proofreadScript') toolType = 'proofread';
-        if (toolRequest.name === 'reformatScript') {
-             toolType = 'reformat';
-             modifiedScript = (toolOutput as AiReformatScriptOutput).formattedScript;
-        }
+      const toolRequest = decision.toolRequests[0];
+      const toolOutput = await toolRequest.run();
 
-        toolResult = {
-            type: toolType,
-            data: toolOutput,
-        };
+      let toolType: string | null = null;
+      if (toolRequest.name === 'generateCharacter') toolType = 'character';
+      if (toolRequest.name === 'proofreadScript') toolType = 'proofread';
+      if (toolRequest.name === 'reformatScript') {
+        toolType = 'reformat';
+        modifiedScript = (toolOutput as AiReformatScriptOutput)
+          .formattedScript;
+      }
+
+      toolResult = {
+        type: toolType,
+        data: toolOutput,
+      };
     }
-    
+
     // STEP 3: Generate the final conversational response based on the action taken.
     if (modifiedScript || toolResult) {
-        const finalResponse = await ai.generate({
-            prompt: `You are an expert AI assistant. Based on the user's request, an action was just performed.
+      const finalResponse = await ai.generate({
+        prompt: `You are an expert AI assistant. Based on the user's request, an action was just performed.
             - If a script was modified, state that you've made the requested changes to the script.
             - If a character was generated, present the character.
             - If proofreading was done, summarize what you found.
@@ -215,27 +217,34 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
             Keep your response concise and friendly.
 
             User Request: "${input.request}"
-            Action Result: ${JSON.stringify(toolResult || { action: 'Direct Script Modification' })}
+            Action Result: ${JSON.stringify(
+              toolResult || { action: 'Direct Script Modification' }
+            )}
             `,
-            output: {
-                format: 'json',
-                schema: z.object({
-                    response: z.string().describe("The AI's friendly, conversational response to the user, summarizing the action taken."),
-                })
-            }
-        });
-        
-        return {
-            response: finalResponse.output?.response || "I've completed your request.",
-            modifiedScript: modifiedScript,
-            toolResult: toolResult,
-        };
+        output: {
+          format: 'json',
+          schema: z.object({
+            response: z
+              .string()
+              .describe(
+                "The AI's friendly, conversational response to the user, summarizing the action taken."
+              ),
+          }),
+        },
+      });
+
+      return {
+        response:
+          finalResponse.output?.response || "I've completed your request.",
+        modifiedScript: modifiedScript,
+        toolResult: toolResult,
+      };
     }
 
     // STEP 4: If no tool was called and no script was modified, it's a general question.
     const generalResponse = await ai.generate({
-        prompt: `You are an expert AI assistant. The user asked: "${input.request}". The script content is: ---{{{script}}}---. Provide a helpful, conversational answer to their question.`,
-        input,
+      prompt: `You are an expert AI assistant. The user asked: "${input.request}". The script content is: ---{{{script}}}---. Provide a helpful, conversational answer to their question.`,
+      input,
     });
 
     return {
