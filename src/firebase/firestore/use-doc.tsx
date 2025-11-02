@@ -24,10 +24,6 @@ export interface UseDocResult<T> {
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
-export interface UseDocOptions {
-  revalidateOnFocus?: boolean;
-}
-
 /**
  * React hook to subscribe to a single Firestore document in real-time.
  * Handles nullable references.
@@ -44,12 +40,11 @@ export interface UseDocOptions {
  */
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
-  options: UseDocOptions = { revalidateOnFocus: true }
 ): UseDocResult<T> {
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -59,15 +54,10 @@ export function useDoc<T = any>(
       setError(null);
       return;
     }
-    
-    // If revalidation on focus is disabled and we already have data, don't re-fetch.
-    if (!options.revalidateOnFocus && data) {
-        setIsLoading(false);
-        return;
-    }
 
     setIsLoading(true);
     setError(null);
+    // Optional: setData(null); // Clear previous data instantly
 
     const unsubscribe = onSnapshot(
       memoizedDocRef,
@@ -97,8 +87,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memoizedDocRef, options.revalidateOnFocus]); // Re-run if the memoizedDocRef changes.
+  }, [memoizedDocRef]); // Re-run if the memoizedDocRef changes.
 
   return { data, isLoading, error };
 }

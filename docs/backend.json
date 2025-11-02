@@ -4,123 +4,97 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the ScriptScribbler application.",
+      "description": "Represents a user of the ScriptSync application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the User entity."
         },
         "email": {
           "type": "string",
-          "description": "Email address of the user.",
+          "description": "User's email address.",
           "format": "email"
         },
         "username": {
           "type": "string",
-          "description": "Username of the user."
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name of the user."
-        },
-        "bio": {
-          "type": "string",
-          "description": "A short bio about the user."
-        },
-        "friends": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "A list of user IDs that are friends with this user."
-        },
-        "coverImageUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL for the user's profile cover image."
+          "description": "User's username."
         }
       },
       "required": [
         "id",
         "email",
-        "username",
-        "displayName"
+        "username"
       ]
     },
     "Script": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Script",
       "type": "object",
-      "description": "Represents a screenplay script, including its content.",
+      "description": "Represents a screenplay or script document.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the script."
+          "description": "Unique identifier for the Script entity."
         },
         "title": {
           "type": "string",
-          "description": "Title of the script."
-        },
-        "logline": {
-          "type": "string",
-          "description": "A one-sentence summary of the script."
-        },
-        "content": {
-          "type": "string",
-          "description": "The full content of the screenplay."
+          "description": "Title of the screenplay."
         },
         "authorId": {
           "type": "string",
-          "description": "Reference to the User who created the script."
+          "description": "Reference to User. (Relationship: User 1:N Script).  The user ID of the script's author."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the script was created.",
+          "description": "Timestamp of when the script was created.",
           "format": "date-time"
         },
-        "lastModified": {
+        "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the script was last modified.",
+          "description": "Timestamp of when the script was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
         "title",
-        "content",
         "authorId",
         "createdAt",
-        "lastModified"
+        "updatedAt"
       ]
     },
-    "Note": {
+    "Scene": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Note",
+      "title": "Scene",
       "type": "object",
-      "description": "Represents a note associated with a script.",
+      "description": "Represents a scene within a screenplay.",
       "properties": {
         "id": {
-          "type": "string"
-        },
-        "title": {
-          "type": "string"
-        },
-        "content": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "imageUrl": {
           "type": "string",
-          "format": "uri"
+          "description": "Unique identifier for the Scene entity."
+        },
+        "scriptId": {
+          "type": "string",
+          "description": "Reference to Script. (Relationship: Script 1:N Scene).  The script ID this scene belongs to."
+        },
+        "sceneNumber": {
+          "type": "number",
+          "description": "The scene number within the script."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the scene."
+        },
+        "estimatedDuration": {
+          "type": "number",
+          "description": "Estimated duration of the scene in minutes."
         }
       },
       "required": [
         "id",
-        "title",
-        "content",
-        "category"
+        "scriptId",
+        "sceneNumber",
+        "description"
       ]
     },
     "Character": {
@@ -131,7 +105,11 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the character."
+          "description": "Unique identifier for the Character entity."
+        },
+        "scriptId": {
+          "type": "string",
+          "description": "Reference to Script. (Relationship: Script 1:N Character). The script ID this character belongs to."
         },
         "name": {
           "type": "string",
@@ -139,102 +117,81 @@
         },
         "description": {
           "type": "string",
-          "description": "A short, one-line description of the character."
-        },
-        "profile": {
-          "type": "string",
-          "description": "A detailed profile of the character, including backstory, personality, motivations, etc."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL for the character's portrait image."
-        },
-        "scenes": {
-          "type": "number",
-          "description": "The number of scenes the character appears in."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
+          "description": "Detailed description of the character."
         }
       },
       "required": [
         "id",
+        "scriptId",
         "name",
-        "description",
-        "scenes"
+        "description"
       ]
     },
-    "Scene": {
+    "SceneCharacter": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Scene",
+      "title": "SceneCharacter",
       "type": "object",
-      "description": "Represents a single scene in a screenplay.",
+      "description": "Represents the relationship between scenes and characters, indicating which characters appear in which scenes.",
       "properties": {
         "id": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique identifier for the SceneCharacter entity."
         },
-        "sceneNumber": {
-          "type": "number"
+        "sceneId": {
+          "type": "string",
+          "description": "Reference to Scene. (Relationship: Scene N:N Character).  The scene ID."
         },
-        "setting": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "time": {
-          "type": "number",
-          "description": "Estimated time in minutes."
+        "characterId": {
+          "type": "string",
+          "description": "Reference to Character. (Relationship: Character N:N Scene). The character ID."
         }
       },
       "required": [
         "id",
-        "sceneNumber",
-        "setting",
-        "description",
-        "time"
+        "sceneId",
+        "characterId"
       ]
     },
-    "Comment": {
+    "Collaboration": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Comment",
+      "title": "Collaboration",
       "type": "object",
-      "description": "Represents a chat message within a script.",
+      "description": "Represents a collaboration session between users on a specific script.",
       "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "displayName": { "type": "string" },
-        "text": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Collaboration entity."
+        },
+        "scriptId": {
+          "type": "string",
+          "description": "Reference to Script. (Relationship: Script 1:N Collaboration).  The script ID being collaborated on."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Collaboration). The user ID participating in the collaboration."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user in the collaboration (e.g., editor, viewer)."
+        },
+        "permissions": {
+          "type": "string",
+          "description": "Permissions granted to the user for the collaboration."
+        }
       },
-      "required": ["id", "userId", "displayName", "text", "timestamp"]
-    },
-    "Notification": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Notification",
-      "type": "object",
-      "description": "Represents a notification of a collaborator's action.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "displayName": { "type": "string" },
-        "action": { "type": "string" },
-        "details": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "userId", "action", "timestamp"]
+      "required": [
+        "id",
+        "scriptId",
+        "userId",
+        "role",
+        "permissions"
+      ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous",
-      "google.com"
+      "anonymous"
     ]
   },
   "firestore": {
@@ -244,9 +201,15 @@
         "definition": {
           "entityName": "User",
           "schema": {
-            "$ref": "#/entities/User"
+            "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles."
+          "description": "Stores user profiles. Path-based ownership ensures only the user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
         }
       },
       {
@@ -254,29 +217,19 @@
         "definition": {
           "entityName": "Script",
           "schema": {
-            "$ref": "#/entities/Script"
+            "$ref": "#/backend/entities/Script"
           },
-          "description": "Stores screenplay documents owned by a user."
-        }
-      },
-      {
-        "path": "/users/{userId}/scripts/{scriptId}/characters/{characterId}",
-        "definition": {
-          "entityName": "Character",
-          "schema": {
-            "$ref": "#/entities/Character"
-          },
-          "description": "Stores characters for a specific script."
-        }
-      },
-      {
-        "path": "/users/{userId}/scripts/{scriptId}/notes/{noteId}",
-        "definition": {
-          "entityName": "Note",
-          "schema": {
-            "$ref": "#/entities/Note"
-          },
-          "description": "Stores notes for a specific script."
+          "description": "Stores scripts created by the user. The 'authorId' field within the script document contains the userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user (script author)."
+            },
+            {
+              "name": "scriptId",
+              "description": "The unique ID of the script."
+            }
+          ]
         }
       },
       {
@@ -284,28 +237,90 @@
         "definition": {
           "entityName": "Scene",
           "schema": {
-            "$ref": "#/entities/Scene"
+            "$ref": "#/backend/entities/Scene"
           },
-          "description": "Stores scenes for a specific script."
+          "description": "Stores scenes within a specific script. Accessed only by the script author.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user (script author)."
+            },
+            {
+              "name": "scriptId",
+              "description": "The unique ID of the script."
+            },
+            {
+              "name": "sceneId",
+              "description": "The unique ID of the scene."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}/scripts/{scriptId}/comments/{commentId}",
+        "path": "/users/{userId}/scripts/{scriptId}/characters/{characterId}",
         "definition": {
-          "entityName": "Comment",
-          "schema": { "$ref": "#/entities/Comment" },
-          "description": "Stores chat comments for a specific script."
+          "entityName": "Character",
+          "schema": {
+            "$ref": "#/backend/entities/Character"
+          },
+          "description": "Stores characters within a specific script. Accessed only by the script author.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user (script author)."
+            },
+            {
+              "name": "scriptId",
+              "description": "The unique ID of the script."
+            },
+            {
+              "name": "characterId",
+              "description": "The unique ID of the character."
+            }
+          ]
         }
       },
-       {
-        "path": "/users/{userId}/scripts/{scriptId}/notifications/{notificationId}",
+      {
+        "path": "/users/{userId}/scripts/{scriptId}/sceneCharacters/{sceneCharacterId}",
         "definition": {
-          "entityName": "Notification",
-          "schema": { "$ref": "#/entities/Notification" },
-          "description": "Stores activity notifications for a specific script."
+          "entityName": "SceneCharacter",
+          "schema": {
+            "$ref": "#/backend/entities/SceneCharacter"
+          },
+          "description": "Stores relationships between scenes and characters within a specific script. Accessed only by the script author.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user (script author)."
+            },
+            {
+              "name": "scriptId",
+              "description": "The unique ID of the script."
+            },
+            {
+              "name": "sceneCharacterId",
+              "description": "The unique ID of the SceneCharacter."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/collaborations/{collaborationId}",
+        "definition": {
+          "entityName": "Collaboration",
+          "schema": {
+            "$ref": "#/backend/entities/Collaboration"
+          },
+          "description": "Stores collaboration sessions.  Access is controlled by verifying the user's ID and role. The data model is designed so the role will dictate permissions.",
+          "params": [
+            {
+              "name": "collaborationId",
+              "description": "The unique ID of the collaboration session."
+            }
+          ]
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to be script-centric. Each user has a collection of scripts. All related data, such as characters, notes, scenes, comments, and notifications are stored in subcollections under a specific script document. This ensures data is well-organized and allows for clear, path-based security rules where a user can only access their own scripts and the data within them."
+    "reasoning": "The Firestore data structure is designed to support a collaborative screenwriting application (ScriptSync) with a focus on robust security and scalability. The design emphasizes Authorization Independence, eliminating the need for `get()` calls in security rules by denormalizing authorization data. It uses structural segregation to ensure that all documents within a collection share the same security requirements, simplifying the security rules.\n\n**Authorization Independence and QAPs:**\n\n*   **User-Owned Data:** Scripts, Scenes, Characters, and SceneCharacters are organized under `/users/{userId}`, ensuring that only the owner can access them by default. The `authorId` field in `Script` documents is used to enforce ownership.\n*   **Collaboration Data:** The `/collaborations/{collaborationId}` collection stores collaboration data. Each document contains the `scriptId`, `userId`, `role`, and `permissions`. QAPs for collaborations will be based on verifying membership in the collaboration and the role and permissions associated with each user. The structure assumes that the role determines the permissions.\n\n\nThis design enables listing scripts accessible to a specific user: `scripts` collection is queried by the logged-in user ID.\n\n\n**Error Fix**: The error reported, `FirebaseError: Firebase: Error (auth/operation-not-allowed)`, indicates an issue with Firebase Authentication configuration. Ensure that Password sign-in is enabled for the Firebase project.\n"
   }
 }
