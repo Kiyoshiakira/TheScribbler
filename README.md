@@ -56,11 +56,17 @@ The application will be available at [http://localhost:9002](http://localhost:90
 
 ## Troubleshooting
 
-### Editor is Not Loading or App is Stuck on Loading Screen
+### Login Fails or Editor is Not Loading
 
-This is often caused by an issue with Firebase authentication or data fetching.
+This is often caused by an issue with Firebase authentication or data fetching. If you see errors in the browser console like `(auth/invalid-credential)` or `(auth/operation-not-allowed)`, follow these steps:
 
-1.  **Check Firebase Authentication:** Make sure you have enabled the `Email/Password` and `Google` sign-in providers in your Firebase project's Authentication settings.
-2.  **Check Firestore Rules:** Ensure your `firestore.rules` are deployed and allow the signed-in user to read and write the necessary documents. An incorrect rule can cause data fetches to fail silently.
-3.  **Check Browser Console:** Open the developer tools in your browser and look at the console for any errors, especially `FirebaseError: Missing or insufficient permissions`. This is a clear indicator that a Firestore rule is blocking a request.
-4.  **Check API Keys:** Ensure your `GEMINI_API_KEY` in `.env.local` is correct. While the app should disable AI features gracefully, a misconfiguration could potentially cause issues.
+1.  **Enable Authentication Providers:** The most common cause of login errors is that the sign-in methods are not enabled in your Firebase project.
+    *   Go to the [Firebase Console](https://console.firebase.google.com/).
+    *   Select your project.
+    *   In the left-hand menu, go to **Build > Authentication**.
+    *   Click the **Sign-in method** tab.
+    *   You **MUST** enable both **Email/Password** and **Google** as sign-in providers. Click on each one and flip the toggle to enable it.
+
+2.  **Check Firestore Rules:** Ensure your `firestore.rules` are deployed and allow the signed-in user to read and write the necessary documents. An incorrect rule can cause data fetches to fail silently. You can check for `FirebaseError: Missing or insufficient permissions` in the browser console.
+
+3.  **Check API Keys:** Ensure your `GEMINI_API_KEY` in `.env.local` is correct. While the app should disable AI features gracefully, a misconfiguration could potentially cause issues.
