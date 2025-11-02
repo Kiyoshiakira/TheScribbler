@@ -31,7 +31,7 @@ import { useCurrentScript } from '@/context/current-script-context';
 import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import AiFab from '../ai-fab';
-import { aiGenerateNote } from '@/app/actions';
+import { runAiGenerateNote } from '@/app/actions';
 
 
 const NOTE_CATEGORIES = {
@@ -215,7 +215,7 @@ export default function NotesView() {
     setIsGenerating(true);
     setEditingNote(null);
     
-    const result = await aiGenerateNote({ prompt: 'A surprising plot twist idea.' });
+    const result = await runAiGenerateNote({ prompt: 'A surprising plot twist idea.' });
     
     if(result.error || !result.data) {
         toast({ variant: 'destructive', title: 'Error', description: result.error || 'Could not generate a note.' });
