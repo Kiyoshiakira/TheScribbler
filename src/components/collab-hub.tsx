@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Mic, Square, Phone, Bell, History } from 'lucide-react';
+import { Send, Mic, Square, Phone, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -178,7 +178,7 @@ export default function CollabHub() {
         <div className='flex items-center justify-between pr-2 gap-2'>
             <TabsList>
             <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="notifications">Activity</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
                 <Button variant={isVoiceConnected ? "destructive" : "outline"} size="sm" onClick={handleVoiceConnectToggle}>

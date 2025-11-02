@@ -12,8 +12,6 @@ import {
   SearchCheck,
   Check,
   X,
-  ChevronLeft,
-  Settings,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -515,7 +513,7 @@ export default function AiFab({
             );
         case 'collab':
              return (
-                <div className='flex flex-col h-full'>
+                <div className='flex flex-col h-[28rem]'>
                     {renderHeader('Collaboration Hub', <Users className="w-4 h-4 text-primary" />)}
                     <div className='p-4 flex-1 min-h-0'>
                         <CollabAssistant />
@@ -547,9 +545,9 @@ export default function AiFab({
             className={cn(
                 "mb-2 p-0",
                 bubbleMode === 'ai' && activeView === 'menu' && "w-64",
-                bubbleMode === 'ai' && activeView === 'chat' && "w-[15rem] h-[18rem] flex flex-col",
+                bubbleMode === 'ai' && activeView === 'chat' && "w-[26rem] h-[30rem] flex flex-col",
                 bubbleMode === 'ai' && (activeView === 'suggestions' || activeView === 'analysis' || activeView === 'proofread') && "w-[28rem] h-auto max-h-[32rem] flex flex-col",
-                bubbleMode === 'collab' && "w-[15rem] h-[18rem] flex flex-col"
+                bubbleMode === 'collab' && "w-[26rem] flex flex-col"
             )}
             side="top"
             align="end"
