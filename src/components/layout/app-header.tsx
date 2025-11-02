@@ -128,7 +128,22 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         const notesCol = collection(newScriptRef, 'notes');
         importedNotes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
 
-        await batch.commit();
+        await batch.commit().catch(serverError => {
+            console.error('Scribbler import batch commit failed:', serverError);
+            const permissionError = new FirestorePermissionError({
+              path: `users/${user.uid}/scripts`,
+              operation: 'write', 
+              requestResourceData: {
+                  scriptTitle: projectData.title || 'Untitled Scribbler Import',
+                  importType: 'scribbler',
+                  characterCount: importedCharacters.length,
+                  sceneCount: importedScenes.length,
+                  noteCount: importedNotes.length
+              },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError;
+        });
 
         toast({
           title: 'Import Successful',
@@ -199,11 +214,13 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         });
         
         await batch.commit().catch(serverError => {
+            console.error('Scrite import batch commit failed:', serverError);
             const permissionError = new FirestorePermissionError({
               path: `users/${user.uid}/scripts`,
               operation: 'write', 
               requestResourceData: {
-                  script: "Batch write for Scrite import",
+                  scriptTitle: scriptTitle,
+                  importType: 'scrite',
                   characterCount: parsedData.characters.length,
                   noteCount: parsedData.notes.length,
                   sceneCount: parsedData.scenes.length
