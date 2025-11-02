@@ -22,7 +22,7 @@ import { runGetAiSuggestions } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/context/settings-context';
 
-interface Scene {
+export interface Scene {
   id: string;
   sceneNumber: number;
   setting: string;
