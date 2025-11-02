@@ -16,13 +16,13 @@ const getBlockStyles = (type: ScriptBlockType): string => {
     case ScriptBlockType.ACTION:
       return 'my-4';
     case ScriptBlockType.CHARACTER:
-      return 'font-bold text-center my-4 uppercase';
+      return 'text-center uppercase my-4';
     case ScriptBlockType.PARENTHETICAL:
-      return 'text-center text-sm text-muted-foreground my-2';
+      return 'text-center text-sm text-muted-foreground my-2 w-1/2 mx-auto';
     case ScriptBlockType.DIALOGUE:
-      return 'my-4 mx-16';
+      return 'my-4 mx-auto w-10/12 md:w-8/12';
     case ScriptBlockType.TRANSITION:
-      return 'font-bold text-right my-4 uppercase';
+      return 'text-right uppercase my-4';
     default:
       return '';
   }
