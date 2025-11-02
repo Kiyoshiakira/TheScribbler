@@ -24,8 +24,6 @@ import { useFirebaseApp } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 import { Chrome } from 'lucide-react'; // Using Chrome icon for Google as a generic browser icon
 
 function LoginCard() {

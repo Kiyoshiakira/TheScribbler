@@ -1,6 +1,6 @@
 'use client';
 import 'regenerator-runtime/runtime'; // Direct import to fix speech recognition error
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SpeechRecognition, {
   useSpeechRecognition,
 } from 'react-speech-recognition';
@@ -14,7 +14,7 @@ import { Input } from './ui/input';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { useScript } from '@/context/script-context';
-import { useUser, useFirestore, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 

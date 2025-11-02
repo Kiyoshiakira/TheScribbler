@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, addDoc, serverTimestamp, deleteDoc, doc, getDocs, writeBatch, query, orderBy } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, writeBatch, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Book, Edit, Loader2, Plus, Trash, Users, UserCheck } from 'lucide-react';
+import { Book, Edit, Loader2, Trash, Users, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentScript } from '@/context/current-script-context';
 import { Skeleton } from '../ui/skeleton';

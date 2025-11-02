@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext, ReactNode, useEffect, useRef } from 'react';
+import { useState, ReactNode, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Lightbulb,
@@ -12,8 +12,6 @@ import {
   SearchCheck,
   Check,
   X,
-  ChevronLeft,
-  Settings,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';

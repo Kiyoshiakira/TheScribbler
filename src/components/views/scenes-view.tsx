@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clapperboard, Clock, GripVertical, Plus, MoreHorizontal, Lightbulb, Loader2 } from 'lucide-react';
+import { Clapperboard, Clock, GripVertical, Plus, MoreHorizontal, Lightbulb } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,

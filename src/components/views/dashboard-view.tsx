@@ -9,9 +9,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Users, StickyNote, Clapperboard, BookOpen, NotebookPen, Plus, Sparkles } from 'lucide-react';
-import type { Character } from "./characters-view";
-import type { Note } from "./notes-view";
-import type { Scene } from "./scenes-view";
+
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import type { View } from "../layout/AppLayout";
