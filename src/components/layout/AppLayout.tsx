@@ -76,12 +76,6 @@ function AppLayoutInternal() {
     } else if (newView === 'profile-edit') {
       setProfileOpen(true);
     } else {
-      // Prevent navigating away from profile view if no script is loaded.
-      if (!currentScriptId && newView !== 'profile') {
-          console.log(`[AppLayout] Blocked navigation to "${newView}" because no script is loaded.`);
-          setView('profile');
-          return;
-      }
       console.log(`[AppLayout] View changed to: ${newView}`);
       setView(newView);
     }
