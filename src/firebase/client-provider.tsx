@@ -8,12 +8,10 @@ interface FirebaseClientProviderProps {
   children: ReactNode;
 }
 
-export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  const firebaseServices = useMemo(() => {
-    // Initialize Firebase on the client side, once per component mount.
-    return initializeFirebase();
-  }, []); // Empty dependency array ensures this runs only once on mount
+// Get the firebase services instance. On the client, this will be a singleton.
+const firebaseServices = initializeFirebase();
 
+export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices.firebaseApp}
