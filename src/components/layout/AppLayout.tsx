@@ -65,12 +65,12 @@ function AppLayoutInternal() {
     } else if (newView === 'profile-edit') {
       setProfileOpen(true);
     } else {
-       // Allow navigation only if a script is loaded, or if navigating to the profile
-      if (currentScriptId || newView === 'profile') {
+       // Allow navigation to dashboard or profile anytime.
+       // For other views, a script must be loaded.
+      if (newView === 'dashboard' || newView === 'profile' || currentScriptId) {
         setView(newView);
       } else {
-        // If no script is loaded, you should be on the profile page anyway.
-        // This can act as a failsafe.
+        // If no script is loaded and trying to access a script-specific view, stay on profile.
         setView('profile');
       }
     }
@@ -79,7 +79,8 @@ function AppLayoutInternal() {
   const renderView = () => {
     // Determine the correct view to render.
     // If no script is loaded, always show the profile view.
-    const viewToRender = currentScriptId ? view : 'profile';
+    const viewToRender = (currentScriptId || view === 'profile') ? view : 'dashboard';
+
 
     switch(viewToRender) {
       case 'dashboard': return <DashboardView setView={handleSetView} />;
