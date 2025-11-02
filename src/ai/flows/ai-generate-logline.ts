@@ -35,11 +35,7 @@ export async function aiGenerateLogline(
   return aiGenerateLoglineFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiGenerateLoglinePrompt',
-  input: { schema: AiGenerateLoglineInputSchema },
-  output: { schema: AiGenerateLoglineOutputSchema },
-  prompt: `You are an expert Hollywood script reader.
+const prompt = `You are an expert Hollywood script reader.
 
   Your task is to read the provided screenplay and write a powerful, industry-standard logline.
 
@@ -53,8 +49,7 @@ const prompt = ai.definePrompt({
   \`\`\`
   {{{screenplay}}}
   \`\`\`
-  `,
-});
+  `;
 
 const aiGenerateLoglineFlow = ai.defineFlow(
   {
@@ -66,7 +61,7 @@ const aiGenerateLoglineFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const { output } = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiGenerateLoglineOutputSchema },
       config: {

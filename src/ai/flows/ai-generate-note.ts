@@ -43,11 +43,7 @@ export async function aiGenerateNote(
   return aiGenerateNoteFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiGenerateNotePrompt',
-  input: { schema: AiGenerateNoteInputSchema },
-  output: { schema: AiGenerateNoteOutputSchema },
-  prompt: `You are an expert screenwriting assistant.
+const prompt = `You are an expert screenwriting assistant.
 
   Your task is to generate a structured note based on a user's prompt.
 
@@ -60,8 +56,7 @@ const prompt = ai.definePrompt({
   \`\`\`
   {{{prompt}}}
   \`\`\`
-  `,
-});
+  `;
 
 const aiGenerateNoteFlow = ai.defineFlow(
   {
@@ -73,7 +68,7 @@ const aiGenerateNoteFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const { output } = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiGenerateNoteOutputSchema },
       config: {

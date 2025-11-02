@@ -37,11 +37,7 @@ export async function aiReformatScript(
   return aiReformatScriptFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiReformatScriptPrompt',
-  input: { schema: AiReformatScriptInputSchema },
-  output: { schema: AiReformatScriptOutputSchema },
-  prompt: `You are an expert script formatter.
+const prompt = `You are an expert script formatter.
 
   Your task is to take the provided raw text and reformat it into a clean, readable, industry-standard screenplay format.
 
@@ -57,8 +53,7 @@ const prompt = ai.definePrompt({
   \`\`\`
   {{{rawScript}}}
   \`\`\`
-  `,
-});
+  `;
 
 const aiReformatScriptFlow = ai.defineFlow(
   {
@@ -70,7 +65,7 @@ const aiReformatScriptFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const { output } = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiReformatScriptOutputSchema },
       config: {

@@ -39,11 +39,7 @@ export async function aiDiagnoseAppHealth(
   return aiDiagnoseAppHealthFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiDiagnoseAppHealthPrompt',
-  input: { schema: AiDiagnoseAppHealthInputSchema },
-  output: { schema: AiDiagnoseAppHealthOutputSchema },
-  prompt: `You are an expert software quality assurance engineer specializing in React and Firebase applications.
+const prompt = `You are an expert software quality assurance engineer specializing in React and Firebase applications.
 
   Your task is to analyze a snapshot of the application's state and provide a health diagnosis.
 
@@ -62,8 +58,7 @@ const prompt = ai.definePrompt({
   \`\`\`json
   {{{appState}}}
   \`\`\`
-  `,
-});
+  `;
 
 const aiDiagnoseAppHealthFlow = ai.defineFlow(
   {
@@ -75,7 +70,7 @@ const aiDiagnoseAppHealthFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const { output } = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiDiagnoseAppHealthOutputSchema },
       config: {

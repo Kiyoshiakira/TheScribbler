@@ -34,11 +34,7 @@ export async function aiDeepAnalysis(
   return aiDeepAnalysisFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiDeepAnalysisPrompt',
-  input: {schema: AiDeepAnalysisInputSchema},
-  output: {schema: AiDeepAnalysisOutputSchema},
-  prompt: `You are an expert script doctor and story analyst.
+const prompt = `You are an expert script doctor and story analyst.
 
   Your task is to perform a deep analysis of the provided screenplay. Provide structured, constructive feedback broken down into three categories: Plot, Character, and Dialogue.
 
@@ -47,8 +43,7 @@ const prompt = ai.definePrompt({
   Screenplay:
   {{{screenplay}}}
 
-  Analyze the screenplay and provide your feedback in the structured format required.`,
-});
+  Analyze the screenplay and provide your feedback in the structured format required.`;
 
 const aiDeepAnalysisFlow = ai.defineFlow(
   {
@@ -60,7 +55,7 @@ const aiDeepAnalysisFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const {output} = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiDeepAnalysisOutputSchema },
       config: {

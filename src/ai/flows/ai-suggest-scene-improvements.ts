@@ -30,11 +30,7 @@ export async function aiSuggestSceneImprovements(
   return aiSuggestSceneImprovementsFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiSuggestSceneImprovementsPrompt',
-  input: {schema: AiSuggestSceneImprovementsInputSchema},
-  output: {schema: AiSuggestSceneImprovementsOutputSchema},
-  prompt: `You are a screenplay expert providing constructive feedback on a given screenplay.
+const prompt = `You are a screenplay expert providing constructive feedback on a given screenplay.
 
 Analyze the screenplay and provide a list of suggestions for improvements.
 Consider aspects such as scene descriptions, character development, and plot progression.
@@ -43,8 +39,7 @@ Screenplay:
 {{screenplay}}
 
 Suggestions:
-`,
-});
+`;
 
 const aiSuggestSceneImprovementsFlow = ai.defineFlow(
   {
@@ -56,7 +51,7 @@ const aiSuggestSceneImprovementsFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const {output} = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiSuggestSceneImprovementsOutputSchema },
       config: {

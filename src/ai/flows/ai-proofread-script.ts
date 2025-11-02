@@ -46,11 +46,7 @@ export async function aiProofreadScript(
   return aiProofreadScriptFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiProofreadScriptPrompt',
-  input: { schema: AiProofreadScriptInputSchema },
-  output: { schema: AiProofreadScriptOutputSchema },
-  prompt: `You are an expert proofreader and script supervisor for screenplays.
+const prompt = `You are an expert proofreader and script supervisor for screenplays.
 
   Your task is to analyze the provided screenplay and identify errors. You MUST NOT make creative changes to the story, characters, or dialogue. Your focus is exclusively on correctness.
 
@@ -67,8 +63,7 @@ const prompt = ai.definePrompt({
   \`\`\`
   {{{script}}}
   \`\`\`
-  `,
-});
+  `;
 
 const aiProofreadScriptFlow = ai.defineFlow(
   {
@@ -88,7 +83,7 @@ const aiProofreadScriptFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const { output } = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiProofreadScriptOutputSchema },
       config: {

@@ -38,11 +38,7 @@ export async function aiGenerateCharacterProfile(
   return aiGenerateCharacterProfileFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'aiGenerateCharacterProfilePrompt',
-  input: { schema: AiGenerateCharacterProfileInputSchema },
-  output: { schema: AiGenerateCharacterProfileOutputSchema },
-  prompt: `You are an expert screenwriter and character creator.
+const prompt = `You are an expert screenwriter and character creator.
 
   Your task is to generate a detailed character profile based on a simple description.
 
@@ -59,8 +55,7 @@ const prompt = ai.definePrompt({
   \`\`\`
   {{{characterDescription}}}
   \`\`\`
-  `,
-});
+  `;
 
 const aiGenerateCharacterProfileFlow = ai.defineFlow(
   {
@@ -72,7 +67,7 @@ const aiGenerateCharacterProfileFlow = ai.defineFlow(
     const model = googleAI('gemini-2.5-flash');
     const { output } = await ai.generate({
       model,
-      prompt: prompt.prompt,
+      prompt: prompt,
       input: input,
       output: { schema: AiGenerateCharacterProfileOutputSchema },
       config: {
