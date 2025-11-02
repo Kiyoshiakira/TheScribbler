@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -20,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useFirebaseApp } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -29,7 +28,7 @@ import { cn } from '@/lib/utils';
 import { Chrome } from 'lucide-react'; // Using Chrome icon for Google as a generic browser icon
 
 function LoginCard() {
-  const app = useFirebaseApp();
+  const auth = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -40,7 +39,6 @@ function LoginCard() {
   const handleAuthAction = async (action: 'signIn' | 'signUp') => {
     setIsLoading(true);
     try {
-      const auth = getAuth(app);
       if (action === 'signUp') {
         await createUserWithEmailAndPassword(auth, email, password);
         toast({
@@ -70,7 +68,6 @@ function LoginCard() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      const auth = getAuth(app);
       const provider = new GoogleAuthProvider();
       // Add scopes to request access to Google Drive and Docs
       provider.addScope('https://www.googleapis.com/auth/drive.readonly');
