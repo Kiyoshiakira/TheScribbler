@@ -3,6 +3,9 @@
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
+import { Button } from './ui/button';
+import { Scissors } from 'lucide-react';
+import { useScript } from '@/context/script-context';
 
 interface ScriptBlockProps {
   block: ScriptBlock;
@@ -16,13 +19,13 @@ const getBlockStyles = (type: ScriptBlockType): string => {
     case ScriptBlockType.ACTION:
       return 'my-4';
     case ScriptBlockType.CHARACTER:
-      return 'text-center uppercase my-4';
+      return 'text-center uppercase my-4 w-full';
     case ScriptBlockType.PARENTHETICAL:
       return 'text-center text-sm text-muted-foreground my-2 w-1/2 mx-auto';
     case ScriptBlockType.DIALOGUE:
-      return 'my-4 mx-auto w-10/12 md:w-8/12';
+      return 'my-4 w-10/12 md:w-8/12 mx-auto';
     case ScriptBlockType.TRANSITION:
-      return 'text-right uppercase my-4';
+      return 'text-right uppercase my-4 w-full';
     default:
       return '';
   }
@@ -30,6 +33,7 @@ const getBlockStyles = (type: ScriptBlockType): string => {
 
 const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange }) => {
   const elementRef = useRef<HTMLDivElement>(null);
+  const { splitScene } = useScript();
 
   useEffect(() => {
     const element = elementRef.current;
@@ -54,20 +58,34 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange }) =
     }
   };
 
+  const isSceneHeading = block.type === ScriptBlockType.SCENE_HEADING;
+
   return (
-    <div
-      ref={elementRef}
-      contentEditable
-      suppressContentEditableWarning={true}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        'w-full outline-none focus:bg-muted/50 p-1 rounded-sm transition-colors',
-        getBlockStyles(block.type)
-      )}
-      data-block-id={block.id}
-      data-block-type={block.type}
-    />
+    <div className={cn('relative group', getBlockStyles(block.type))}>
+        <div
+            ref={elementRef}
+            contentEditable
+            suppressContentEditableWarning={true}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className={cn(
+                'w-full outline-none focus:bg-muted/50 p-1 rounded-sm transition-colors'
+            )}
+            data-block-id={block.id}
+            data-block-type={block.type}
+        />
+        {isSceneHeading && (
+             <Button
+                variant="ghost"
+                size="icon"
+                className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => splitScene(block.id)}
+                aria-label="Split scene"
+            >
+                <Scissors className="h-4 w-4" />
+            </Button>
+        )}
+    </div>
   );
 };
 
