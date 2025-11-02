@@ -35,14 +35,14 @@ interface SettingsDialogProps {
 
 const AVAILABLE_MODELS: { value: AiModel; label: string; description: string }[] = [
   {
-    value: 'gemini-1.5-flash-latest',
-    label: 'Gemini 1.5 Flash',
-    description: 'Fast and cost-effective for most tasks.',
-  },
-  {
     value: 'gemini-1.5-pro-latest',
     label: 'Gemini 1.5 Pro',
     description: 'Highest-quality model for complex reasoning.',
+  },
+  {
+    value: 'gemini-1.5-flash-latest',
+    label: 'Gemini 1.5 Flash',
+    description: 'Fast and cost-effective for most tasks.',
   },
 ];
 

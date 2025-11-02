@@ -170,7 +170,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     outputSchema: AiAgentOrchestratorOutputSchema,
   },
   async (input) => {
-    const model = googleAI(input.model || 'gemini-1.5-flash-latest');
+    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
     
     // Pass the model to the underlying tool functions
     const hydratedGenerateCharacterTool = ai.defineTool(

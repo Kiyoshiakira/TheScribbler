@@ -17,13 +17,13 @@ interface SettingsContextType {
 }
 
 export const SettingsContext = createContext<SettingsContextType>({
-  settings: { aiModel: 'gemini-1.5-flash-latest' },
+  settings: { aiModel: 'gemini-1.5-pro-latest' },
   setAiModel: () => {},
   isSettingsLoading: true,
 });
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>({ aiModel: 'gemini-1.5-flash-latest' });
+  const [settings, setSettings] = useState<Settings>({ aiModel: 'gemini-1.5-pro-latest' });
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
 
   useEffect(() => {

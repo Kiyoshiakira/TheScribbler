@@ -54,7 +54,7 @@ const aiSuggestSceneImprovementsFlow = ai.defineFlow(
     outputSchema: AiSuggestSceneImprovementsOutputSchema,
   },
   async input => {
-    const model = googleAI(input.model || 'gemini-1.5-flash-latest');
+    const model = googleAI(input.model || 'gemini-1.5-pro-latest');
     const {output} = await ai.generate({
       model,
       prompt: prompt.prompt,
