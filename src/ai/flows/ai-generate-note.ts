@@ -31,6 +31,10 @@ const AiGenerateNoteOutputSchema = z.object({
   title: z.string().describe('A concise title for the note.'),
   content: z.string().describe('The detailed content of the note.'),
   category: z.enum(NOTE_CATEGORIES as [string, ...string[]]).describe('The most relevant category for the note.'),
+  id: z.string().optional(),
+  createdAt: z.any().optional(),
+  updatedAt: z.any().optional(),
+  imageUrl: z.string().optional(),
 });
 export type AiGenerateNoteOutput = z.infer<typeof AiGenerateNoteOutputSchema>;
 

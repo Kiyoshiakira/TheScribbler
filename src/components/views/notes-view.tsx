@@ -26,9 +26,9 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import React from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import AiFab from '../ai-fab';
 import { runAiGenerateNote } from '@/app/actions';
@@ -53,6 +53,8 @@ export interface Note {
   content: string;
   category: NoteCategory;
   imageUrl?: string;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 function NoteDialog({ note, onSave, open, onOpenChange, isGenerating }: { note: Note | null, onSave: (note: Note) => void, open: boolean, onOpenChange: (open: boolean) => void, isGenerating: boolean }) {
@@ -192,24 +194,45 @@ export default function NotesView() {
       return;
     }
     
+    const isNew = !noteToSave.id;
+    const { id, createdAt, updatedAt, ...plainNoteData } = noteToSave;
+    
     try {
-        if (noteToSave.id) {
-            // Update existing note
-            const noteDocRef = doc(notesCollection, noteToSave.id);
-            await setDoc(noteDocRef, noteToSave, { merge: true });
-            toast({ title: 'Note Updated', description: `"${noteToSave.title}" has been updated.` });
-        } else {
-            // Create new note
-            await addDoc(notesCollection, noteToSave);
+        if (isNew) {
+            const docData = { ...plainNoteData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+            await addDoc(notesCollection, docData).catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                    path: notesCollection.path,
+                    operation: 'create',
+                    requestResourceData: docData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                throw permissionError;
+            });
             toast({ title: 'Note Created', description: `"${noteToSave.title}" has been added.` });
+        } else {
+            const noteDocRef = doc(notesCollection, noteToSave.id);
+            const updateData = { ...plainNoteData, updatedAt: serverTimestamp() };
+            await setDoc(noteDocRef, updateData, { merge: true }).catch((serverError) => {
+                 const permissionError = new FirestorePermissionError({
+                    path: noteDocRef.path,
+                    operation: 'update',
+                    requestResourceData: updateData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                throw permissionError;
+            });
+            toast({ title: 'Note Updated', description: `"${noteToSave.title}" has been updated.` });
         }
     } catch(error: any) {
-         console.error("Error saving note: ", error);
-         toast({
-            variant: 'destructive',
-            title: 'Save Error',
-            description: error.message || 'Could not save the note.',
-        });
+         if (!(error instanceof FirestorePermissionError)) {
+            console.error("Error saving note: ", error);
+            toast({
+                variant: 'destructive',
+                title: 'Save Error',
+                description: 'An unexpected error occurred while saving the note.',
+            });
+         }
     }
   };
 
@@ -223,7 +246,8 @@ export default function NotesView() {
         toast({ variant: 'destructive', title: 'Error', description: result.error || 'Could not generate a note.' });
         setIsGenerating(false);
     } else {
-        setEditingNote(result.data);
+        const { id, createdAt, updatedAt, ...generatedData } = result.data as Note;
+        setEditingNote(generatedData);
         setDialogOpen(true); // Open the dialog with the generated content
         setIsGenerating(false);
     }
@@ -277,7 +301,7 @@ export default function NotesView() {
          </div>
       )}
       <AiFab
-        actions={[]}
+        actions={['openChat']}
         customActions={[{
             label: 'Generate Note Idea',
             icon: <Sparkles className="mr-2 h-4 w-4" />,
