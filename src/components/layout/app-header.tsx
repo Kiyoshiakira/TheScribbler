@@ -375,7 +375,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                     Import from file...
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem disabled>
                     <GoogleDocIcon className="h-4 w-4 mr-2" />
                     Import from Google Docs
                 </DropdownMenuItem>
