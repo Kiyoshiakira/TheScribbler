@@ -128,7 +128,20 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         const notesCol = collection(newScriptRef, 'notes');
         importedNotes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
 
-        await batch.commit();
+        await batch.commit().catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+              path: `users/${user.uid}/scripts`,
+              operation: 'write', 
+              requestResourceData: {
+                  script: "Batch write for Scribbler import",
+                  characterCount: importedCharacters.length,
+                  sceneCount: importedScenes.length,
+                  noteCount: importedNotes.length
+              },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError;
+        });
 
         toast({
           title: 'Import Successful',

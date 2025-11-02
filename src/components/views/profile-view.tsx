@@ -108,22 +108,30 @@ export default function ProfileView({ setView }: ProfileViewProps) {
                 batch.delete(scriptRef);
             }
 
-            await batch.commit();
+            await batch.commit().catch(serverError => {
+                const permissionError = new FirestorePermissionError({
+                    path: scriptRef.path,
+                    operation: 'delete',
+                    requestResourceData: {
+                        deleteScriptDoc,
+                        deleteCharacters,
+                        deleteScenes,
+                        deleteNotes
+                    }
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                throw permissionError;
+            });
 
             toast({
                 title: 'Delete Successful',
                 description: 'The selected script components have been deleted.',
             });
         } catch (error: any) {
-             const permissionError = new FirestorePermissionError({
-                path: scriptRef.path,
-                operation: 'delete',
-             })
-             errorEmitter.emit('permission-error', permissionError);
              toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'Could not delete the selected components.',
+                description: error instanceof Error ? error.message : 'Could not delete the selected components.',
             });
         } finally {
             setIsDeleting(false);
