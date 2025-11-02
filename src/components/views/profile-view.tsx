@@ -109,6 +109,7 @@ export default function ProfileView({ setView }: ProfileViewProps) {
             }
 
             await batch.commit().catch(serverError => {
+                console.error('Script deletion batch commit failed:', serverError);
                 const permissionError = new FirestorePermissionError({
                     path: scriptRef.path,
                     operation: 'delete',

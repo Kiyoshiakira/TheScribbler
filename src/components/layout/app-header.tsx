@@ -129,6 +129,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         importedNotes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
 
         await batch.commit().catch(serverError => {
+            console.error('Scribbler import batch commit failed:', serverError);
             const permissionError = new FirestorePermissionError({
               path: `users/${user.uid}/scripts`,
               operation: 'write', 
@@ -213,6 +214,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         });
         
         await batch.commit().catch(serverError => {
+            console.error('Scrite import batch commit failed:', serverError);
             const permissionError = new FirestorePermissionError({
               path: `users/${user.uid}/scripts`,
               operation: 'write', 
