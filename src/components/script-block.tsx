@@ -18,17 +18,17 @@ interface ScriptBlockProps {
 const getBlockStyles = (type: ScriptBlockType): string => {
   switch (type) {
     case ScriptBlockType.SCENE_HEADING:
-      return 'font-bold uppercase mt-6 mb-2';
+      return 'font-bold uppercase my-4';
     case ScriptBlockType.ACTION:
       return 'my-2';
     case ScriptBlockType.CHARACTER:
-      return 'text-center uppercase mt-4 mb-1 w-full';
+      return 'text-center uppercase mt-4 mb-1';
     case ScriptBlockType.PARENTHETICAL:
-      return 'text-center text-sm my-1 w-7/12 mx-auto';
+      return 'text-center text-sm my-1';
     case ScriptBlockType.DIALOGUE:
       return 'my-1 w-9/12 md:w-7/12 mx-auto';
     case ScriptBlockType.TRANSITION:
-      return 'text-right uppercase mt-4 mb-2 w-full';
+      return 'text-right uppercase mt-4 mb-2';
     default:
       return 'my-2';
   }
@@ -65,22 +65,26 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      
-      const selection = window.getSelection();
-      const range = selection?.getRangeAt(0);
-      const currentElement = e.currentTarget;
+        const selection = window.getSelection();
+        const range = selection?.getRangeAt(0);
+        const currentElement = e.currentTarget;
+        
+        // If the line is empty and it's an action block, create a new block
+        if (currentElement.innerText.trim() === '' && block.type === ScriptBlockType.ACTION) {
+            e.preventDefault();
+            insertBlockAfter(block.id);
+            return;
+        }
 
-      if(range && currentElement.innerText.length === range.endOffset) {
-        // Cursor is at the end of the line, normal behavior
-        insertBlockAfter(block.id);
-      } else if (range) {
-        // Cursor is in the middle, split the block
-        const textBeforeCursor = currentElement.innerText.substring(0, range.startOffset);
-        const textAfterCursor = currentElement.innerText.substring(range.startOffset);
-        onChange(block.id, textBeforeCursor);
-        insertBlockAfter(block.id, textAfterCursor);
-      }
+        // If cursor is at the end of the text, create a new block
+        if (range && currentElement.innerText.length === range.endOffset) {
+            e.preventDefault();
+            insertBlockAfter(block.id);
+            return;
+        }
+
+        // Default behavior for Enter key is to create a newline within the block
+        // No e.preventDefault() is called here
     }
 
     if (e.key === 'Tab' && !e.shiftKey) {
@@ -92,7 +96,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
   const isSceneHeading = block.type === ScriptBlockType.SCENE_HEADING;
 
   return (
-    <div className={cn('relative group', getBlockStyles(block.type))}>
+    <div className={cn('relative group w-full', getBlockStyles(block.type))}>
         <div
             ref={elementRef}
             contentEditable
@@ -101,7 +105,8 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             onKeyDown={handleKeyDown}
             className={cn(
                 'w-full outline-none p-0.5 rounded-sm transition-colors whitespace-pre-wrap',
-                isHighlighted ? 'bg-yellow-200 dark:bg-yellow-800' : 'focus:bg-muted/50'
+                'focus:bg-transparent dark:focus:bg-transparent',
+                 isHighlighted ? 'bg-yellow-200 dark:bg-yellow-800' : 'focus:bg-muted/50'
             )}
             data-block-id={block.id}
             data-block-type={block.type}

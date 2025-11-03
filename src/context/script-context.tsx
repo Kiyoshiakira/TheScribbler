@@ -39,7 +39,7 @@ interface ScriptContextType {
   setScriptTitle: (title: string) => void;
   setScriptLogline: (logline: string) => void;
   splitScene: (blockId: string) => void;
-  insertBlockAfter: (blockId: string, text?: string) => void;
+  insertBlockAfter: (currentBlockId: string, text?: string, type?: ScriptBlockType) => void;
   cycleBlockType: (blockId: string) => void;
   addComment: (blockId: string, content: string) => void;
   isScriptLoading: boolean;
@@ -240,21 +240,24 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     });
   }, []);
 
-  const insertBlockAfter = useCallback((currentBlockId: string, text = '') => {
+  const insertBlockAfter = useCallback((currentBlockId: string, text = '', type?: ScriptBlockType) => {
     setLocalDocument(prevDoc => {
       if (!prevDoc) return null;
       const index = prevDoc.blocks.findIndex(b => b.id === currentBlockId);
       if (index === -1) return prevDoc;
       const currentBlock = prevDoc.blocks[index];
       
-      let newBlockType = ScriptBlockType.ACTION;
-      if (currentBlock.type === ScriptBlockType.SCENE_HEADING) {
-          newBlockType = ScriptBlockType.ACTION;
-      } else if (currentBlock.type === ScriptBlockType.CHARACTER) {
-          newBlockType = ScriptBlockType.DIALOGUE;
-      } else if (currentBlock.type === ScriptBlockType.DIALOGUE && text === '') {
-          newBlockType = ScriptBlockType.ACTION;
+      let newBlockType = type || ScriptBlockType.ACTION;
+      if (!type) {
+         if (currentBlock.type === ScriptBlockType.SCENE_HEADING) {
+            newBlockType = ScriptBlockType.ACTION;
+        } else if (currentBlock.type === ScriptBlockType.CHARACTER) {
+            newBlockType = ScriptBlockType.DIALOGUE;
+        } else if (currentBlock.type === ScriptBlockType.DIALOGUE && text === '') {
+            newBlockType = ScriptBlockType.ACTION;
+        }
       }
+
 
       const newBlock: ScriptBlock = {
         id: `block_${Date.now()}`,
@@ -265,7 +268,6 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       const newBlocks = [...prevDoc.blocks];
       newBlocks.splice(index + 1, 0, newBlock);
       
-      // We need to focus the new block after the state updates and DOM renders.
       setTimeout(() => {
         const newElement = document.querySelector(`[data-block-id="${newBlock.id}"]`) as HTMLElement;
         if (newElement) {
