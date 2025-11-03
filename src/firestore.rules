@@ -5,19 +5,21 @@
  * This ruleset enforces a strict user-ownership model. All user-generated content
  * (scripts, characters, notes, scenes) is stored in subcollections under the user's
  * unique ID, ensuring data isolation and simplifying security rules. It also includes
- * a rule for a public-write error reporting collection.
+ * rules for public-write error and feedback collections.
  *
  * Data Structure:
  * - /users/{userId}: Public-readable user profile information.
  * - /users/{userId}/scripts/{scriptId}: Core script documents.
  * - /users/{userId}/scripts/{scriptId}/[characters|notes|scenes|comments|versions]/{docId}: Subcollections for script data.
  * - /error-reports/{reportId}: Collection for users to submit error logs.
+ * - /feedback/{feedbackId}: Collection for users to submit feedback.
  *
  * Key Security Decisions:
  * - User profiles (`/users/{userId}`) are world-readable to facilitate future social features,
  *   but only the owner can write to their own profile.
  * - All script-related data is nested under the user path, making ownership checks straightforward.
- * - Users can write to the `error-reports` collection but cannot read from it, protecting privacy.
+ * - Authenticated users can write to the `error-reports` and `feedback` collections
+ *   but cannot read from them, protecting privacy.
  * - Users cannot list all other users in the system.
  */
 rules_version = '2';
@@ -89,6 +91,21 @@ service cloud.firestore {
      * @path /error-reports/{reportId}
      */
     match /error-reports/{reportId} {
+        function isSignedIn() {
+            return request.auth != null;
+        }
+
+        allow create: if isSignedIn();
+        allow read, list, update, delete: if false;
+    }
+
+    /**
+     * @description Controls access to the feedback collection. Allows any
+     * authenticated user to create (submit) feedback, but allows no one to
+     * read, list, update, or delete other people's feedback to protect privacy.
+     * @path /feedback/{feedbackId}
+     */
+    match /feedback/{feedbackId} {
         function isSignedIn() {
             return request.auth != null;
         }
