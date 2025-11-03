@@ -69,7 +69,8 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange }) =
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className={cn(
-                'w-full outline-none focus:bg-muted/50 p-1 rounded-sm transition-colors'
+                'w-full outline-none focus:bg-muted/50 p-1 rounded-sm transition-colors',
+                'data-[find-active=true]:bg-yellow-200 dark:data-[find-active=true]:bg-yellow-800'
             )}
             data-block-id={block.id}
             data-block-type={block.type}
