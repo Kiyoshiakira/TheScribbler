@@ -69,8 +69,8 @@ export async function runAiReformatScript(input: AiReformatScriptInput) {
 export async function runGetAiSuggestions(
   input: AiSuggestSceneImprovementsInput
 ) {
-  if (!process.env.GEMINI_API_KEY) {
-    return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+  if (!isAiAvailable) {
+    return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
   }
   try {
     const result = await aiSuggestSceneImprovements(input);
@@ -86,8 +86,8 @@ export async function runGetAiSuggestions(
 }
 
 export async function runAiGenerateLogline(input: AiGenerateLoglineInput) {
-    if (!process.env.GEMINI_API_KEY) {
-        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
     }
     try {
         const result = await aiGenerateLoglineFlow(input);
@@ -103,8 +103,8 @@ export async function runAiGenerateLogline(input: AiGenerateLoglineInput) {
 }
 
 export async function runGetAiCharacterProfile(input: AiGenerateCharacterProfileInput) {
-    if (!process.env.GEMINI_API_KEY) {
-        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
     }
     try {
         const result = await aiGenerateCharacterProfile(input);
@@ -120,8 +120,8 @@ export async function runGetAiCharacterProfile(input: AiGenerateCharacterProfile
 }
 
 export async function runAiGenerateNote(input: AiGenerateNoteInput) {
-    if (!process.env.GEMINI_API_KEY) {
-        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
     }
     try {
         const result = await aiGenerateNoteFlow(input);
@@ -138,8 +138,8 @@ export async function runAiGenerateNote(input: AiGenerateNoteInput) {
 
 
 export async function runGetAiDeepAnalysis(input: AiDeepAnalysisInput) {
-  if (!process.env.GEMINI_API_KEY) {
-    return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+  if (!isAiAvailable) {
+    return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
   }
   try {
     const result = await aiDeepAnalysis(input);
@@ -155,8 +155,8 @@ export async function runGetAiDeepAnalysis(input: AiDeepAnalysisInput) {
 }
 
 export async function runAiAgent(input: AiAgentOrchestratorInput) {
-    if (!process.env.GEMINI_API_KEY) {
-        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
     }
     try {
         const result = await aiAgentOrchestrator(input);
@@ -172,8 +172,8 @@ export async function runAiAgent(input: AiAgentOrchestratorInput) {
 }
 
 export async function runGetAiProofreadSuggestions(input: AiProofreadScriptInput) {
-    if (!process.env.GEMINI_API_KEY) {
-        return { data: null, error: 'GEMINI_API_KEY is not set. Please create a .env.local file and add your key.' };
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
     }
     try {
         const result = await aiProofreadScript(input);
@@ -189,7 +189,7 @@ export async function runGetAiProofreadSuggestions(input: AiProofreadScriptInput
 }
 
 export async function runAiDiagnoseAppHealth(input: AiDiagnoseAppHealthInput) {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!isAiAvailable) {
         return { data: { diagnosis: "AI Health Check disabled: GEMINI_API_KEY is not set." }, error: null };
     }
     try {
