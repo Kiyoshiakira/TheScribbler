@@ -10,6 +10,7 @@ import type { Scene } from '@/components/views/scenes-view';
 import type { Note } from '@/components/views/notes-view';
 import { ScriptDocument, ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import { parseScreenplay, serializeScript } from '@/lib/screenplay-parser';
+import type { Match } from '@/hooks/use-find-replace';
 
 
 interface Script {
@@ -45,6 +46,8 @@ interface ScriptContextType {
   notes: Note[] | null;
   comments: Comment[] | null;
   saveStatus: SaveStatus;
+  activeMatch: Match | null;
+  setActiveMatch: React.Dispatch<React.SetStateAction<Match | null>>;
 }
 
 export const ScriptContext = createContext<ScriptContextType>({
@@ -61,6 +64,8 @@ export const ScriptContext = createContext<ScriptContextType>({
   notes: null,
   comments: null,
   saveStatus: 'idle',
+  activeMatch: null,
+  setActiveMatch: () => {},
 });
 
 export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, scriptId: string }) => {
@@ -71,6 +76,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   const [localDocument, setLocalDocument] = useState<ScriptDocument | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [activeMatch, setActiveMatch] = useState<Match | null>(null);
 
 
   const scriptDocRef = useMemoFirebase(
@@ -268,6 +274,8 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     notes,
     comments,
     saveStatus,
+    activeMatch,
+    setActiveMatch,
   };
 
   return (

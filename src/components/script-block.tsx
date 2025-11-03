@@ -10,6 +10,7 @@ import { useScript } from '@/context/script-context';
 interface ScriptBlockProps {
   block: ScriptBlock;
   onChange: (blockId: string, newText: string) => void;
+  isHighlighted: boolean;
 }
 
 const getBlockStyles = (type: ScriptBlockType): string => {
@@ -31,7 +32,7 @@ const getBlockStyles = (type: ScriptBlockType): string => {
   }
 };
 
-const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange }) => {
+const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isHighlighted }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const { splitScene } = useScript();
 
@@ -41,6 +42,14 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange }) =
       element.innerText = block.text;
     }
   }, [block.text]);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (element && isHighlighted) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isHighlighted]);
+
 
   const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
     const newText = e.currentTarget.innerText;
@@ -70,7 +79,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange }) =
             onKeyDown={handleKeyDown}
             className={cn(
                 'w-full outline-none focus:bg-muted/50 p-1 rounded-sm transition-colors',
-                'data-[find-active=true]:bg-yellow-200 dark:data-[find-active=true]:bg-yellow-800'
+                isHighlighted && 'bg-yellow-200 dark:bg-yellow-800'
             )}
             data-block-id={block.id}
             data-block-type={block.type}

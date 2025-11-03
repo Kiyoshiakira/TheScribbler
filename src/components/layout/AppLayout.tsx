@@ -19,6 +19,7 @@ import BeatboardView from '../views/beatboard-view';
 import { useUser, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { EditProfileDialog } from '../edit-profile-dialog';
 import { doc } from 'firebase/firestore';
+import { FindReplaceProvider } from '@/hooks/use-find-replace';
 
 
 export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile' | 'beatboard';

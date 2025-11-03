@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { CurrentScriptProvider } from '@/context/current-script-context';
 import { SettingsProvider } from '@/context/settings-context';
+import { FindReplaceProvider } from '@/hooks/use-find-replace';
 
 export const metadata: Metadata = {
   title: 'ScriptScribbler',
@@ -31,8 +32,8 @@ export default function RootLayout({
         <FirebaseClientProvider>
           <SettingsProvider>
             <CurrentScriptProvider>
-              {children}
-              <Toaster />
+                {children}
+                <Toaster />
             </CurrentScriptProvider>
           </SettingsProvider>
         </FirebaseClientProvider>

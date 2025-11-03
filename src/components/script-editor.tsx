@@ -12,7 +12,7 @@ interface ScriptEditorProps {
 }
 
 export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps) {
-  const { document, setBlocks, isScriptLoading } = useScript();
+  const { document, setBlocks, isScriptLoading, activeMatch } = useScript();
 
   const handleBlockChange = (blockId: string, newText: string) => {
     if (document) {
@@ -42,11 +42,12 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
         isStandalone ? 'p-4' : 'p-8 md:p-16' // Add more padding for a doc-like feel
       )}
     >
-      {document.blocks.map(block => (
+      {document.blocks.map((block, index) => (
         <ScriptBlockComponent
           key={block.id}
           block={block}
           onChange={handleBlockChange}
+          isHighlighted={activeMatch?.blockIndex === index}
         />
       ))}
     </div>

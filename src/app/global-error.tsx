@@ -58,6 +58,12 @@ function GlobalErrorContent({
     }
   };
 
+  const handleReset = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
   const isPermissionError = error instanceof FirestorePermissionError;
 
   return (
@@ -77,7 +83,7 @@ function GlobalErrorContent({
                         </code>
                     </div>
                     <div className="flex justify-center gap-4">
-                        <Button onClick={() => reset()}>Try Again</Button>
+                        <Button onClick={handleReset}>Try Again</Button>
                         <Button variant="outline" onClick={handleReportError} disabled={!isPermissionError}>
                             Report Error
                         </Button>
