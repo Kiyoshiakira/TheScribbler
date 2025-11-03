@@ -60,7 +60,7 @@ The application will be available at [http://localhost:9002](http://localhost:90
 
 ### Login Fails or Editor is Not Loading
 
-This is often caused by an issue with Firebase authentication or data fetching. If you see errors in the browser console like `(auth/invalid-credential)` or `(auth/operation-not-allowed)`, follow these steps:
+This is often caused by an issue with Firebase authentication or data fetching. If you see errors in the browser console like `(auth/invalid-credential)`, `(auth/operation-not-allowed)`, or `accounts.google.com refused to connect`, follow these steps:
 
 1.  **Enable Authentication Providers:** The most common cause of login errors is that the sign-in methods are not enabled in your Firebase project.
     *   Go to the [Firebase Console](https://console.firebase.google.com/).
@@ -69,6 +69,12 @@ This is often caused by an issue with Firebase authentication or data fetching. 
     *   Click the **Sign-in method** tab.
     *   You **MUST** enable both **Email/Password** and **Google** as sign-in providers. Click on each one and flip the toggle to enable it.
 
-2.  **Check Firestore Rules:** Ensure your `firestore.rules` are deployed and allow the signed-in user to read and write the necessary documents. An incorrect rule can cause data fetches to fail silently. You can check for `FirebaseError: Missing or insufficient permissions` in the browser console.
+2.  **Authorize Your Domain for Google Sign-In:** If you see an error that `accounts.google.com refused to connect`, it means you need to add your development domain to Firebase's authorized list.
+    *   In the Firebase Console, go to **Authentication > Sign-in method**.
+    *   Scroll down to the **Authorized domains** section.
+    *   Click **Add domain**.
+    *   Enter `localhost` and click **Add**. This is essential for local development.
 
-3.  **Check API Keys:** Ensure your `GEMINI_API_KEY` in `.env.local` is correct. While the app should disable AI features gracefully, a misconfiguration could potentially cause issues.
+3.  **Check Firestore Rules:** Ensure your `firestore.rules` are deployed and allow the signed-in user to read and write the necessary documents. An incorrect rule can cause data fetches to fail silently. You can check for `FirebaseError: Missing or insufficient permissions` in the browser console.
+
+4.  **Check API Keys:** Ensure your `GEMINI_API_KEY` in `.env.local` is correct. While the app should disable AI features gracefully, a misconfiguration could potentially cause issues.
