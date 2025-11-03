@@ -4,8 +4,6 @@
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
-import { Button } from './ui/button';
-import { Scissors } from 'lucide-react';
 import { useScript } from '@/context/script-context';
 
 interface ScriptBlockProps {
@@ -14,7 +12,6 @@ interface ScriptBlockProps {
   isHighlighted: boolean;
 }
 
-// These styles are inspired by standard screenplay formatting.
 const getBlockStyles = (type: ScriptBlockType): string => {
   switch (type) {
     case ScriptBlockType.SCENE_HEADING:
@@ -36,10 +33,8 @@ const getBlockStyles = (type: ScriptBlockType): string => {
 
 const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isHighlighted }) => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const { splitScene, insertBlockAfter, cycleBlockType } = useScript();
+  const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock } = useScript();
 
-  // This effect ensures that if the block's text is updated from an external
-  // source (like a find-and-replace), the DOM is updated to match.
   useEffect(() => {
     const element = elementRef.current;
     if (element && element.innerText !== block.text) {
@@ -47,7 +42,6 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
     }
   }, [block.text]);
 
-  // This effect scrolls the highlighted block into view.
   useEffect(() => {
     const element = elementRef.current;
     if (element && isHighlighted) {
@@ -64,36 +58,28 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const selection = window.getSelection();
+    const range = selection?.getRangeAt(0);
+
     if (e.key === 'Enter' && !e.shiftKey) {
-        const selection = window.getSelection();
-        const range = selection?.getRangeAt(0);
-        const currentElement = e.currentTarget;
-        
-        // If the line is empty and it's an action block, create a new block
-        if (currentElement.innerText.trim() === '' && block.type === ScriptBlockType.ACTION) {
-            e.preventDefault();
-            insertBlockAfter(block.id);
-            return;
-        }
-
-        // If cursor is at the end of the text, create a new block
-        if (range && currentElement.innerText.length === range.endOffset) {
-            e.preventDefault();
-            insertBlockAfter(block.id);
-            return;
-        }
-
-        // Default behavior for Enter key is to create a newline within the block
-        // No e.preventDefault() is called here
+        e.preventDefault();
+        insertBlockAfter(block.id);
+        return;
     }
 
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
       cycleBlockType(block.id);
     }
+
+    if (e.key === 'Backspace') {
+      if (selection && range && range.startOffset === 0 && range.endOffset === 0) {
+        e.preventDefault();
+        mergeWithPreviousBlock(block.id);
+      }
+    }
   };
 
-  const isSceneHeading = block.type === ScriptBlockType.SCENE_HEADING;
 
   return (
     <div className={cn('relative group w-full', getBlockStyles(block.type))}>
@@ -112,17 +98,6 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             data-block-type={block.type}
             dangerouslySetInnerHTML={{ __html: block.text }}
         />
-        {isSceneHeading && (
-             <Button
-                variant="ghost"
-                size="icon"
-                className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => splitScene(block.id)}
-                aria-label="Split scene"
-            >
-                <Scissors className="h-4 w-4" />
-            </Button>
-        )}
     </div>
   );
 };

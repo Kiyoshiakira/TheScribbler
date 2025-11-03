@@ -38,9 +38,9 @@ interface ScriptContextType {
   setBlocks: (blocks: ScriptBlock[]) => void;
   setScriptTitle: (title: string) => void;
   setScriptLogline: (logline: string) => void;
-  splitScene: (blockId: string) => void;
   insertBlockAfter: (currentBlockId: string, text?: string, type?: ScriptBlockType) => void;
   cycleBlockType: (blockId: string) => void;
+  mergeWithPreviousBlock: (blockId: string) => void;
   addComment: (blockId: string, content: string) => void;
   isScriptLoading: boolean;
   characters: Character[] | null;
@@ -58,9 +58,9 @@ export const ScriptContext = createContext<ScriptContextType>({
   setBlocks: () => {},
   setScriptTitle: () => {},
   setScriptLogline: () => {},
-  splitScene: () => {},
   insertBlockAfter: () => {},
   cycleBlockType: () => {},
+  mergeWithPreviousBlock: () => {},
   addComment: () => {},
   isScriptLoading: true,
   characters: null,
@@ -163,11 +163,9 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     try {
         const batch = writeBatch(firestore);
         
-        // Add a new document to the versions subcollection
         const newVersionRef = doc(versionsCollectionRef);
         batch.set(newVersionRef, versionData);
 
-        // Update the main script document with all changes
         batch.set(scriptDocRef, mainScriptUpdateData, { merge: true });
 
         await batch.commit();
@@ -186,21 +184,18 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     }
   }, [scriptDocRef, localScript, localDocument, firestoreScript, isInitialLoad, firestore]);
   
-  // Effect for initial data load
   useEffect(() => {
     if (firestoreScript && isInitialLoad) {
         setLocalScript(firestoreScript);
         setLocalDocument(parseScreenplay(firestoreScript.content));
         setIsInitialLoad(false);
     } else if (!scriptId && isInitialLoad) {
-        // Handle case where there is no script ID
         setLocalScript(null);
         setLocalDocument(null);
         setIsInitialLoad(false);
     }
   }, [firestoreScript, isInitialLoad, scriptId]);
 
-  // Debounced effect for saving ALL changes
   useEffect(() => {
     if (!isInitialLoad) {
       updateFirestore();
@@ -220,26 +215,6 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     setLocalScript(prev => prev ? { ...prev, logline } : null);
   }, []);
 
-  const splitScene = useCallback((blockId: string) => {
-    setLocalDocument(prevDoc => {
-        if (!prevDoc) return null;
-
-        const blockIndex = prevDoc.blocks.findIndex(b => b.id === blockId);
-        if (blockIndex === -1) return prevDoc;
-
-        const newSceneHeading: ScriptBlock = {
-            id: `block_${Date.now()}`,
-            type: ScriptBlockType.SCENE_HEADING,
-            text: 'INT. NEW SCENE - DAY',
-        };
-
-        const newBlocks = [...prevDoc.blocks];
-        newBlocks.splice(blockIndex + 1, 0, newSceneHeading);
-
-        return { ...prevDoc, blocks: newBlocks };
-    });
-  }, []);
-
   const insertBlockAfter = useCallback((currentBlockId: string, text = '', type?: ScriptBlockType) => {
     setLocalDocument(prevDoc => {
       if (!prevDoc) return null;
@@ -247,20 +222,22 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       if (index === -1) return prevDoc;
       const currentBlock = prevDoc.blocks[index];
       
-      let newBlockType = type || ScriptBlockType.ACTION;
+      let newBlockType = type;
       if (!type) {
          if (currentBlock.type === ScriptBlockType.SCENE_HEADING) {
             newBlockType = ScriptBlockType.ACTION;
         } else if (currentBlock.type === ScriptBlockType.CHARACTER) {
             newBlockType = ScriptBlockType.DIALOGUE;
-        } else if (currentBlock.type === ScriptBlockType.DIALOGUE && text === '') {
+        } else if (currentBlock.type === ScriptBlockType.DIALOGUE && text.trim() === '') {
+            newBlockType = ScriptBlockType.ACTION;
+        } else {
             newBlockType = ScriptBlockType.ACTION;
         }
       }
 
 
       const newBlock: ScriptBlock = {
-        id: `block_${Date.now()}`,
+        id: `block_${Date.now()}_${Math.random()}`,
         type: newBlockType,
         text: text,
       };
@@ -307,6 +284,44 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     });
   };
 
+  const mergeWithPreviousBlock = useCallback((blockId: string) => {
+    setLocalDocument(prevDoc => {
+      if (!prevDoc) return null;
+      const index = prevDoc.blocks.findIndex(b => b.id === blockId);
+      
+      if (index <= 0) return prevDoc; // Cannot merge the first block
+
+      const currentBlock = prevDoc.blocks[index];
+      const prevBlock = prevDoc.blocks[index - 1];
+
+      const newBlocks = [...prevDoc.blocks];
+      const originalPrevTextLength = prevBlock.text.length;
+
+      // Merge text and remove the current block
+      prevBlock.text += currentBlock.text;
+      newBlocks.splice(index, 1);
+      
+      setTimeout(() => {
+        const prevElement = document.querySelector(`[data-block-id="${prevBlock.id}"]`) as HTMLElement;
+        if (prevElement) {
+          prevElement.focus();
+          const selection = window.getSelection();
+          const range = document.createRange();
+          
+          if (prevElement.childNodes.length > 0) {
+            const textNode = prevElement.childNodes[0];
+            const newCursorPos = Math.min(originalPrevTextLength, textNode.textContent?.length || 0);
+            range.setStart(textNode, newCursorPos);
+            range.collapse(true);
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+          }
+        }
+      }, 0);
+      
+      return { ...prevDoc, blocks: newBlocks };
+    });
+  }, []);
 
   const addComment = useCallback((blockId: string, content: string) => {
       if (!commentsCollectionRef || !user) return;
@@ -338,9 +353,9 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     setBlocks,
     setScriptTitle,
     setScriptLogline,
-    splitScene,
     insertBlockAfter,
     cycleBlockType,
+    mergeWithPreviousBlock,
     addComment,
     isScriptLoading,
     characters,
