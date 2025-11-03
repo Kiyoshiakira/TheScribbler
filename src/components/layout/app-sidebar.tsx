@@ -60,11 +60,10 @@ import {
                                                                                                                         const scriptMenuItems = [
                                                                                                                             { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                                                                                                                                 { view: 'editor', label: 'Editor', icon: BookText },
-                                                                                                                                    { view: 'beatboard', label: 'Beatboard', icon: LayoutGrid },
-                                                                                                                                        { view: 'logline', label: 'Logline', icon: NotebookPen },
-                                                                                                                                            { view: 'scenes', label: 'Scenes', icon: Clapperboard },
-                                                                                                                                                { view: 'characters', label: 'Characters', icon: Users },
-                                                                                                                                                    { view: 'notes', label: 'Notes', icon: StickyNote },
+                                                                                                                                    { view: 'logline', label: 'Logline', icon: NotebookPen },
+                                                                                                                                        { view: 'scenes', label: 'Scenes', icon: Clapperboard },
+                                                                                                                                            { view: 'characters', label: 'Characters', icon: Users },
+                                                                                                                                                { view: 'notes', label: 'Notes', icon: StickyNote },
                                                                                                                                                       ] as const;
 
                                                                                                                                                         return (

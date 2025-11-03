@@ -15,13 +15,12 @@ import LoglineView from '../views/logline-view';
 import ScenesView from '../views/scenes-view';
 import CharactersView from '../views/characters-view';
 import NotesView from '../views/notes-view';
-import BeatboardView from '../views/beatboard-view';
 import { useUser, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { EditProfileDialog } from '../edit-profile-dialog';
 import { doc } from 'firebase/firestore';
 
 
-export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile' | 'beatboard';
+export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile';
 
 /**
  * This is the internal component that renders the main app layout.
@@ -90,7 +89,6 @@ function AppLayoutInternal() {
       case 'scenes': return <ScenesView />;
       case 'characters': return <CharactersView />;
       case 'notes': return <NotesView />;
-      case 'beatboard': return <BeatboardView />;
       case 'profile': return <ProfileView setView={handleSetView} />;
       default: return <ProfileView setView={handleSetView} />;
     }
