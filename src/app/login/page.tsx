@@ -1,10 +1,11 @@
+
 'use client';
 
 import * as React from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -72,12 +73,9 @@ function LoginCard() {
       // Add scopes to request access to Google Drive and Docs
       provider.addScope('https://www.googleapis.com/auth/drive.readonly');
       provider.addScope('https://www.googleapis.com/auth/documents.readonly');
-      await signInWithPopup(auth, provider);
-      toast({
-          title: 'Signed In with Google',
-          description: "Welcome! Redirecting...",
-      });
-      router.push('/');
+      await signInWithRedirect(auth, provider);
+      // The user is redirected, so the code below this line won't execute until they return.
+      // Firebase automatically handles the redirect result on page load.
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
       toast({
@@ -85,7 +83,6 @@ function LoginCard() {
         title: 'Google Sign-In Error',
         description: error.message || 'An unexpected error occurred.',
       });
-    } finally {
       setIsGoogleLoading(false);
     }
   };
@@ -183,7 +180,7 @@ function LoginCard() {
         <div className="grid grid-cols-1 gap-2">
           <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
             {isGoogleLoading ? (
-              'Signing in...'
+              'Redirecting to Google...'
             ) : (
               <>
                 <Chrome className="mr-2 h-4 w-4" />
