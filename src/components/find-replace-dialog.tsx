@@ -41,6 +41,7 @@ export function FindReplaceDialog({ open, onOpenChange }: FindReplaceDialogProps
   } = useFindReplace();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     if (open) {
       findMatches();
     } else {
@@ -50,6 +51,7 @@ export function FindReplaceDialog({ open, onOpenChange }: FindReplaceDialogProps
   }, [open]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     findMatches();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [findValue, matchCase, wholeWord]);

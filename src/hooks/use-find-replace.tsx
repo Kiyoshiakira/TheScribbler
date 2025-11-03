@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useContext, useEffect } from 'react';
+import { useState, useCallback, useContext, useEffect, createContext, ReactNode } from 'react';
 import { useScript } from '@/context/script-context';
 
 export interface Match {
@@ -10,7 +10,27 @@ export interface Match {
   endIndex: number;
 }
 
-export function useFindReplace() {
+interface FindReplaceContextType {
+    findValue: string;
+    setFindValue: (value: string) => void;
+    replaceValue: string;
+    setReplaceValue: (value: string) => void;
+    matches: Match[];
+    currentMatchIndex: number;
+    matchCase: boolean;
+    setMatchCase: (value: boolean) => void;
+    wholeWord: boolean;
+    setWholeWord: (value: boolean) => void;
+    findMatches: () => void;
+    navigateMatches: (direction: 'next' | 'prev') => void;
+    handleReplace: () => void;
+    handleReplaceAll: () => void;
+    clearHighlights: () => void;
+}
+
+const FindReplaceContext = createContext<FindReplaceContextType | undefined>(undefined);
+
+export const FindReplaceProvider = ({ children }: { children: ReactNode }) => {
   const { document, setBlocks, activeMatch, setActiveMatch } = useScript();
   const [findValue, setFindValue] = useState('');
   const [replaceValue, setReplaceValue] = useState('');
@@ -20,6 +40,7 @@ export function useFindReplace() {
   const [wholeWord, setWholeWord] = useState(false);
 
   const findMatches = useCallback(() => {
+    if (typeof window === 'undefined') return;
     if (!findValue || !document) {
       setMatches([]);
       setCurrentMatchIndex(-1);
@@ -52,11 +73,12 @@ export function useFindReplace() {
   }, [findValue, document, matchCase, wholeWord, setActiveMatch]);
   
   useEffect(() => {
-      if (matches.length > 0 && currentMatchIndex !== -1) {
-          setActiveMatch(matches[currentMatchIndex]);
-      } else {
-          setActiveMatch(null);
-      }
+    if (typeof window === 'undefined') return;
+    if (matches.length > 0 && currentMatchIndex !== -1) {
+        setActiveMatch(matches[currentMatchIndex]);
+    } else {
+        setActiveMatch(null);
+    }
   }, [currentMatchIndex, matches, setActiveMatch]);
 
   const navigateMatches = (direction: 'next' | 'prev') => {
@@ -69,6 +91,7 @@ export function useFindReplace() {
   };
   
   const clearHighlights = () => {
+    if (typeof window === 'undefined') return;
     setActiveMatch(null);
   };
 
@@ -88,8 +111,6 @@ export function useFindReplace() {
     );
     setBlocks(newBlocks);
 
-    // This is tricky because the state update is async.
-    // Let's refind matches after a short delay to let the document update.
     setTimeout(() => {
         findMatches();
     }, 100);
@@ -100,7 +121,6 @@ export function useFindReplace() {
 
     const blockUpdates = new Map<string, string>();
 
-    // We process replacements from the end to the start to not mess up indices
     const sortedMatches = [...matches].sort((a, b) => b.startIndex - a.startIndex);
     
     sortedMatches.forEach(match => {
@@ -124,7 +144,7 @@ export function useFindReplace() {
     setActiveMatch(null);
   };
 
-  return {
+  const value = {
     findValue,
     setFindValue,
     replaceValue,
@@ -141,4 +161,14 @@ export function useFindReplace() {
     handleReplaceAll,
     clearHighlights,
   };
+
+  return <FindReplaceContext.Provider value={value}>{children}</FindReplaceContext.Provider>;
 }
+
+export const useFindReplace = () => {
+  const context = useContext(FindReplaceContext);
+  if (!context) {
+    throw new Error('useFindReplace must be used within a FindReplaceProvider');
+  }
+  return context;
+};

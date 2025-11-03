@@ -205,7 +205,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
 
   const setBlocks = useCallback((blocks: ScriptBlock[]) => {
-    setLocalDocument({ blocks });
+    setLocalDocument(prevDoc => prevDoc ? { ...prevDoc, blocks } : { blocks });
   }, []);
 
   const setScriptTitle = useCallback((title: string) => {
