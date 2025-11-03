@@ -73,6 +73,9 @@ const aiReformatScriptFlow = ai.defineFlow(
       prompt: prompt,
       input: input,
       output: { schema: AiReformatScriptOutputSchema },
+      config: {
+        temperature: 0,
+      },
     });
     if (!output) {
       throw new Error(

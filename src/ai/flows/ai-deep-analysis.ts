@@ -63,6 +63,9 @@ const aiDeepAnalysisFlow = ai.defineFlow(
       prompt: prompt,
       input: input,
       output: { schema: AiDeepAnalysisOutputSchema },
+      config: {
+        temperature: 0.5,
+      },
     });
     if (!output) {
       throw new Error('AI failed to return a valid analysis. The output did not match the expected format.');

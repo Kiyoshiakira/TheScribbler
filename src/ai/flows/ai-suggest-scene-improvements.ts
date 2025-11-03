@@ -59,6 +59,9 @@ const aiSuggestSceneImprovementsFlow = ai.defineFlow(
       prompt: prompt,
       input: input,
       output: { schema: AiSuggestSceneImprovementsOutputSchema },
+      config: {
+        temperature: 0.7,
+      },
     });
     if (!output) {
       throw new Error('AI failed to return valid suggestions. The output did not match the expected format.');

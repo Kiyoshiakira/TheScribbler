@@ -19,12 +19,12 @@ import {
 import {
   aiProofreadScript,
   type AiProofreadScriptOutput,
-type AiProofreadScriptInput,
+  type AiProofreadScriptInput,
 } from './ai-proofread-script';
 import {
   aiReformatScript,
   type AiReformatScriptOutput,
-type AiReformatScriptInput,
+  type AiReformatScriptInput,
 } from './ai-reformat-script';
 
 const AiGenerateCharacterProfileOutputSchema = z.object({
@@ -169,7 +169,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
   },
   async (input) => {
     const model = googleAI('gemini-2.5-flash');
-    
+
     // STEP 1: Let the model decide whether to call a tool OR modify the script directly.
     let decision = await ai.generate({
       model,

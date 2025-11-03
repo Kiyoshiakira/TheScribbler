@@ -86,6 +86,9 @@ const aiProofreadScriptFlow = ai.defineFlow(
       prompt: prompt,
       input: input,
       output: { schema: AiProofreadScriptOutputSchema },
+      config: {
+        temperature: 0.1,
+      },
     });
     if (!output) {
       throw new Error('AI failed to return valid proofreading suggestions. The output did not match the expected format.');

@@ -69,6 +69,9 @@ const aiGenerateLoglineFlow = ai.defineFlow(
       prompt: prompt,
       input: input,
       output: { schema: AiGenerateLoglineOutputSchema },
+      config: {
+        temperature: 0.5,
+      },
     });
     if (!output) {
       throw new Error('AI failed to return a valid logline. The output did not match the expected format.');

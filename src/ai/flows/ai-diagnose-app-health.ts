@@ -78,6 +78,9 @@ const aiDiagnoseAppHealthFlow = ai.defineFlow(
       prompt: prompt,
       input: input,
       output: { schema: AiDiagnoseAppHealthOutputSchema },
+      config: {
+        temperature: 0.1,
+      },
     });
     if (!output) {
       throw new Error(
