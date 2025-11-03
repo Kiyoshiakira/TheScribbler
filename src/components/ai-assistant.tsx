@@ -41,7 +41,6 @@ const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
 
 export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
   const { document, setBlocks } = useScript();
-  const scriptContent = document?.blocks.map(b => b.text).join('\n\n') || '';
   const { toast } = useToast();
 
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -74,7 +73,7 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
   }, [chatHistory, isChatLoading]);
 
   const handleSendChat = async () => {
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || !document) return;
 
     const userMessage: ChatMessage = { sender: 'user', text: chatInput };
     setChatHistory(prev => [...prev, userMessage]);
@@ -84,7 +83,7 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
 
     const result = await runAiAgent({
       request: currentInput,
-      script: scriptContent,
+      document: document, // Pass the structured document to the AI
     });
 
     setIsChatLoading(false);
@@ -99,12 +98,9 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
       };
       setChatHistory(prev => [...prev, aiMessage]);
 
-      if (result.data.modifiedScript) {
-        // This is a significant change. We need to re-parse the script.
-        // In a real app, we'd use the structured output from the parser.
-        // For now, we'll just split by lines.
-        const newBlocks = result.data.modifiedScript.split('\n\n').map((line, index) => ({ id: `block-${index}-${Date.now()}`, text: line, type: 'action' as const }));
-        setBlocks(newBlocks);
+      if (result.data.modifiedDocument) {
+        // The AI now returns a structured document, so we can set it directly.
+        setBlocks(result.data.modifiedDocument.blocks);
 
         toast({
           title: 'Script Updated',
@@ -259,3 +255,5 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
     </div>
   );
 }
+
+    

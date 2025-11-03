@@ -14,18 +14,28 @@ import { z } from 'genkit';
 import {
   aiGenerateCharacterProfile,
   type AiGenerateCharacterProfileOutput,
-  type AiGenerateCharacterProfileInput,
 } from './ai-generate-character-profile';
 import {
   aiProofreadScript,
   type AiProofreadScriptOutput,
-  type AiProofreadScriptInput,
 } from './ai-proofread-script';
 import {
   aiReformatScript,
   type AiReformatScriptOutput,
-  type AiReformatScriptInput,
 } from './ai-reformat-script';
+import { ScriptBlock, ScriptDocument } from '@/lib/editor-types';
+
+
+const ScriptBlockSchema = z.object({
+  id: z.string(),
+  type: z.enum(['scene-heading', 'action', 'character', 'parenthetical', 'dialogue', 'transition', 'shot']),
+  text: z.string(),
+});
+
+const ScriptDocumentSchema = z.object({
+  blocks: z.array(ScriptBlockSchema),
+});
+
 
 const AiGenerateCharacterProfileOutputSchema = z.object({
   name: z.string().describe("The character's full name."),
@@ -52,7 +62,7 @@ const AiReformatScriptOutputSchema = z.object({
 
 const AiAgentOrchestratorInputSchema = z.object({
   request: z.string().describe("The user's natural language request."),
-  script: z.string().describe('The current state of the screenplay.'),
+  document: ScriptDocumentSchema.describe('The current state of the screenplay as a structured document.'),
 });
 export type AiAgentOrchestratorInput = z.infer<
   typeof AiAgentOrchestratorInputSchema
@@ -68,11 +78,10 @@ const AiAgentOrchestratorOutputSchema = z.object({
     .any()
     .optional()
     .describe('The direct result from any tool that was called.'),
-  modifiedScript: z
-    .string()
+  modifiedDocument: ScriptDocumentSchema
     .optional()
     .describe(
-      'The full, rewritten script content if the user requested a change.'
+      'The full, rewritten script document if the user requested a change.'
     ),
 });
 export type AiAgentOrchestratorOutput = z.infer<
@@ -111,7 +120,7 @@ const proofreadScriptTool = ai.defineTool(
     description:
       'Proofreads the script for objective errors like spelling, grammar, and continuity mistakes. This tool does NOT change the story or structure.',
     inputSchema: z.object({
-      script: z.string().describe('The full script to proofread.'),
+      script: z.string().describe('The full script content to proofread.'),
     }),
     outputSchema: AiProofreadScriptOutputSchema,
   },
@@ -124,7 +133,7 @@ const reformatScriptTool = ai.defineTool(
   {
     name: 'reformatScript',
     description:
-      'Reformats the entire script into standard screenplay format. Use this when the user asks to "reformat", "clean up", "fix formatting", or says the script is "squished" or "unstructured".',
+      'Reformats the entire script into standard screenplay format. Use this when the user asks to "reformat", "clean up", "fix formatting", or says the script is "squished" or "unstructured". This returns a single text string, not a document.',
     inputSchema: z.object({
       script: z.string().describe('The full script content to reformat.'),
     }),
@@ -140,24 +149,25 @@ const orchestratorPrompt = `You are an expert AI assistant for a screenwriting a
 Analyze the user's request and the current script content to determine the correct action. You have two types of actions: direct script modification or calling a tool.
 
 **HIGHEST PRIORITY: DIRECT SCRIPT MODIFICATION**
-- **IF the user asks for a direct change to the story or dialogue (e.g., "change the character's name", "make this scene more suspenseful", "add a line of dialogue")**, you MUST rewrite the script yourself.
-- In this case, **DO NOT CALL A TOOL**. Your action is to provide the full new script content in the 'modifiedScript' field of your response.
+- **IF the user asks for a direct change to the story, dialogue, characters, or scenes (e.g., "change the character's name", "make this scene more suspenseful", "add a line of dialogue", "delete the last action line")**, you MUST rewrite the script's document structure.
+- In this case, **DO NOT CALL A TOOL**. Your action is to provide the full new script document in the 'modifiedDocument' field of your response.
+- You MUST preserve the existing block IDs where possible. Only generate new IDs for new blocks.
 
 **SECOND PRIORITY: TOOL CALLING**
 If the request is not a direct story change, you MUST select one of the following tools:
-- **IF the user asks to create a character**, use the \`generateCharacter\` tool.
+- **IF the user asks to create a brand new character profile (not editing an existing one)**, use the \`generateCharacter\` tool.
 - **IF the user asks to proofread, check for errors, or find mistakes**, use the \`proofreadScript\` tool.
-- **IF the user asks to reformat, clean up the layout, or fix formatting (e.g., "it's too squished")**, use the \`reformatScript\` tool.
+- **IF the user asks to reformat, clean up the layout, or fix formatting from a raw text block (e.g., "it's too squished")**, use the \`reformatScript\` tool.
 
 **LOWEST PRIORITY: GENERAL CONVERSATION**
-- **IF the user is asking a general question or for analysis that doesn't fit any of the above**, respond directly with text and do not use a tool or modify the script.
+- **IF the user is asking a general question or for analysis that doesn't fit any of the above**, respond directly with text and do not use a tool or modify the script document.
 
 **User Request:**
 {{{request}}}
 
-**Current Screenplay:**
+**Current Screenplay Document:**
 ---
-{{{script}}}
+{{{json document}}}
 ---
 `;
 
@@ -169,21 +179,21 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
   },
   async (input) => {
     const model = googleAI.model('gemini-2.5-flash');
+    const scriptAsString = JSON.stringify(input.document);
 
     // STEP 1: Let the model decide whether to call a tool OR modify the script directly.
     let decision = await ai.generate({
       model,
       prompt: orchestratorPrompt,
-      history: [{role: 'user', content: [{text: input.request}, {text: input.script}]}],
+      history: [{role: 'user', content: [{text: input.request}, {json: input.document}]}],
       tools: [generateCharacterTool, proofreadScriptTool, reformatScriptTool],
       output: {
         format: 'json',
         schema: z.object({
-          modifiedScript: z
-            .string()
+          modifiedDocument: ScriptDocumentSchema
             .optional()
             .describe(
-              'If the request requires a direct script change, this is the FULL new script. Omit this field entirely if calling a tool.'
+              'If the request requires a direct script change, this is the FULL new script document. Omit this field entirely if calling a tool.'
             ),
         }),
       },
@@ -193,7 +203,8 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     });
 
     let toolResult: any = null;
-    let modifiedScript = decision.output?.modifiedScript;
+    let modifiedDocument = decision.output?.modifiedDocument;
+    let modifiedScriptAsString: string | undefined = undefined;
 
     // STEP 2: Execute the chosen tool, if any.
     if (decision.toolRequests.length > 0) {
@@ -205,7 +216,8 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
       if (toolRequest.name === 'proofreadScript') toolType = 'proofread';
       if (toolRequest.name === 'reformatScript') {
         toolType = 'reformat';
-        modifiedScript = (toolOutput as AiReformatScriptOutput)
+        // The output of reformat is a string, not a document.
+        modifiedScriptAsString = (toolOutput as AiReformatScriptOutput)
           .formattedScript;
       }
 
@@ -216,7 +228,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     }
 
     // STEP 3: Generate the final conversational response based on the action taken.
-    if (modifiedScript || toolResult) {
+    if (modifiedDocument || toolResult) {
       const finalResponse = await ai.generate({
         model,
         prompt: `You are an expert AI assistant. Based on the user's request, an action was just performed.
@@ -246,11 +258,22 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
             temperature: 0.3,
         }
       });
+      
+      // Special handling for reformat tool which returns a string, not a document
+      if (modifiedScriptAsString) {
+         return {
+            response:
+            finalResponse.output?.response || "I've completed your request.",
+            // We need to parse the string back into a document here.
+            modifiedDocument: { blocks: modifiedScriptAsString.split('\n\n').map((line, index) => ({ id: `block-${index}-${Date.now()}`, text: line, type: 'action' as const }))},
+            toolResult: toolResult,
+        };
+      }
 
       return {
         response:
           finalResponse.output?.response || "I've completed your request.",
-        modifiedScript: modifiedScript,
+        modifiedDocument: modifiedDocument,
         toolResult: toolResult,
       };
     }
@@ -258,8 +281,8 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     // STEP 4: If no tool was called and no script was modified, it's a general question.
     const generalResponse = await ai.generate({
       model,
-      prompt: `You are an expert AI assistant. The user asked: "${input.request}". The script content is: ---{{{script}}}---. Provide a helpful, conversational answer to their question.`,
-      history: [{role: 'user', content: [{text: input.request}, {text: input.script}]}],
+      prompt: `You are an expert AI assistant. The user asked: "${input.request}". The script content is: ---${scriptAsString}---. Provide a helpful, conversational answer to their question.`,
+      history: [{role: 'user', content: [{text: input.request}, {json: input.document}]}],
     });
 
     return {
@@ -267,3 +290,5 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
     };
   }
 );
+
+    

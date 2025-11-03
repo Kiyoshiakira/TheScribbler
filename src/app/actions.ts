@@ -161,15 +161,16 @@ export async function runAiAgent(input: AiAgentOrchestratorInput) {
     try {
         const result = await aiAgentOrchestrator(input);
         return { data: result, error: null };
-    } catch (error) {
-        console.error(error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    } catch (error: any) {
+        console.error('Error in runAiAgent:', error);
+        const errorMessage = error.message || 'An unknown error occurred while running the AI agent.';
         return {
-        data: null,
-        error: `An error occurred while running the AI agent: ${errorMessage}`,
+            data: null,
+            error: errorMessage,
         };
     }
 }
+
 
 export async function runGetAiProofreadSuggestions(input: AiProofreadScriptInput) {
     if (!isAiAvailable) {
@@ -204,3 +205,5 @@ export async function runAiDiagnoseAppHealth(input: AiDiagnoseAppHealthInput) {
         };
     }
 }
+
+    
