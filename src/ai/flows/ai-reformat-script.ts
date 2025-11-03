@@ -8,8 +8,8 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
 import { googleAI } from '@genkit-ai/google-genai';
+import { z } from 'zod';
 
 const AiReformatScriptInputSchema = z.object({
   rawScript: z
