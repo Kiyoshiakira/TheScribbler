@@ -77,7 +77,7 @@ export function FindReplaceDialog({ open, onOpenChange }: FindReplaceDialogProps
         activeElement.removeAttribute('data-find-active');
       }
     }
-  }, [findValue, open, matchCase, wholeWord, findMatches]);
+  }, [open, findMatches]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
