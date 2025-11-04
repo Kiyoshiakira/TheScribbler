@@ -141,7 +141,6 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             )}
             data-block-id={block.id}
             data-block-type={block.type}
-            dangerouslySetInnerHTML={{ __html: block.text }}
         />
     </div>
   );
