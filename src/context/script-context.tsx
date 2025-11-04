@@ -309,7 +309,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
           const range = document.createRange();
           
           if (prevElement.childNodes.length > 0) {
-            const textNode = prevElement.childNodes[0];
+            const textNode = prevElement.childNodes[prevElement.childNodes.length - 1];
             // Ensure cursor position is valid
             const newCursorPos = Math.min(originalPrevTextLength, textNode.textContent?.length || 0);
             range.setStart(textNode, newCursorPos);
