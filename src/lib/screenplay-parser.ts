@@ -11,7 +11,7 @@ const Patterns = {
   // Handles variations like I/E. and INT./EXT. Also detects forced scene headings starting with a period.
   sceneHeading: /^(INT|EXT|I\/E|INT\.\/EXT)\..*|^\..+/i,
   // Transitions: e.g., FADE IN:, CUT TO:, DISSOLVE TO. Must be on its own line and often at the end.
-  transition: /(FADE (IN|OUT):|CUT TO:|DISSOLVE TO:|SMASH CUT TO:|>.*)$/i,
+  transition: /(FADE (IN|OUT):|CUT TO:|DISSOLVE TO:|SMASH CUT TO:|>.*)$/,
   // Character names: Typically all caps, not followed by dialogue on the same line.
   // Must not be a scene heading. Should be on a line by itself.
   character: /^[A-Z][A-Z0-9 \t]+(?:\(V\.O\.\)|\(O\.S\.\))?$/,
@@ -125,33 +125,6 @@ export function parseScreenplay(rawScript: string): ScriptDocument {
 export function serializeScript(scriptDoc: ScriptDocument): string {
     if (!scriptDoc || !scriptDoc.blocks) {
         return '';
-    }
-
-    let output = '';
-    for (let i = 0; i < scriptDoc.blocks.length; i++) {
-        const block = scriptDoc.blocks[i];
-        const nextBlock = scriptDoc.blocks[i + 1];
-
-        output += block.text;
-
-        // Determine the appropriate newline spacing based on block types
-        if (nextBlock) {
-            const isTransitioningToNewMajorBlock = 
-                block.type === ScriptBlockType.ACTION ||
-                block.type === ScriptBlockType.DIALOGUE ||
-                block.type === ScriptBlockType.TRANSITION;
-
-            if (nextBlock.type === ScriptBlockType.SCENE_HEADING) {
-                output += '\n\n\n'; // More space before a new scene
-            } else if (nextBlock.type === ScriptBlockType.CHARACTER && isTransitioningToNewMajorBlock) {
-                output += '\n\n';
-            } else if (nextBlock.type === ScriptBlockType.ACTION && (block.type === ScriptBlockType.DIALOGUE || block.type === ScriptBlockType.CHARACTER)) {
-                output += '\n\n';
-            }
-             else {
-                output += '\n'; // Single newline for tight groups like CHARACTER -> DIALOGUE
-            }
-        }
     }
 
     return scriptDoc.blocks.map(b => b.text).join('\n\n');
