@@ -35,29 +35,25 @@ export default function EditorStatusBar() {
     }, [document, activeBlockId]);
 
     return (
-        <div className="fixed bottom-0 left-0 md:left-[var(--sidebar-width-icon)] group-data-[state=expanded]:md:left-[var(--sidebar-width)] right-0 z-20 bg-background/80 backdrop-blur-sm border-t transition-[left] duration-300 ease-in-out">
-            <div className="flex items-center justify-between h-10 px-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-4">
-                     <div className="flex items-center gap-1.5" title="Page Count">
-                        <Scroll className="w-3.5 h-3.5" />
-                        <span>{metrics.pageCount} pgs</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Estimated Time">
-                        <Timer className="w-3.5 h-3.5" />
-                        <span>~{metrics.estimatedMinutes} min</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Character Count">
-                        <Type className="w-3.5 h-3.5" />
-                        <span>{metrics.charCount.toLocaleString()} chars</span>
-                    </div>
+        <div className="w-full mt-4">
+            <div className="flex items-center justify-center h-10 px-4 text-xs text-muted-foreground rounded-lg border bg-card gap-6 max-w-sm mx-auto">
+                <div className="flex items-center gap-1.5" title="Page Count">
+                <Scroll className="w-3.5 h-3.5" />
+                <span>{metrics.pageCount} pgs</span>
                 </div>
-                 <div className="flex items-center gap-2">
-                    {activeBlock && (
-                        <Badge variant="outline" className="transition-all duration-200">
-                            {getBlockTypeLabel(activeBlock.type)}
-                        </Badge>
-                    )}
-                 </div>
+                <div className="flex items-center gap-1.5" title="Estimated Time">
+                <Timer className="w-3.5 h-3.5" />
+                <span>~{metrics.estimatedMinutes} min</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Character Count">
+                <Type className="w-3.5 h-3.5" />
+                <span>{metrics.charCount.toLocaleString()} chars</span>
+                </div>
+                {activeBlock && (
+                    <Badge variant="outline" className="transition-all duration-200">
+                        {getBlockTypeLabel(activeBlock.type)}
+                    </Badge>
+                )}
             </div>
         </div>
     );
