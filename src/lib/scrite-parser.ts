@@ -1,15 +1,15 @@
 
 import JSZip from 'jszip';
+import { runAiReformatScript } from '@/app/actions';
 
-// These interfaces are simplified representations of the Scrite JSON structure.
-// They help in safely navigating the complex object.
-
+// Internal interfaces for parsing the Scrite JSON structure
 interface ScriteSceneElement {
   type: 'Action' | 'Character' | 'Dialogue' | 'Parenthetical' | 'Transition' | 'Shot';
-  text: string;
+  text: any; // Can be a string or a Quill Delta-like object
 }
 
 interface ScriteScene {
+  id: string;
   heading?: {
     locationType?: string;
     location?: string;
@@ -17,6 +17,7 @@ interface ScriteScene {
   };
   synopsis?: string;
   elements?: ScriteSceneElement[];
+  wordCount?: number;
 }
 
 interface ScriteStructureElement {
@@ -34,7 +35,7 @@ interface ScriteNote {
   content?: any; // Can be string or Quill Delta
 }
 
-// Final output interfaces remain the same
+// Interfaces for the final parsed data
 export type NoteCategory = 'Plot' | 'Character' | 'Dialogue' | 'Research' | 'Theme' | 'Scene' | 'General';
 
 export interface ParsedNote {
@@ -55,17 +56,16 @@ export interface ParsedCharacter {
 }
 
 export interface ParsedScene {
-  id?: string;
+  id: string;
   sceneNumber: number;
   setting: string;
   description: string;
-  time: number;
+  time: number; // Estimated time in minutes
 }
 
-
-export interface ParsedScriteFile {
+export interface ParsedAndFormattedData {
   title: string;
-  script: string;
+  formattedScript: string;
   characters: ParsedCharacter[];
   notes: ParsedNote[];
   scenes: ParsedScene[];
@@ -90,20 +90,23 @@ const parseQuillDelta = (delta: any): string => {
                 text = parsed.ops.map((op: any) => op.insert || '').join('');
             }
         }
-        // Remove excessive newlines and whitespace that can come from Quill
         return text.replace(/(\n\s*)+/g, '\n').trim();
     } catch (e) {
-        return ''; // Return empty string on parse error
+        return '';
     }
 };
 
-export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScriteFile> => {
+/**
+ * Parses a .scrite file, extracts content, reformats it via AI, and returns a structured object.
+ * @param fileData The ArrayBuffer content of the .scrite file.
+ * @returns A promise that resolves to the parsed and formatted data.
+ */
+export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise<ParsedAndFormattedData> => {
   const zip = await JSZip.loadAsync(fileData);
   
   const headerFile = zip.file('_header.json');
   if (!headerFile) {
-    const fileList = Object.keys(zip.files).join(', ');
-    throw new Error(`Invalid .scrite file: _header.json not found. Files in archive: [${fileList}]`);
+    throw new Error('Invalid .scrite file: _header.json not found.');
   }
   
   const headerData = await headerFile.async('string');
@@ -114,7 +117,7 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     throw new Error('Invalid Scrite JSON structure: <structure> tag not found.');
   }
 
-  const title = jsonObj.screenplay?.title || 'Untitled Import';
+  const title = jsonObj.screenplay?.title || 'Untitled Scrite Import';
   const scriptLines: string[] = [];
   const scenes: ParsedScene[] = [];
   let sceneCounter = 0;
@@ -126,44 +129,49 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     if (!scene) continue;
 
     sceneCounter++;
-    const sceneParts: string[] = [];
-    const heading = scene.heading;
     let sceneSetting = 'Untitled Scene';
 
-    if (heading && heading.location && heading.moment) {
-        sceneSetting = `${heading.locationType || 'INT.'} ${heading.location} - ${heading.moment}`;
+    if (scene.heading && scene.heading.location && scene.heading.moment) {
+        sceneSetting = `${scene.heading.locationType || 'INT.'} ${scene.heading.location} - ${scene.heading.moment}`;
         const sceneHeadingText = sceneSetting.toUpperCase();
         scriptLines.push(sceneHeadingText);
     }
     
     const sceneElements = getAsArray(scene.elements) as ScriteSceneElement[];
-    if (sceneElements) {
-        sceneElements.forEach(element => {
-            let text = parseQuillDelta(element.text || '');
-            if (!text && element.type !== 'Action') return;
+    sceneElements.forEach(element => {
+        let text = parseQuillDelta(element.text || '');
+        if (!text && element.type !== 'Action') return;
 
-            let line = '';
-            switch(element.type) {
-                case 'Action':        line = text; break;
-                case 'Character':     line = `\n${text.toUpperCase()}`; break;
-                case 'Parenthetical': line = `(${text})`; break;
-                case 'Dialogue':      line = text; break;
-                case 'Transition':    line = `\n${text.toUpperCase()}`; break;
-                case 'Shot':          line = text.toUpperCase(); break;
-                default:              return;
-            }
-            scriptLines.push(line);
-        });
-    }
+        let line = '';
+        switch(element.type) {
+            case 'Action':        line = text; break;
+            case 'Character':     line = `\n${text.toUpperCase()}`; break;
+            case 'Parenthetical': line = `(${text})`; break;
+            case 'Dialogue':      line = text; break;
+            case 'Transition':    line = `\n${text.toUpperCase()}`; break;
+            case 'Shot':          line = text.toUpperCase(); break;
+            default:              return;
+        }
+        scriptLines.push(line);
+    });
 
     scenes.push({
       id: scene.id,
       sceneNumber: sceneCounter,
       setting: sceneSetting,
       description: scene.synopsis || "No synopsis available.",
-      time: Math.round(scene.wordCount / 20) / 10 || 1, // Rough estimate: 1 page/min, 200 words/page
+      time: Math.round((scene.wordCount || 0) / 150) || 1, // Estimate ~150 words/min
     });
   }
+
+  const rawScript = scriptLines.join('\n\n').replace(/\n{3,}/g, '\n\n');
+
+  // Call AI to reformat the extracted script
+  const reformatResult = await runAiReformatScript({ rawScript });
+  if (reformatResult.error || !reformatResult.data) {
+    throw new Error('Failed to reformat script content during import.');
+  }
+  const formattedScript = reformatResult.data.formattedScript;
 
   const characters: ParsedCharacter[] = (getAsArray(structure.characters) as ScriteCharacter[]).map(c => ({
     name: c.name || 'Unknown',
@@ -177,7 +185,5 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
       category: 'General'
   }));
 
-  const script = scriptLines.join('\n\n').replace(/\n\n\n/g, '\n\n');
-
-  return { title, script, characters, notes, scenes };
+  return { title, formattedScript, characters, notes, scenes };
 };

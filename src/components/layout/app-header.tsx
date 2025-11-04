@@ -31,7 +31,7 @@ import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
-import { parseScriteFile } from '@/lib/scrite-parser';
+import { parseAndReformatScriteFile, ParsedAndFormattedData } from '@/lib/scrite-parser';
 import { collection, writeBatch, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import JSZip from 'jszip';
@@ -73,38 +73,46 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     }
   };
 
-    const processImportedContent = async (title: string, content: string) => {
+    const processImportedContent = async (title: string, content: string, subCollections?: Omit<ParsedAndFormattedData, 'title' | 'formattedScript'>) => {
         if (!firestore || !user) return;
         const { dismiss, update } = toast({
             id: 'import-toast',
-            title: 'Importing Script...',
-            description: 'Starting the import process.',
+            title: 'Saving Script...',
+            description: 'Adding the new script to your collection.',
         });
         
         try {
-             update({ id: 'import-toast', title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
-             const reformatResult = await runAiReformatScript({ rawScript: content });
-
-             // Since the action now always returns data, we just check for its existence.
-             if (!reformatResult.data) {
-                throw new Error('Import failed during the reformatting stage.');
-            }
-
+            const batch = writeBatch(firestore);
             const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
-            const scriptData = {
+            
+            batch.set(newScriptRef, {
                 title: title,
-                content: reformatResult.data.formattedScript,
+                content: content,
                 authorId: user.uid,
                 createdAt: serverTimestamp(),
                 lastModified: serverTimestamp(),
-            };
+            });
 
-            update({ id: 'import-toast', title: 'Saving Script...', description: 'Adding the new script to your collection.' });
-            await setDoc(newScriptRef, scriptData).catch((serverError) => {
+            if (subCollections) {
+                if (subCollections.characters) {
+                    const charactersCol = collection(newScriptRef, 'characters');
+                    subCollections.characters.forEach((char: any) => batch.set(doc(charactersCol), { ...char, id: undefined }));
+                }
+                if (subCollections.scenes) {
+                    const scenesCol = collection(newScriptRef, 'scenes');
+                    subCollections.scenes.forEach((scene: any) => batch.set(doc(scenesCol), { ...scene, id: undefined }));
+                }
+                if (subCollections.notes) {
+                    const notesCol = collection(newScriptRef, 'notes');
+                    subCollections.notes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
+                }
+            }
+
+            await batch.commit().catch((serverError) => {
                 const permissionError = new FirestorePermissionError({
-                    path: newScriptRef.path,
-                    operation: 'create',
-                    requestResourceData: scriptData,
+                    path: `users/${user.uid}/scripts`,
+                    operation: 'write',
+                    requestResourceData: { script: "Batch write for import" },
                 });
                 errorEmitter.emit('permission-error', permissionError);
                 throw permissionError;
@@ -132,7 +140,27 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
 
 
     const { openPicker } = useGooglePicker({
-        onFilePicked: processImportedContent,
+        onFilePicked: async (fileName, fileContent) => {
+            const { dismiss, update } = toast({
+                id: 'gdoc-reformat-toast',
+                title: 'Reformatting Script...',
+                description: 'AI is cleaning up the script format.'
+            });
+
+            const reformatResult = await runAiReformatScript({ rawScript: fileContent });
+            dismiss();
+
+            if (reformatResult.error || !reformatResult.data) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Reformatting Failed',
+                    description: 'Falling back to raw text import.'
+                });
+                processImportedContent(fileName, fileContent);
+            } else {
+                processImportedContent(fileName, reformatResult.data.formattedScript);
+            }
+        },
     });
 
 
@@ -152,7 +180,6 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       });
     }
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -179,38 +206,16 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         const importedCharacters = zip.file('characters.json') ? JSON.parse(await zip.file('characters.json')!.async('string')) : [];
         const importedScenes = zip.file('scenes.json') ? JSON.parse(await zip.file('scenes.json')!.async('string')) : [];
         const importedNotes = zip.file('notes.json') ? JSON.parse(await zip.file('notes.json')!.async('string')) : [];
-
-        const batch = writeBatch(firestore);
-
-        const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
-        batch.set(newScriptRef, {
-            title: projectData.title || 'Untitled Scribbler Import',
-            content: projectData.content || '',
-            logline: projectData.logline || '',
-            authorId: user.uid,
-            createdAt: serverTimestamp(),
-            lastModified: serverTimestamp(),
-        });
         
-        const charactersCol = collection(newScriptRef, 'characters');
-        importedCharacters.forEach((char: any) => batch.set(doc(charactersCol), { ...char, id: undefined }));
-        
-        const scenesCol = collection(newScriptRef, 'scenes');
-        importedScenes.forEach((scene: any) => batch.set(doc(scenesCol), { ...scene, id: undefined }));
-
-        const notesCol = collection(newScriptRef, 'notes');
-        importedNotes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
-
         update({ id: 'scribbler-import-toast', title: 'Saving to Database...', description: 'Writing new script and sub-collections.' });
-        await batch.commit();
+        
+        await processImportedContent(
+            projectData.title || 'Untitled Scribbler Import',
+            projectData.content || '',
+            { characters: importedCharacters, scenes: importedScenes, notes: importedNotes }
+        );
 
         dismiss();
-        toast({
-          title: 'Import Successful',
-          description: `"${projectData.title}" has been added to your scripts.`,
-        });
-        setCurrentScriptId(newScriptRef.id);
-        setView('dashboard');
 
     } catch (error) {
         console.error('Scribbler import failed:', error);
@@ -226,102 +231,33 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   }
 
 
-  const handleScriteImport = (file: File) => {
-    if (!firestore || !user) return;
+  const handleScriteImport = async (file: File) => {
+    if (!user) return;
+    const { dismiss, update } = toast({ id: 'scrite-import-toast', title: 'Importing Scrite File...', description: 'Parsing and reformatting...' });
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const arrayBuffer = e.target?.result as ArrayBuffer;
-      const { dismiss, update } = toast({ id: 'scrite-import-toast', title: 'Importing Scrite File...', description: 'Reading file content.' });
-
-      try {
-        update({ id: 'scrite-import-toast', description: 'Parsing and analyzing the file structure.' });
-        const parsedData = await parseScriteFile(arrayBuffer);
-        
-        update({ id: 'scrite-import-toast', title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
-        const reformatResult = await runAiReformatScript({ rawScript: parsedData.script });
-        
-        if (reformatResult.error || !reformatResult.data) {
-            throw new Error(reformatResult.error || 'AI reformatting failed.');
-        }
-
-        const formattedScript = reformatResult.data.formattedScript;
-
-        const batch = writeBatch(firestore);
-
-        const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
-        const scriptTitle = parsedData.title;
-        
-        batch.set(newScriptRef, {
-            title: scriptTitle,
-            content: formattedScript,
-            authorId: user.uid,
-            createdAt: serverTimestamp(),
-            lastModified: serverTimestamp(),
-        });
-        
-        const charactersCollectionRef = collection(newScriptRef, 'characters');
-        parsedData.characters.forEach(char => {
-            const newCharRef = doc(charactersCollectionRef);
-            batch.set(newCharRef, { ...char, scenes: 0, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-        });
-
-        const notesCollectionRef = collection(newScriptRef, 'notes');
-        parsedData.notes.forEach(note => {
-            const newNoteRef = doc(notesCollectionRef);
-            batch.set(newNoteRef, note);
-        });
-
-        const scenesCollectionRef = collection(newScriptRef, 'scenes');
-        parsedData.scenes.forEach(scene => {
-            const newSceneRef = doc(scenesCollectionRef);
-            batch.set(newSceneRef, scene);
-        });
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const parsedData = await parseAndReformatScriteFile(arrayBuffer);
         
         update({ id: 'scrite-import-toast', title: 'Saving to Database...', description: 'Writing new script and sub-collections.' });
-        await batch.commit().catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-              path: `users/${user.uid}/scripts`,
-              operation: 'write', 
-              requestResourceData: {
-                  script: "Batch write for Scrite import",
-                  characterCount: parsedData.characters.length,
-                  noteCount: parsedData.notes.length,
-                  sceneCount: parsedData.scenes.length
-              },
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            throw permissionError;
-        });
         
-        dismiss();
-        toast({
-          title: 'Import Successful',
-          description: `"${scriptTitle}" has been added to your scripts.`,
+        await processImportedContent(parsedData.title, parsedData.formattedScript, {
+            characters: parsedData.characters,
+            scenes: parsedData.scenes,
+            notes: parsedData.notes,
         });
-        setCurrentScriptId(newScriptRef.id);
-        setView('dashboard');
 
-      } catch (error) {
-         console.error("--- DEBUG: Import Parsing Failed ---", error);
-         dismiss();
-         if (!(error instanceof FirestorePermissionError)) {
-            toast({
-                variant: 'destructive',
-                title: 'Import Failed',
-                description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
-            });
-         }
-      }
-    };
-    reader.onerror = () => {
-        toast({
-            variant: 'destructive',
-            title: 'Import Failed',
-            description: 'There was an error reading the file.',
-        });
+        dismiss();
+
+    } catch (error) {
+       console.error("--- DEBUG: Scrite Import Failed ---", error);
+       dismiss();
+       toast({
+          variant: 'destructive',
+          title: 'Import Failed',
+          description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+      });
     }
-    reader.readAsArrayBuffer(file);
   };
 
   const triggerFileSelect = () => {
