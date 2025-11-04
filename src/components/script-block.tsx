@@ -15,9 +15,9 @@ interface ScriptBlockProps {
 const getBlockStyles = (type: ScriptBlockType): string => {
   switch (type) {
     case ScriptBlockType.SCENE_HEADING:
-      return 'font-bold uppercase my-4';
+      return 'font-bold uppercase my-6';
     case ScriptBlockType.ACTION:
-      return 'my-2';
+      return 'my-4';
     case ScriptBlockType.CHARACTER:
       return 'text-center uppercase mt-4 mb-1';
     case ScriptBlockType.PARENTHETICAL:
@@ -64,26 +64,64 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const selection = window.getSelection();
-    const range = selection?.getRangeAt(0);
+    if (!selection?.rangeCount) return;
 
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        insertBlockAfter(block.id);
+    const range = selection.getRangeAt(0);
+    const element = e.currentTarget;
+
+    if (e.key === 'Enter') {
+      if(e.shiftKey) {
+        // Allow default behavior (new line) for Shift+Enter
         return;
+      }
+      e.preventDefault();
+      insertBlockAfter(block.id);
+      return;
     }
 
     if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
       cycleBlockType(block.id);
     }
-
-    if (e.key === 'Backspace') {
-      const currentText = e.currentTarget.innerText;
-      if (selection && range && range.startOffset === 0 && range.endOffset === 0 && currentText.trim() === '') {
-        e.preventDefault();
-        mergeWithPreviousBlock(block.id);
+    
+    if (e.key === 'Backspace' && range.startOffset === 0 && range.endOffset === 0) {
+      const currentText = element.innerText;
+       if (currentText === '' || selection.toString() === currentText) {
+          e.preventDefault();
+          mergeWithPreviousBlock(block.id);
       }
     }
+    
+    // Arrow key navigation between blocks
+    const focusSibling = (sibling: 'previous' | 'next') => {
+        const siblingElement = (element.parentElement?.[`${sibling}ElementSibling`] as HTMLElement)?.querySelector('[contenteditable="true"]') as HTMLElement;
+        if (siblingElement) {
+            e.preventDefault();
+            siblingElement.focus();
+            // Move cursor to the end if moving up, or start if moving down
+            const newRange = document.createRange();
+            const selection = window.getSelection();
+            newRange.selectNodeContents(siblingElement);
+            newRange.collapse(sibling === 'previous'); // true = to end, false = to start
+            selection?.removeAllRanges();
+            selection?.addRange(newRange);
+        }
+    }
+
+    if (e.key === 'ArrowUp') {
+        const atStart = range.startOffset === 0 && range.startContainer === element.firstChild;
+        if (atStart) {
+           focusSibling('previous');
+        }
+    }
+
+    if (e.key === 'ArrowDown') {
+        const atEnd = range.endOffset === element.innerText.length && range.endContainer === element.lastChild;
+        if (atEnd) {
+           focusSibling('next');
+        }
+    }
+
   };
 
 
