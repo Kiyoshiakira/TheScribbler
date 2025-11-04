@@ -54,15 +54,19 @@ export async function runAiReformatScript(input: AiReformatScriptInput) {
         const result = await aiReformatScript(input);
         // Validate shape defensively
         if (!result || typeof result.formattedScript !== 'string') {
-            return { data: null, error: 'AI returned an unexpected output shape (formattedScript missing or invalid).' };
+            // If AI returns an invalid shape, fall back to raw script instead of failing.
+            return {
+                data: { formattedScript: input.rawScript, __debug: { fallback: true, reason: 'AI returned invalid shape.' } },
+                error: null,
+            };
         }
         return { data: result, error: null };
     } catch (error) {
-        console.error('[runAiReformatScript] Error invoking AI flow:', error);
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        console.error('[runAiReformatScript] Error invoking AI flow, falling back to raw content:', error);
+        // On any other error, fall back to the raw script content.
         return {
-            data: null,
-            error: `An error occurred while reformatting the script: ${errorMessage}`,
+            data: { formattedScript: input.rawScript, __debug: { fallback: true, reason: 'AI flow threw an exception.' } },
+            error: null,
         };
     }
 }

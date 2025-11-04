@@ -85,8 +85,9 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
              update({ id: 'import-toast', title: 'Reformatting Script...', description: 'AI is cleaning up the script format.' });
              const reformatResult = await runAiReformatScript({ rawScript: content });
 
-             if (reformatResult.error || !reformatResult.data) {
-                throw new Error(reformatResult.error || 'AI reformatting failed.');
+             // Since the action now always returns data, we just check for its existence.
+             if (!reformatResult.data) {
+                throw new Error('Import failed during the reformatting stage.');
             }
 
             const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
