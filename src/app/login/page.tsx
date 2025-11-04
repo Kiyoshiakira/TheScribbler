@@ -20,16 +20,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/firebase';
+import { useFirebase } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 import { Chrome } from 'lucide-react'; // Using Chrome icon for Google as a generic browser icon
 
 function LoginCard() {
-  const auth = useAuth();
+  // Use useFirebase instead of useAuth to get nullable auth
+  const { auth } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -37,17 +36,87 @@ function LoginCard() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
+  // Log auth availability for debugging
+  React.useEffect(() => {
+    console.log('[LoginPage] Auth availability:', {
+      authAvailable: !!auth,
+      authType: auth ? typeof auth : 'undefined',
+    });
+  }, [auth]);
+
+  const validateInputs = (action: 'signIn' | 'signUp'): string | null => {
+    // Trim inputs
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail) {
+      return 'Email is required.';
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return 'Please enter a valid email address.';
+    }
+
+    if (!trimmedPassword) {
+      return 'Password is required.';
+    }
+
+    // For sign up, enforce minimum password length
+    if (action === 'signUp' && trimmedPassword.length < 6) {
+      return 'Password must be at least 6 characters long.';
+    }
+
+    return null;
+  };
+
   const handleAuthAction = async (action: 'signIn' | 'signUp') => {
+    console.log(`[LoginPage] Starting ${action} attempt`, {
+      hasEmail: !!email.trim(),
+      authAvailable: !!auth,
+    });
+
+    // Validate inputs first
+    const validationError = validateInputs(action);
+    if (validationError) {
+      console.warn(`[LoginPage] Validation failed for ${action}:`, validationError);
+      toast({
+        variant: 'destructive',
+        title: 'Validation Error',
+        description: validationError,
+      });
+      return;
+    }
+
+    // Check if auth is available
+    if (!auth) {
+      console.error('[LoginPage] Firebase Auth is not available');
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Service Unavailable',
+        description: 'Firebase authentication is not available. Please try again later or contact support.',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+
       if (action === 'signUp') {
-        await createUserWithEmailAndPassword(auth, email, password);
+        console.log('[LoginPage] Calling createUserWithEmailAndPassword');
+        await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+        console.log('[LoginPage] Sign up successful');
         toast({
           title: 'Account Created',
           description: "You've been successfully signed up! Redirecting...",
         });
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        console.log('[LoginPage] Calling signInWithEmailAndPassword');
+        await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+        console.log('[LoginPage] Sign in successful');
         toast({
           title: 'Signed In',
           description: "Welcome back! Redirecting...",
@@ -55,7 +124,7 @@ function LoginCard() {
       }
       router.push('/');
     } catch (error: any) {
-      console.error(`Error during ${action}:`, error);
+      console.error(`[LoginPage] Error during ${action}:`, error);
       toast({
         variant: 'destructive',
         title: `Error during ${action}`,
@@ -67,17 +136,33 @@ function LoginCard() {
   };
 
   const handleGoogleSignIn = async () => {
+    console.log('[LoginPage] Starting Google sign-in attempt', {
+      authAvailable: !!auth,
+    });
+
+    // Check if auth is available
+    if (!auth) {
+      console.error('[LoginPage] Firebase Auth is not available for Google sign-in');
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Service Unavailable',
+        description: 'Firebase authentication is not available. Please try again later or contact support.',
+      });
+      return;
+    }
+
     setIsGoogleLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       // Add scopes to request access to Google Drive and Docs
       provider.addScope('https://www.googleapis.com/auth/drive.readonly');
       provider.addScope('https://www.googleapis.com/auth/documents.readonly');
+      console.log('[LoginPage] Calling signInWithRedirect for Google');
       await signInWithRedirect(auth, provider);
       // The user is redirected, so the code below this line won't execute until they return.
       // Firebase automatically handles the redirect result on page load.
     } catch (error: any) {
-      console.error('Error signing in with Google:', error);
+      console.error('[LoginPage] Error signing in with Google:', error);
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Error',
