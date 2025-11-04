@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useContext, ReactNode, useEffect, useRef } from 'react';
@@ -550,11 +551,11 @@ export default function AiFab({
           <TooltipTrigger asChild>
             <Button
               size="icon"
-              className="rounded-full w-14 h-14 shadow-lg fixed bottom-8 right-8 z-50"
+              className="rounded-full w-12 h-12 shadow-lg fixed bottom-4 right-4 z-50"
               disabled
               aria-label="AI features disabled"
             >
-              <Sparkles className="w-6 h-6" />
+              <Sparkles className="w-5 h-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" align="end">
@@ -578,14 +579,14 @@ export default function AiFab({
         <PopoverTrigger asChild>
           <Button
             size="icon"
-            className="rounded-full w-14 h-14 shadow-lg fixed bottom-8 right-8 z-50"
+            className="rounded-full w-12 h-12 shadow-lg fixed bottom-4 right-4 z-50"
             onClick={handleFabClick}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             aria-label={bubbleMode === 'ai' ? "Open AI menu" : "Open Collaboration Hub"}
           >
-            {bubbleMode === 'ai' ? <Sparkles className="w-6 h-6" /> : <Users className="w-6 h-6" />}
+            {bubbleMode === 'ai' ? <Sparkles className="w-5 h-5" /> : <Users className="w-5 h-5" />}
           </Button>
         </PopoverTrigger>
         <PopoverContent

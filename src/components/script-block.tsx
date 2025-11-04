@@ -126,7 +126,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
 
 
   return (
-    <div className={cn('relative group w-full', getBlockStyles(block.type))}>
+    <div className={cn('group w-full', getBlockStyles(block.type))}>
         <div
             ref={elementRef}
             contentEditable
@@ -135,8 +135,8 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className={cn(
-                'w-full outline-none p-2 rounded-sm transition-colors whitespace-pre-wrap',
-                'focus:bg-muted/50 focus:shadow-inner',
+                'w-full outline-none p-2 rounded-sm transition-colors whitespace-pre-wrap min-h-[1.5rem] focus:ring-1 focus:ring-primary',
+                'focus:bg-muted/50',
                  isHighlighted ? 'bg-yellow-200 dark:bg-yellow-800' : 'hover:bg-muted/30'
             )}
             data-block-id={block.id}
