@@ -96,15 +96,24 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             if (subCollections) {
                 if (subCollections.characters) {
                     const charactersCol = collection(newScriptRef, 'characters');
-                    subCollections.characters.forEach((char: any) => batch.set(doc(charactersCol), { ...char, id: undefined }));
+                    subCollections.characters.forEach((char: any) => {
+                        const { id, ...charData } = char;
+                        batch.set(doc(charactersCol), charData);
+                    });
                 }
                 if (subCollections.scenes) {
                     const scenesCol = collection(newScriptRef, 'scenes');
-                    subCollections.scenes.forEach((scene: any) => batch.set(doc(scenesCol), { ...scene, id: undefined }));
+                    subCollections.scenes.forEach((scene: any) => {
+                        const { id, ...sceneData } = scene;
+                        batch.set(doc(scenesCol), sceneData);
+                    });
                 }
                 if (subCollections.notes) {
                     const notesCol = collection(newScriptRef, 'notes');
-                    subCollections.notes.forEach((note: any) => batch.set(doc(notesCol), { ...note, id: undefined }));
+                    subCollections.notes.forEach((note: any) => {
+                        const { id, ...noteData } = note;
+                        batch.set(doc(notesCol), noteData);
+                    });
                 }
             }
 

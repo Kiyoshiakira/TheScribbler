@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clapperboard, Clock, GripVertical, Plus, MoreHorizontal, Lightbulb, List, LayoutGrid } from 'lucide-react';
@@ -11,18 +11,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, doc, setDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import AiFab from '../ai-fab';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
 import { useScript } from '@/context/script-context';
 import { runGetAiSuggestions } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 
 export interface Scene {
   id: string;
@@ -32,7 +34,122 @@ export interface Scene {
   time: number;
 }
 
-const ScenesListView = ({ scenes }: { scenes: Scene[] | null }) => (
+function SceneDialog({ 
+  scene, 
+  onSave, 
+  open, 
+  onOpenChange,
+  nextSceneNumber 
+}: { 
+  scene: Scene | null;
+  onSave: (scene: Omit<Scene, 'id'>) => Promise<boolean>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  nextSceneNumber: number;
+}) {
+  const [sceneNumber, setSceneNumber] = useState(1);
+  const [setting, setSetting] = useState('');
+  const [description, setDescription] = useState('');
+  const [time, setTime] = useState(5);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (open) {
+      setSceneNumber(scene?.sceneNumber || nextSceneNumber);
+      setSetting(scene?.setting || '');
+      setDescription(scene?.description || '');
+      setTime(scene?.time || 5);
+    }
+  }, [open, scene, nextSceneNumber]);
+
+  const handleSave = async () => {
+    if (!setting) {
+      toast({
+        variant: 'destructive',
+        title: 'Setting Required',
+        description: 'Please enter a setting for the scene.',
+      });
+      return;
+    }
+    setIsSaving(true);
+    const success = await onSave({
+      sceneNumber,
+      setting,
+      description,
+      time,
+    });
+    setIsSaving(false);
+    if (success) {
+      onOpenChange(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>{scene ? 'Edit Scene' : 'Add New Scene'}</DialogTitle>
+          <DialogDescription>
+            {scene ? 'Update the scene details below.' : 'Create a new scene for your script.'}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="sceneNumber">Scene Number</Label>
+            <Input
+              id="sceneNumber"
+              type="number"
+              value={sceneNumber}
+              onChange={(e) => setSceneNumber(parseInt(e.target.value) || 1)}
+              min={1}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="setting">Setting *</Label>
+            <Input
+              id="setting"
+              value={setting}
+              onChange={(e) => setSetting(e.target.value)}
+              placeholder="e.g., INT. COFFEE SHOP - DAY"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Brief description of what happens in this scene..."
+              rows={4}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="time">Estimated Time (minutes)</Label>
+            <Input
+              id="time"
+              type="number"
+              value={time}
+              onChange={(e) => setTime(parseInt(e.target.value) || 1)}
+              min={1}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Scene'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+const ScenesListView = ({ scenes, onEdit }: { scenes: Scene[] | null; onEdit: (scene: Scene) => void }) => (
     <div className="space-y-4">
         {scenes && scenes.map((scene) => (
             <Card key={scene.id} className="flex items-center p-2 sm:p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -62,7 +179,7 @@ const ScenesListView = ({ scenes }: { scenes: Scene[] | null }) => (
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(scene)}>Edit</DropdownMenuItem>
                     <DropdownMenuItem>Duplicate</DropdownMenuItem>
                     <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -72,10 +189,14 @@ const ScenesListView = ({ scenes }: { scenes: Scene[] | null }) => (
     </div>
 );
 
-const BeatboardView = ({ scenes }: { scenes: Scene[] | null }) => (
+const BeatboardView = ({ scenes, onEdit }: { scenes: Scene[] | null; onEdit: (scene: Scene) => void }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {scenes && scenes.map((scene) => (
-          <Card key={scene.id} className="flex flex-col shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-56">
+          <Card 
+            key={scene.id} 
+            className="flex flex-col shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-56"
+            onClick={() => onEdit(scene)}
+          >
             <CardHeader>
                 <CardTitle className='font-headline text-lg flex items-start justify-between gap-2'>
                     <span className="truncate">Scene {scene.sceneNumber}: {scene.setting}</span>
@@ -101,6 +222,8 @@ export default function ScenesView() {
   const { script } = useScript();
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'list' | 'beatboard'>('list');
+  const [sceneDialogOpen, setSceneDialogOpen] = useState(false);
+  const [editingScene, setEditingScene] = useState<Scene | null>(null);
 
   const scenesCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'scenes') : null),
@@ -113,6 +236,73 @@ export default function ScenesView() {
   );
 
   const { data: scenes, isLoading: areScenesLoading } = useCollection<Scene>(scenesQuery);
+
+  const nextSceneNumber = useMemo(() => {
+    if (!scenes || scenes.length === 0) return 1;
+    return Math.max(...scenes.map(s => s.sceneNumber)) + 1;
+  }, [scenes]);
+
+  const handleOpenDialog = (scene: Scene | null) => {
+    setEditingScene(scene);
+    setSceneDialogOpen(true);
+  };
+
+  const handleSaveScene = async (sceneData: Omit<Scene, 'id'>): Promise<boolean> => {
+    if (!firestore || !scenesCollection) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Cannot save scene: no active script.',
+      });
+      return false;
+    }
+
+    try {
+      if (editingScene?.id) {
+        // Update existing scene
+        const sceneDocRef = doc(scenesCollection, editingScene.id);
+        await setDoc(sceneDocRef, sceneData, { merge: true }).catch((serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: sceneDocRef.path,
+            operation: 'update',
+            requestResourceData: sceneData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          throw permissionError;
+        });
+        toast({
+          title: 'Scene Updated',
+          description: `Scene ${sceneData.sceneNumber} has been updated.`,
+        });
+      } else {
+        // Create new scene
+        await addDoc(scenesCollection, sceneData).catch((serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: scenesCollection.path,
+            operation: 'create',
+            requestResourceData: sceneData,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+          throw permissionError;
+        });
+        toast({
+          title: 'Scene Created',
+          description: `Scene ${sceneData.sceneNumber} has been created.`,
+        });
+      }
+      return true;
+    } catch (error) {
+      if (!(error instanceof FirestorePermissionError)) {
+        console.error('Error saving scene:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Save Error',
+          description: 'An unexpected error occurred while saving the scene.',
+        });
+      }
+      return false;
+    }
+  };
 
   const handleGetSuggestions = async () => {
     if (!script?.content) {
@@ -188,14 +378,14 @@ export default function ScenesView() {
                     Beatboard
                 </Label>
             </RadioGroup>
-            <Button>
+            <Button onClick={() => handleOpenDialog(null)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Scene
             </Button>
         </div>
       </div>
 
-      {viewMode === 'list' ? <ScenesListView scenes={scenes} /> : <BeatboardView scenes={scenes} />}
+      {viewMode === 'list' ? <ScenesListView scenes={scenes} onEdit={handleOpenDialog} /> : <BeatboardView scenes={scenes} onEdit={handleOpenDialog} />}
 
       {!areScenesLoading && scenes && scenes.length === 0 && (
         <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
@@ -214,6 +404,15 @@ export default function ScenesView() {
             isLoading: isSuggestionsLoading,
         }]}
        />
+
+      {/* Scene Dialog */}
+      <SceneDialog
+        scene={editingScene}
+        onSave={handleSaveScene}
+        open={sceneDialogOpen}
+        onOpenChange={setSceneDialogOpen}
+        nextSceneNumber={nextSceneNumber}
+      />
 
         {/* Suggestions Dialog */}
       <Dialog open={suggestionsDialogOpen} onOpenChange={setSuggestionsDialogOpen}>
