@@ -135,7 +135,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             className={cn(
-                'w-full outline-none p-2 rounded-sm transition-colors whitespace-pre-wrap min-h-[1.5rem] focus:ring-1 focus:ring-primary',
+                'w-full outline-none p-2 rounded-sm transition-colors whitespace-pre-wrap min-h-[1.5rem] focus:ring-1 focus:ring-primary cursor-text',
                 'focus:bg-muted/50',
                  isHighlighted ? 'bg-yellow-200 dark:bg-yellow-800' : 'hover:bg-muted/30'
             )}
