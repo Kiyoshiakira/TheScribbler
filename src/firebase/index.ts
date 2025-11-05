@@ -25,7 +25,17 @@ export function initializeFirebase(): { firebaseApp: FirebaseApp; auth: Auth; fi
 
   // On the client, we use the singleton pattern.
   if (!firebaseServices) {
-    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    let app: FirebaseApp;
+    
+    try {
+      app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    } catch (error) {
+      // Re-throw with more helpful error message
+      if (error instanceof Error && error.message.includes('invalid-api-key')) {
+        throw new Error('Firebase API key is invalid. Please check your .env.local file and ensure NEXT_PUBLIC_FIREBASE_API_KEY is set correctly.');
+      }
+      throw error;
+    }
     
     // Use the new initializeFirestore API for persistence
     try {
