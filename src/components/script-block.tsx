@@ -26,6 +26,12 @@ const getBlockStyles = (type: ScriptBlockType): string => {
       return 'my-1 w-9/12 md:w-7/12 mx-auto';
     case ScriptBlockType.TRANSITION:
       return 'text-right uppercase mt-4 mb-2';
+    case ScriptBlockType.CENTERED:
+      return 'text-center my-4 font-medium';
+    case ScriptBlockType.SECTION:
+      return 'font-bold text-lg mt-8 mb-4 text-primary';
+    case ScriptBlockType.SYNOPSIS:
+      return 'italic text-muted-foreground my-2 text-sm border-l-2 border-muted pl-4';
     default:
       return 'my-2';
   }
