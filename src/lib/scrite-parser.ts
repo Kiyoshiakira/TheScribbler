@@ -151,10 +151,19 @@ export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise
         if (!text && element.type !== 'Action') return;
 
         // Add spacing based on Fountain rules
+        const isCharacterAfterNonParenthetical = 
+            element.type === 'Character' && 
+            previousElementType !== 'Parenthetical' && 
+            previousElementType !== 'Character';
+        const isTransition = element.type === 'Transition' && previousElementType !== null;
+        const isActionAfterDialogueOrTransition = 
+            element.type === 'Action' && 
+            (previousElementType === 'Dialogue' || previousElementType === 'Transition');
+        
         const needsBlankLineBefore = 
-            element.type === 'Character' && previousElementType !== 'Parenthetical' && previousElementType !== 'Character' ||
-            element.type === 'Transition' && previousElementType !== null ||
-            element.type === 'Action' && (previousElementType === 'Dialogue' || previousElementType === 'Transition');
+            isCharacterAfterNonParenthetical || 
+            isTransition || 
+            isActionAfterDialogueOrTransition;
 
         if (needsBlankLineBefore && scriptLines.length > 0 && scriptLines[scriptLines.length - 1] !== '') {
             scriptLines.push(''); // Add blank line for separation
@@ -169,18 +178,25 @@ export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise
                 scriptLines.push(text.toUpperCase());
                 break;
             case 'Parenthetical':
-                // Ensure parentheses are present
-                const parenthetical = text.startsWith('(') ? text : `(${text})`;
+                // Ensure parentheses are present on both sides
+                let parenthetical = text;
+                if (!parenthetical.startsWith('(')) {
+                    parenthetical = '(' + parenthetical;
+                }
+                if (!parenthetical.endsWith(')')) {
+                    parenthetical = parenthetical + ')';
+                }
                 scriptLines.push(parenthetical);
                 break;
             case 'Dialogue':
                 scriptLines.push(text);
                 break;
             case 'Transition':
-                // Transitions should be uppercase. Use > prefix for forced transitions
+                // Transitions should be uppercase
+                // Standard transitions (ending with :) are used as-is
+                // Others get > prefix to mark as forced transitions
                 const transition = text.toUpperCase();
-                // Add > prefix if it doesn't already end with : to mark as forced transition
-                const formattedTransition = transition.includes(':') ? transition : `> ${transition}`;
+                const formattedTransition = transition.endsWith(':') ? transition : `> ${transition}`;
                 scriptLines.push(formattedTransition);
                 break;
             case 'Shot':
