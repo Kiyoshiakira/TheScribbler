@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Clock, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, MapPin, Trash2 } from 'lucide-react';
 import ScriptBlockComponent from './script-block';
 import type { ScriptBlock } from '@/lib/editor-types';
 import type { Scene } from './views/scenes-view';
@@ -11,6 +11,7 @@ interface SceneBlockProps {
   sceneData?: Scene;
   blocks: ScriptBlock[];
   onBlockChange: (blockId: string, newText: string) => void;
+  onDeleteScene?: () => void;
   highlightedBlockIndex: number | undefined;
   startBlockIndex: number;
 }
@@ -20,6 +21,7 @@ const SceneBlock: React.FC<SceneBlockProps> = ({
   sceneData,
   blocks,
   onBlockChange,
+  onDeleteScene,
   highlightedBlockIndex,
   startBlockIndex,
 }) => {
@@ -73,21 +75,37 @@ const SceneBlock: React.FC<SceneBlockProps> = ({
             </p>
           )}
         </div>
+
+        {/* Delete Scene Button */}
+        {onDeleteScene && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: Replace confirm() with accessible dialog component for better UX
+              if (confirm(`Delete Scene ${sceneNumber} and all its ${blocks.length} block(s)?`)) {
+                onDeleteScene();
+              }
+            }}
+            className="flex-shrink-0 p-1 hover:bg-destructive/20 rounded transition-colors opacity-0 group-hover:opacity-100"
+            aria-label="Delete scene"
+            title="Delete entire scene"
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </button>
+        )}
       </div>
 
-      {/* Scene Content */}
-      {!isCollapsed && (
-        <div className="scene-content space-y-0">
-          {blocks.map((block, index) => (
-            <ScriptBlockComponent
-              key={block.id}
-              block={block}
-              onChange={onBlockChange}
-              isHighlighted={highlightedBlockIndex === startBlockIndex + index}
-            />
-          ))}
-        </div>
-      )}
+      {/* Scene Content - Hidden when collapsed to avoid confusing keyboard navigation */}
+      <div className={isCollapsed ? 'hidden' : 'scene-content space-y-0'}>
+        {blocks.map((block, index) => (
+          <ScriptBlockComponent
+            key={block.id}
+            block={block}
+            onChange={onBlockChange}
+            isHighlighted={highlightedBlockIndex === startBlockIndex + index}
+          />
+        ))}
+      </div>
 
       {/* Collapsed Preview */}
       {isCollapsed && (

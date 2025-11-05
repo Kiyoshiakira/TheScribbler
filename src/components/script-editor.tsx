@@ -15,7 +15,7 @@ interface ScriptEditorProps {
 }
 
 export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps) {
-  const { document, setBlocks, isScriptLoading, activeMatch, scenes } = useScript();
+  const { document, setBlocks, isScriptLoading, activeMatch, scenes, deleteScene } = useScript();
 
   const handleBlockChange = (blockId: string, newText: string) => {
     if (document) {
@@ -92,6 +92,7 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
                 sceneData={sceneData}
                 blocks={scene.blocks}
                 onBlockChange={handleBlockChange}
+                onDeleteScene={() => deleteScene(scene.startIndex, scene.blocks.length)}
                 highlightedBlockIndex={activeMatch?.blockIndex}
                 startBlockIndex={scene.startIndex}
               />
