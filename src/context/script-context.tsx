@@ -41,6 +41,7 @@ interface ScriptContextType {
   insertBlockAfter: (currentBlockId: string, text?: string, type?: ScriptBlockType) => void;
   cycleBlockType: (blockId: string) => void;
   mergeWithPreviousBlock: (blockId: string) => void;
+  deleteScene: (startBlockIndex: number, blockCount: number) => void;
   addComment: (blockId: string, content: string) => void;
   isScriptLoading: boolean;
   characters: Character[] | null;
@@ -63,6 +64,7 @@ export const ScriptContext = createContext<ScriptContextType>({
   insertBlockAfter: () => {},
   cycleBlockType: () => {},
   mergeWithPreviousBlock: () => {},
+  deleteScene: () => {},
   addComment: () => {},
   isScriptLoading: true,
   characters: null,
@@ -345,6 +347,30 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     });
 }, []);
 
+  const deleteScene = useCallback((startBlockIndex: number, blockCount: number) => {
+    setLocalDocument(prevDoc => {
+      if (!prevDoc) return null;
+      
+      const newBlocks = [...prevDoc.blocks];
+      // Remove all blocks in the scene
+      newBlocks.splice(startBlockIndex, blockCount);
+      
+      // Focus on the previous block if available, or next block if this was the first scene
+      setTimeout(() => {
+        if (newBlocks.length > 0) {
+          const targetIndex = Math.max(0, Math.min(startBlockIndex - 1, newBlocks.length - 1));
+          const targetBlock = newBlocks[targetIndex];
+          const targetElement = document.querySelector(`[data-block-id="${targetBlock.id}"]`) as HTMLElement;
+          if (targetElement) {
+            targetElement.focus();
+          }
+        }
+      }, 0);
+      
+      return { ...prevDoc, blocks: newBlocks };
+    });
+  }, []);
+
   const addComment = useCallback((blockId: string, content: string) => {
       if (!commentsCollectionRef || !user) return;
       
@@ -378,6 +404,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     insertBlockAfter,
     cycleBlockType,
     mergeWithPreviousBlock,
+    deleteScene,
     addComment,
     isScriptLoading,
     characters,
