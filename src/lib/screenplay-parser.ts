@@ -17,6 +17,14 @@ const Patterns = {
   character: /^[A-Z][A-Z0-9 \t]+(?:\(V\.O\.\)|\(O\.S\.\))?$/,
   // Parentheticals: Enclosed in parentheses on their own line.
   parenthetical: /^\(.*\)$/,
+  // Centered text: Surrounded by > <
+  centered: /^>\s*(.+?)\s*<$/,
+  // Section headings: Start with one or more #
+  section: /^(#+)\s+(.*)$/,
+  // Synopsis: Starts with =
+  synopsis: /^=\s*(.*)$/,
+  // Note/Boneyard: Enclosed in [[ ]]
+  note: /^\[\[.*\]\]$/,
 };
 
 /**
@@ -32,6 +40,21 @@ const generateId = () => `block_${Date.now()}_${Math.random().toString(36).subst
  */
 const getBlockType = (line: string, previousBlockType: ScriptBlockType | null): ScriptBlockType => {
   const trimmedLine = line.trim();
+
+  // Sections (# Heading)
+  if (Patterns.section.test(trimmedLine)) {
+    return ScriptBlockType.SECTION;
+  }
+
+  // Synopsis (= Synopsis text)
+  if (Patterns.synopsis.test(trimmedLine)) {
+    return ScriptBlockType.SYNOPSIS;
+  }
+
+  // Centered text (> centered <)
+  if (Patterns.centered.test(trimmedLine)) {
+    return ScriptBlockType.CENTERED;
+  }
 
   // Forced scene headings take top priority
   if (trimmedLine.startsWith('.')) {

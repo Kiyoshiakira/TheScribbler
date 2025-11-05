@@ -28,7 +28,7 @@ import { ScriptBlock, ScriptDocument } from '@/lib/editor-types';
 
 const ScriptBlockSchema = z.object({
   id: z.string(),
-  type: z.enum(['scene-heading', 'action', 'character', 'parenthetical', 'dialogue', 'transition', 'shot']),
+  type: z.enum(['scene-heading', 'action', 'character', 'parenthetical', 'dialogue', 'transition', 'shot', 'centered', 'section', 'synopsis']),
   text: z.string(),
 });
 

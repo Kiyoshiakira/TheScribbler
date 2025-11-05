@@ -11,6 +11,9 @@ export const ScriptBlockType = {
   DIALOGUE: 'dialogue',
   TRANSITION: 'transition',
   SHOT: 'shot',
+  CENTERED: 'centered',
+  SECTION: 'section',
+  SYNOPSIS: 'synopsis',
 } as const;
 
 // Type alias for the values of the ScriptBlockType object.

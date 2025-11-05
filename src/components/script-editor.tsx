@@ -6,24 +6,9 @@ import { useScript } from '@/context/script-context';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import ScriptBlockComponent from './script-block';
+import SceneBlock from './scene-block';
 import type { ScriptBlock } from '@/lib/editor-types';
 import { ScriptBlockType } from '@/lib/editor-types';
-
-interface SceneHeaderCardProps {
-    sceneNumber: number;
-    setting: string;
-    description: string;
-}
-
-const SceneHeaderCard: React.FC<SceneHeaderCardProps> = ({ sceneNumber, setting, description }) => {
-    return (
-        <div className="bg-primary/10 border-l-4 border-primary text-primary-foreground p-4 rounded-r-lg my-8 not-prose">
-            <h3 className="font-bold font-headline text-lg text-primary">SCENE {sceneNumber}: {setting}</h3>
-            <p className="text-sm text-primary/80 mt-1">{description}</p>
-        </div>
-    );
-};
-
 
 interface ScriptEditorProps {
   isStandalone?: boolean;
@@ -53,7 +38,40 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
     );
   }
 
+  // Group blocks into scenes
+  const groupedScenes: Array<{ sceneNumber: number; blocks: ScriptBlock[]; startIndex: number }> = [];
+  let currentScene: ScriptBlock[] = [];
   let sceneCounter = 0;
+  let startIndex = 0;
+
+  document.blocks.forEach((block, index) => {
+    if (block.type === ScriptBlockType.SCENE_HEADING) {
+      // Save the previous scene if it exists
+      if (currentScene.length > 0) {
+        groupedScenes.push({
+          sceneNumber: sceneCounter,
+          blocks: currentScene,
+          startIndex: startIndex,
+        });
+      }
+      // Start a new scene
+      sceneCounter++;
+      currentScene = [block];
+      startIndex = index;
+    } else {
+      // Add block to current scene
+      currentScene.push(block);
+    }
+  });
+
+  // Add the last scene
+  if (currentScene.length > 0) {
+    groupedScenes.push({
+      sceneNumber: sceneCounter,
+      blocks: currentScene,
+      startIndex: startIndex,
+    });
+  }
 
   return (
     <div
@@ -63,33 +81,33 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
       )}
     >
       <div className={cn(isStandalone ? '' : 'p-8 md:p-12')}>
-        {document.blocks.map((block, index) => {
-          let sceneHeaderCard = null;
-          if (block.type === ScriptBlockType.SCENE_HEADING) {
-              sceneCounter++;
-              const sceneData = scenes?.find(s => s.sceneNumber === sceneCounter);
-              if (sceneData) {
-                  sceneHeaderCard = (
-                      <SceneHeaderCard
-                          sceneNumber={sceneData.sceneNumber}
-                          setting={sceneData.setting}
-                          description={sceneData.description}
-                      />
-                  );
-              }
-          }
-          
-          return (
-              <React.Fragment key={block.id}>
-                  {sceneHeaderCard}
-                  <ScriptBlockComponent
-                      block={block}
-                      onChange={handleBlockChange}
-                      isHighlighted={activeMatch?.blockIndex === index}
-                  />
-              </React.Fragment>
-          )
-        })}
+        {groupedScenes.length > 0 ? (
+          // Render scenes as collapsible blocks
+          groupedScenes.map((scene) => {
+            const sceneData = scenes?.find(s => s.sceneNumber === scene.sceneNumber);
+            return (
+              <SceneBlock
+                key={scene.startIndex}
+                sceneNumber={scene.sceneNumber}
+                sceneData={sceneData}
+                blocks={scene.blocks}
+                onBlockChange={handleBlockChange}
+                highlightedBlockIndex={activeMatch?.blockIndex}
+                startBlockIndex={scene.startIndex}
+              />
+            );
+          })
+        ) : (
+          // Fallback: render blocks without scene grouping (e.g., no scene headings yet)
+          document.blocks.map((block, index) => (
+            <ScriptBlockComponent
+              key={block.id}
+              block={block}
+              onChange={handleBlockChange}
+              isHighlighted={activeMatch?.blockIndex === index}
+            />
+          ))
+        )}
       </div>
     </div>
   );

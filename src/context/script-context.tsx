@@ -227,7 +227,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       if (index === -1) return prevDoc;
       const currentBlock = prevDoc.blocks[index];
       
-      let newBlockType = type;
+      let newBlockType: ScriptBlockType = type || ScriptBlockType.ACTION;
       if (!type) {
          if (currentBlock.type === ScriptBlockType.SCENE_HEADING) {
             newBlockType = ScriptBlockType.ACTION;
