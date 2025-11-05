@@ -43,17 +43,23 @@ const prompt = ai.definePrompt(
         model: googleAI.model('gemini-2.5-flash'),
         input: { schema: AiReformatScriptInputSchema },
         output: { schema: AiReformatScriptOutputSchema },
-        prompt: `You are an expert script formatter.
+        prompt: `You are an expert script formatter specializing in Fountain syntax.
 
-  Your task is to take the provided raw text and reformat it into a clean, readable, industry-standard screenplay format.
+  Your task is to take the provided raw text and reformat it into clean, valid Fountain format.
 
-  **Instructions:**
-  1.  Identify Scene Headings (e.g., "INT. ROOM - DAY") and format them correctly on their own line and in all caps.
-  2.  Identify Character names (e.g., "JOHN DOE") and place them on their own line, in all caps, and centered.
-  3.  Identify Dialogue and place it directly below the character name.
-  4.  Identify Parentheticals (e.g., "(beat)") and place them on their own line, indented, between the character and dialogue.
-  5.  Identify Action lines (scene descriptions) and format them as standard paragraphs.
-  6.  Ensure there are appropriate blank lines between elements for readability (e.g., before scene headings, between a character's dialogue and the next character).
+  **Fountain Syntax Rules:**
+  1.  Scene Headings: Start with INT., EXT., or I/E. followed by location and time (e.g., "INT. COFFEE SHOP - DAY"). Must be on their own line and in ALL CAPS.
+  2.  Character Names: Must be on their own line and in ALL CAPS (e.g., "JOHN" or "SARAH (V.O.)"). LEFT-ALIGNED, NOT centered.
+  3.  Dialogue: Plain text directly below the character name. Do not indent.
+  4.  Parentheticals: Wrapped in parentheses (e.g., "(whispering)") on their own line between character and dialogue.
+  5.  Action/Description: Plain text paragraphs describing what happens in the scene.
+  6.  Transitions: ALL CAPS with colon (e.g., "CUT TO:", "FADE OUT:"). For forced transitions, prefix with > (e.g., "> SMASH CUT TO:").
+  7.  Blank Lines: Use blank lines to separate different elements (scene headings, character dialogue blocks, action paragraphs).
+
+  **Important:** 
+  - Character names are LEFT-ALIGNED in Fountain, not centered (centering happens during rendering)
+  - Keep proper spacing: blank line before scene headings, between dialogue blocks
+  - Preserve all content, just fix the formatting
 
   **Raw Script Text to Reformat:**
   \`\`\`
