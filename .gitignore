@@ -42,4 +42,5 @@ next-env.d.ts
 
 # firebase
 firebase-debug.log
-firestore-debug.logtest-parser.ts
+firestore-debug.log
+test-parser.ts
