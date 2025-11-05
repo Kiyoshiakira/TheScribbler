@@ -123,7 +123,10 @@ export function parseScreenplay(rawScript: string): ScriptDocument {
     const currentBlockType = getBlockType(line, previousBlockType);
 
     // Merge consecutive action lines into a single block for better editing.
-    if (currentBlockType === ScriptBlockType.ACTION && previousBlockType === ScriptBlockType.ACTION && blocks.length > 0) {
+    if (currentBlockType === ScriptBlockType.ACTION && 
+        previousBlockType === ScriptBlockType.ACTION && 
+        blocks.length > 0 &&
+        blocks[blocks.length - 1].type === ScriptBlockType.ACTION) {
       blocks[blocks.length - 1].text += '\n' + line;
     } else {
       blocks.push({

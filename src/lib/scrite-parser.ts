@@ -131,28 +131,82 @@ export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise
     sceneCounter++;
     let sceneSetting = 'Untitled Scene';
 
+    // Add scene heading in proper Fountain format
     if (scene.heading && scene.heading.location && scene.heading.moment) {
         sceneSetting = `${scene.heading.locationType || 'INT.'} ${scene.heading.location} - ${scene.heading.moment}`;
         const sceneHeadingText = sceneSetting.toUpperCase();
+        // Ensure blank line before scene heading (except for first scene)
+        if (scriptLines.length > 0) {
+            scriptLines.push(''); // Blank line before scene heading
+        }
         scriptLines.push(sceneHeadingText);
+        scriptLines.push(''); // Blank line after scene heading
     }
     
     const sceneElements = getAsArray(scene.elements) as ScriteSceneElement[];
-    sceneElements.forEach(element => {
+    let previousElementType: string | null = null;
+    
+    sceneElements.forEach((element, index) => {
         let text = parseQuillDelta(element.text || '');
         if (!text && element.type !== 'Action') return;
 
-        let line = '';
-        switch(element.type) {
-            case 'Action':        line = text; break;
-            case 'Character':     line = `\n${text.toUpperCase()}`; break;
-            case 'Parenthetical': line = `(${text})`; break;
-            case 'Dialogue':      line = text; break;
-            case 'Transition':    line = `\n${text.toUpperCase()}`; break;
-            case 'Shot':          line = text.toUpperCase(); break;
-            default:              return;
+        // Add spacing based on Fountain rules
+        const isCharacterAfterNonParenthetical = 
+            element.type === 'Character' && 
+            previousElementType !== 'Parenthetical' && 
+            previousElementType !== 'Character';
+        const isTransition = element.type === 'Transition' && previousElementType !== null;
+        const isActionAfterDialogueOrTransition = 
+            element.type === 'Action' && 
+            (previousElementType === 'Dialogue' || previousElementType === 'Transition');
+        
+        const needsBlankLineBefore = 
+            isCharacterAfterNonParenthetical || 
+            isTransition || 
+            isActionAfterDialogueOrTransition;
+
+        if (needsBlankLineBefore && scriptLines.length > 0 && scriptLines[scriptLines.length - 1] !== '') {
+            scriptLines.push(''); // Add blank line for separation
         }
-        scriptLines.push(line);
+
+        switch(element.type) {
+            case 'Action':
+                scriptLines.push(text);
+                break;
+            case 'Character':
+                // Character names must be uppercase and left-aligned (Fountain handles centering)
+                scriptLines.push(text.toUpperCase());
+                break;
+            case 'Parenthetical':
+                // Ensure parentheses are present on both sides
+                let parenthetical = text;
+                if (!parenthetical.startsWith('(')) {
+                    parenthetical = '(' + parenthetical;
+                }
+                if (!parenthetical.endsWith(')')) {
+                    parenthetical = parenthetical + ')';
+                }
+                scriptLines.push(parenthetical);
+                break;
+            case 'Dialogue':
+                scriptLines.push(text);
+                break;
+            case 'Transition':
+                // Transitions should be uppercase
+                // Standard transitions (ending with :) are used as-is
+                // Others get > prefix to mark as forced transitions
+                const transition = text.toUpperCase();
+                const formattedTransition = transition.endsWith(':') ? transition : `> ${transition}`;
+                scriptLines.push(formattedTransition);
+                break;
+            case 'Shot':
+                scriptLines.push(text.toUpperCase());
+                break;
+            default:
+                return;
+        }
+        
+        previousElementType = element.type;
     });
 
     scenes.push({
@@ -164,7 +218,8 @@ export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise
     });
   }
 
-  const rawScript = scriptLines.join('\n\n').replace(/\n{3,}/g, '\n\n');
+  // Join lines with single newlines, the blank lines are already in the array
+  const rawScript = scriptLines.join('\n').replace(/\n{3,}/g, '\n\n');
 
   // Call AI to reformat the extracted script
   const reformatResult = await runAiReformatScript({ rawScript });
