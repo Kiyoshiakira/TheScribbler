@@ -42,7 +42,7 @@ function SceneDialog({
   nextSceneNumber 
 }: { 
   scene: Scene | null;
-  onSave: (scene: Omit<Scene, 'id'>) => Promise<void>;
+  onSave: (scene: Omit<Scene, 'id'>) => Promise<boolean>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   nextSceneNumber: number;
@@ -73,14 +73,16 @@ function SceneDialog({
       return;
     }
     setIsSaving(true);
-    await onSave({
+    const success = await onSave({
       sceneNumber,
       setting,
       description,
       time,
     });
     setIsSaving(false);
-    onOpenChange(false);
+    if (success) {
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -245,14 +247,14 @@ export default function ScenesView() {
     setSceneDialogOpen(true);
   };
 
-  const handleSaveScene = async (sceneData: Omit<Scene, 'id'>) => {
+  const handleSaveScene = async (sceneData: Omit<Scene, 'id'>): Promise<boolean> => {
     if (!firestore || !scenesCollection) {
       toast({
         variant: 'destructive',
         title: 'Error',
         description: 'Cannot save scene: no active script.',
       });
-      return;
+      return false;
     }
 
     try {
@@ -288,6 +290,7 @@ export default function ScenesView() {
           description: `Scene ${sceneData.sceneNumber} has been created.`,
         });
       }
+      return true;
     } catch (error) {
       if (!(error instanceof FirestorePermissionError)) {
         console.error('Error saving scene:', error);
@@ -297,6 +300,7 @@ export default function ScenesView() {
           description: 'An unexpected error occurred while saving the scene.',
         });
       }
+      return false;
     }
   };
 
