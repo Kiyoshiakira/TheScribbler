@@ -77,7 +77,7 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
   return (
     <div
       className={cn(
-        'relative h-full w-full font-code max-w-3xl mx-auto',
+        'relative w-full font-code max-w-3xl mx-auto',
         isStandalone ? 'p-4' : 'bg-card shadow-sm rounded-lg border'
       )}
     >
