@@ -442,6 +442,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
   }, []);
 
   const cycleBlockType = (blockId: string) => {
+    // Screenplay-specific block types in typical screenplay order
     const typeCycle: ScriptBlockType[] = [
       ScriptBlockType.ACTION,
       ScriptBlockType.CHARACTER,
@@ -449,9 +450,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       ScriptBlockType.DIALOGUE,
       ScriptBlockType.TRANSITION,
       ScriptBlockType.SCENE_HEADING,
-      ScriptBlockType.CENTERED,
-      ScriptBlockType.SECTION,
-      ScriptBlockType.SYNOPSIS,
+      ScriptBlockType.SHOT,
     ];
     
     setLocalDocument(prevDoc => {
@@ -464,7 +463,17 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       const nextTypeIndex = (currentTypeIndex + 1) % typeCycle.length;
       const newType = typeCycle[nextTypeIndex];
       
-      const updatedBlock = { ...currentBlock, type: newType };
+      // When switching to PARENTHETICAL, add opening parenthesis if not present
+      let updatedText = currentBlock.text;
+      if (newType === ScriptBlockType.PARENTHETICAL && !updatedText.startsWith('(')) {
+        updatedText = '(' + updatedText;
+      }
+      // When switching away from PARENTHETICAL, remove parentheses if present
+      if (currentBlock.type === ScriptBlockType.PARENTHETICAL && newType !== ScriptBlockType.PARENTHETICAL) {
+        updatedText = updatedText.replace(/^\(/, '').replace(/\)$/, '');
+      }
+      
+      const updatedBlock = { ...currentBlock, type: newType, text: updatedText };
       const newBlocks = [...prevDoc.blocks];
       newBlocks[blockIndex] = updatedBlock;
 
