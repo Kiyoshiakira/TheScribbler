@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Clock, MapPin, Trash2 } from 'lucide-react';
 import ScriptBlockComponent from './script-block';
-import type { ScriptBlock } from '@/lib/editor-types';
+import BlockSeparator from './block-separator';
+import type { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import type { Scene } from './views/scenes-view';
+import { useScript } from '@/context/script-context';
 
 interface SceneBlockProps {
   sceneNumber: number;
@@ -26,6 +28,7 @@ const SceneBlock: React.FC<SceneBlockProps> = ({
   startBlockIndex,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { insertBlockAfter } = useScript();
 
   const hasSceneData = !!sceneData;
 
@@ -98,14 +101,21 @@ const SceneBlock: React.FC<SceneBlockProps> = ({
       {/* Scene Content - Hidden when collapsed to avoid confusing keyboard navigation */}
       <div className={isCollapsed ? 'hidden' : 'scene-content space-y-0'}>
         {blocks.map((block, index) => (
-          <ScriptBlockComponent
-            key={block.id}
-            block={block}
-            onChange={onBlockChange}
-            isHighlighted={highlightedBlockIndex === startBlockIndex + index}
-            previousBlockType={index > 0 ? blocks[index - 1].type : undefined}
-            nextBlockType={index < blocks.length - 1 ? blocks[index + 1].type : undefined}
-          />
+          <React.Fragment key={block.id}>
+            <ScriptBlockComponent
+              block={block}
+              onChange={onBlockChange}
+              isHighlighted={highlightedBlockIndex === startBlockIndex + index}
+              previousBlockType={index > 0 ? blocks[index - 1].type : undefined}
+              nextBlockType={index < blocks.length - 1 ? blocks[index + 1].type : undefined}
+            />
+            {/* Add separator after each block except the last one */}
+            {index < blocks.length - 1 && (
+              <BlockSeparator 
+                onInsertBlock={(type: ScriptBlockType) => insertBlockAfter(block.id, '', type)}
+              />
+            )}
+          </React.Fragment>
         ))}
       </div>
 

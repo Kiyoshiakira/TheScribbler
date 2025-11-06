@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import { useScript } from '@/context/script-context';
 import AiEditContextMenu from './ai-edit-context-menu';
-import BlockInsertMenu from './block-insert-menu';
 
 interface ScriptBlockProps {
   block: ScriptBlock;
@@ -92,13 +91,10 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
   nextBlockType
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const blockWrapperRef = useRef<HTMLDivElement>(null);
   const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock, setActiveBlockId, activeBlockId, document: scriptDocument } = useScript();
   const [showAiMenu, setShowAiMenu] = useState(false);
   const [aiMenuPosition, setAiMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
-  const [showInsertMenu, setShowInsertMenu] = useState(false);
-  const [insertMenuPosition, setInsertMenuPosition] = useState({ x: 0, y: 0 });
 
   // Check if this block is currently active
   const isActive = activeBlockId === block.id;
@@ -140,19 +136,6 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
       setAiMenuPosition({ x: e.clientX, y: e.clientY });
       setShowAiMenu(true);
     }
-  };
-
-  const handleWrapperContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only show insert menu if not clicking on the editable content itself
-    if (e.target === blockWrapperRef.current) {
-      e.preventDefault();
-      setInsertMenuPosition({ x: e.clientX, y: e.clientY });
-      setShowInsertMenu(true);
-    }
-  };
-
-  const handleInsertBlock = (type: ScriptBlockType) => {
-    insertBlockAfter(block.id, '', type);
   };
 
   const handleApplyEdit = (originalText: string, editedText: string) => {
@@ -233,11 +216,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
 
 
   return (
-    <div 
-      ref={blockWrapperRef}
-      className={cn('group w-full', getBlockStyles(block.type, previousBlockType, nextBlockType, isActive))}
-      onContextMenu={handleWrapperContextMenu}
-    >
+    <div className={cn('group w-full', getBlockStyles(block.type, previousBlockType, nextBlockType, isActive))}>
         <div
             ref={elementRef}
             contentEditable
@@ -261,13 +240,6 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
             onApplyEdit={handleApplyEdit}
             onClose={() => setShowAiMenu(false)}
             position={aiMenuPosition}
-          />
-        )}
-        {showInsertMenu && (
-          <BlockInsertMenu
-            onInsertBlock={handleInsertBlock}
-            onClose={() => setShowInsertMenu(false)}
-            position={insertMenuPosition}
           />
         )}
     </div>
