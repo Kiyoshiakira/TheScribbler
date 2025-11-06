@@ -468,9 +468,12 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       if (newType === ScriptBlockType.PARENTHETICAL && !updatedText.startsWith('(')) {
         updatedText = '(' + updatedText;
       }
-      // When switching away from PARENTHETICAL, remove parentheses if present
+      // When switching away from PARENTHETICAL, remove wrapping parentheses if present
       if (currentBlock.type === ScriptBlockType.PARENTHETICAL && newType !== ScriptBlockType.PARENTHETICAL) {
-        updatedText = updatedText.replace(/^\(/, '').replace(/\)$/, '');
+        // Only remove if the entire text is wrapped in parentheses
+        if (updatedText.startsWith('(') && updatedText.endsWith(')')) {
+          updatedText = updatedText.slice(1, -1);
+        }
       }
       
       const updatedBlock = { ...currentBlock, type: newType, text: updatedText };

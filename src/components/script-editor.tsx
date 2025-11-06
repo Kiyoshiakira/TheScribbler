@@ -9,7 +9,7 @@ import ScriptBlockComponent from './script-block';
 import SceneBlock from './scene-block';
 import BlockSeparator from './block-separator';
 import type { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
-import { ScriptBlockType as BlockTypes } from '@/lib/editor-types';
+import { ScriptBlockType } from '@/lib/editor-types';
 
 interface ScriptEditorProps {
   isStandalone?: boolean;
@@ -46,7 +46,7 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
   let startIndex = 0;
 
   document.blocks.forEach((block, index) => {
-    if (block.type === BlockTypes.SCENE_HEADING) {
+    if (block.type === ScriptBlockType.SCENE_HEADING) {
       // Save the previous scene if it exists
       if (currentScene.length > 0) {
         groupedScenes.push({
