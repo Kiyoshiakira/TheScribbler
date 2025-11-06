@@ -31,7 +31,7 @@ import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
-import { parseAndReformatScriteFile, ParsedAndFormattedData } from '@/lib/scrite-parser';
+import { parseScriteFile, ParsedScriteData } from '@/lib/scrite-parser';
 import { collection, writeBatch, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import JSZip from 'jszip';
@@ -73,7 +73,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     }
   };
 
-    const processImportedContent = async (title: string, content: string, subCollections?: Omit<ParsedAndFormattedData, 'title' | 'formattedScript'>) => {
+    const processImportedContent = async (title: string, content: string, subCollections?: Omit<ParsedScriteData, 'title' | 'rawScript'>) => {
         if (!firestore || !user) return;
         const { dismiss, update } = toast({
             id: 'import-toast',
@@ -242,15 +242,28 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
 
   const handleScriteImport = async (file: File) => {
     if (!user) return;
-    const { dismiss, update } = toast({ id: 'scrite-import-toast', title: 'Importing Scrite File...', description: 'Parsing and reformatting...' });
+    const { dismiss, update } = toast({ id: 'scrite-import-toast', title: 'Importing Scrite File...', description: 'Parsing file...' });
 
     try {
         const arrayBuffer = await file.arrayBuffer();
-        const parsedData = await parseAndReformatScriteFile(arrayBuffer);
+        const parsedData = await parseScriteFile(arrayBuffer);
+        
+        update({ id: 'scrite-import-toast', description: 'Reformatting script with AI...' });
+        
+        // Call AI to reformat the extracted script
+        const reformatResult = await runAiReformatScript({ rawScript: parsedData.rawScript });
+        
+        let formattedScript = parsedData.rawScript; // Fallback to raw script
+        
+        if (reformatResult.data?.formattedScript) {
+            formattedScript = reformatResult.data.formattedScript;
+        } else if (reformatResult.error) {
+            console.warn('AI reformatting failed, using raw script:', reformatResult.error);
+        }
         
         update({ id: 'scrite-import-toast', title: 'Saving to Database...', description: 'Writing new script and sub-collections.' });
         
-        await processImportedContent(parsedData.title, parsedData.formattedScript, {
+        await processImportedContent(parsedData.title, formattedScript, {
             characters: parsedData.characters,
             scenes: parsedData.scenes,
             notes: parsedData.notes,
