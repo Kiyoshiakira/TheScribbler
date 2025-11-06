@@ -129,7 +129,7 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
               description: `${charData.name} has been added to your characters list.`,
             });
           })
-          .catch(serverError => {
+          .catch(() => {
             const permissionError = new FirestorePermissionError({
               path: charactersCollectionRef.path,
               operation: 'create',
@@ -150,7 +150,7 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
           const suggestions = result.data.toolResult.data.suggestions;
           if (suggestions && suggestions.length > 0) {
             // Convert edit suggestions to proofread format for display
-            const proofreadSuggestions = suggestions.map((s: any) => ({
+            const proofreadSuggestions = suggestions.map((s: { originalText: string; editedText: string; reason: string; confidence: string }) => ({
               originalText: s.originalText,
               correctedText: s.editedText,
               explanation: `${s.reason} (Confidence: ${s.confidence})`,
@@ -176,7 +176,7 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
             <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
             <h3 className="text-lg font-semibold text-foreground">AI Features Disabled</h3>
             <p className="text-sm">
-                To enable the AI assistant, please set the GEMINI_API_KEY in your project's environment variables.
+                To enable the AI assistant, please set the GEMINI_API_KEY in your project&apos;s environment variables.
             </p>
         </div>
     );

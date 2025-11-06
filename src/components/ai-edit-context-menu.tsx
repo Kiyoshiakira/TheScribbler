@@ -75,7 +75,7 @@ export default function AiEditContextMenu({
           onClose();
         }
       }
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -167,10 +167,10 @@ export default function AiEditContextMenu({
                         {suggestion.reason}
                       </div>
                       <div className="text-xs text-red-500 line-through">
-                        "{suggestion.originalText}"
+                        &quot;{suggestion.originalText}&quot;
                       </div>
                       <div className="text-xs text-green-600">
-                        "{suggestion.editedText}"
+                        &quot;{suggestion.editedText}&quot;
                       </div>
                       <div className="flex justify-end gap-2 mt-2">
                         <Button

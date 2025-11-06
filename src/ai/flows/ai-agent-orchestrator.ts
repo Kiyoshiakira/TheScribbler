@@ -13,21 +13,16 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import {
   aiGenerateCharacterProfile,
-  type AiGenerateCharacterProfileOutput,
 } from './ai-generate-character-profile';
 import {
   aiProofreadScript,
-  type AiProofreadScriptOutput,
 } from './ai-proofread-script';
 import {
   aiReformatScript,
-  type AiReformatScriptOutput,
 } from './ai-reformat-script';
 import {
   aiEditScript,
-  type AiEditScriptOutput,
 } from './ai-edit-script';
-import { ScriptBlock, ScriptDocument } from '@/lib/editor-types';
 
 
 const ScriptBlockSchema = z.object({
