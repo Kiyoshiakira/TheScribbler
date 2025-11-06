@@ -13,17 +13,16 @@ import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 import {
   aiGenerateCharacterProfile,
-  type AiGenerateCharacterProfileOutput,
 } from './ai-generate-character-profile';
 import {
   aiProofreadScript,
-  type AiProofreadScriptOutput,
 } from './ai-proofread-script';
 import {
   aiReformatScript,
-  type AiReformatScriptOutput,
 } from './ai-reformat-script';
-import { ScriptBlock, ScriptDocument } from '@/lib/editor-types';
+import {
+  aiEditScript,
+} from './ai-edit-script';
 
 
 const ScriptBlockSchema = z.object({
@@ -142,6 +141,34 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
         toolResult: {
           type: 'reformat',
           data: reformatResult,
+        },
+      };
+    }
+    
+    // Check if user wants to edit/improve the script
+    const editKeywords = [
+      'edit', 'improve', 'fix', 'change', 'rewrite', 'make better',
+      'enhance', 'spelling', 'grammar', 'dialogue', 'action',
+      'more natural', 'more engaging', 'clearer', 'stronger'
+    ];
+    
+    if (editKeywords.some(keyword => input.request.toLowerCase().includes(keyword))) {
+      const editResult = await aiEditScript({
+        instruction: input.request,
+        context: input.document.blocks,
+      });
+      
+      if (editResult.suggestions.length === 0) {
+        return {
+          response: editResult.summary || "Your script looks good! I didn't find anything that needs editing based on your request.",
+        };
+      }
+      
+      return {
+        response: `${editResult.summary}\n\nI found ${editResult.suggestions.length} suggestion(s) to improve your script.`,
+        toolResult: {
+          type: 'edit',
+          data: editResult,
         },
       };
     }

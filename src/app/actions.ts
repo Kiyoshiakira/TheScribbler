@@ -34,6 +34,14 @@ import {
     type AiReformatScriptInput,
 } from '@/ai/flows/ai-reformat-script';
 import {
+  aiEditScript,
+  type AiEditScriptInput,
+} from '@/ai/flows/ai-edit-script';
+import {
+  aiWritingAssist,
+  type AiWritingAssistInput,
+} from '@/ai/flows/ai-writing-assist';
+import {
   aiDiagnoseAppHealth,
   type AiDiagnoseAppHealthInput,
 } from '@/ai/flows/ai-diagnose-app-health';
@@ -207,6 +215,40 @@ export async function runAiDiagnoseAppHealth(input: AiDiagnoseAppHealthInput) {
         return {
             data: null,
             error: `An error occurred during AI health diagnosis: ${errorMessage}`,
+        };
+    }
+}
+
+export async function runAiEditScript(input: AiEditScriptInput) {
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
+    }
+    try {
+        const result = await aiEditScript(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+            data: null,
+            error: `An error occurred while editing: ${errorMessage}`,
+        };
+    }
+}
+
+export async function runAiWritingAssist(input: AiWritingAssistInput) {
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
+    }
+    try {
+        const result = await aiWritingAssist(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+            data: null,
+            error: `An error occurred while getting writing assistance: ${errorMessage}`,
         };
     }
 }

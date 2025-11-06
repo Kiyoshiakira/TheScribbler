@@ -1,10 +1,11 @@
 
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import { useScript } from '@/context/script-context';
+import AiEditContextMenu from './ai-edit-context-menu';
 
 interface ScriptBlockProps {
   block: ScriptBlock;
@@ -39,7 +40,10 @@ const getBlockStyles = (type: ScriptBlockType): string => {
 
 const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isHighlighted }) => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock, setActiveBlockId } = useScript();
+  const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock, setActiveBlockId, document: scriptDocument } = useScript();
+  const [showAiMenu, setShowAiMenu] = useState(false);
+  const [aiMenuPosition, setAiMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedText, setSelectedText] = useState('');
 
   useEffect(() => {
     const element = elementRef.current;
@@ -67,6 +71,28 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
   const handleFocus = () => {
     setActiveBlockId(block.id);
   }
+
+  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    
+    if (text && text.length > 0) {
+      e.preventDefault();
+      setSelectedText(text);
+      setAiMenuPosition({ x: e.clientX, y: e.clientY });
+      setShowAiMenu(true);
+    }
+  };
+
+  const handleApplyEdit = (originalText: string, editedText: string) => {
+    const currentText = elementRef.current?.innerText || block.text;
+    const newText = currentText.replace(originalText, editedText);
+    
+    if (elementRef.current) {
+      elementRef.current.innerText = newText;
+    }
+    onChange(block.id, newText);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const selection = window.getSelection();
@@ -140,6 +166,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             onFocus={handleFocus}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
+            onContextMenu={handleContextMenu}
             className={cn(
                 'w-full outline-none p-2 rounded-sm transition-colors whitespace-pre-wrap min-h-[1.5rem] focus:ring-1 focus:ring-primary cursor-text',
                 'focus:bg-muted/50',
@@ -148,6 +175,15 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
             data-block-id={block.id}
             data-block-type={block.type}
         />
+        {showAiMenu && scriptDocument && (
+          <AiEditContextMenu
+            selectedText={selectedText}
+            context={scriptDocument.blocks}
+            onApplyEdit={handleApplyEdit}
+            onClose={() => setShowAiMenu(false)}
+            position={aiMenuPosition}
+          />
+        )}
     </div>
   );
 };
