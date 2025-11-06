@@ -451,7 +451,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     });
   }, []);
 
-  const cycleBlockType = (blockId: string) => {
+  const cycleBlockType = useCallback((blockId: string) => {
     // Screenplay-specific block types in typical screenplay order
     const typeCycle: ScriptBlockType[] = [
       ScriptBlockType.ACTION,
@@ -492,9 +492,9 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
       return { ...prevDoc, blocks: newBlocks };
     });
-  };
+  }, []);
 
-  const skipToDialogue = (blockId: string) => {
+  const skipToDialogue = useCallback((blockId: string) => {
     setLocalDocument(prevDoc => {
       if (!prevDoc) return null;
       const blockIndex = prevDoc.blocks.findIndex(b => b.id === blockId);
@@ -522,7 +522,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
       return { ...prevDoc, blocks: newBlocks };
     });
-  };
+  }, []);
 
   const deleteBlock = useCallback((blockId: string) => {
     setLocalDocument(prevDoc => {
