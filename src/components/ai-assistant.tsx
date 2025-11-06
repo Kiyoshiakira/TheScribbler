@@ -36,6 +36,7 @@ interface AiAssistantProps {
     openProofreadDialog: (suggestions: ProofreadSuggestion[]) => void;
 }
 
+// Check if AI is available by checking the environment variable set in next.config.ts
 const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
 
 

@@ -104,6 +104,7 @@ const PROOFREAD_STATUS_MESSAGES = [
   'Finalizing suggestions...',
 ];
 
+// Check if AI is available by checking the environment variable set in next.config.ts
 const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
 
 export default function AiFab({

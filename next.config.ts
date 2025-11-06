@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   env: {
-    NEXT_PUBLIC_AI_ENABLED: (process.env.GEMINI_API_KEY || '').trim() !== '',
+    NEXT_PUBLIC_AI_ENABLED: (process.env.GEMINI_API_KEY || '').trim() !== '' ? 'true' : 'false',
   },
   eslint: {
     ignoreDuringBuilds: true,
