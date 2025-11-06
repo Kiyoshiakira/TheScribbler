@@ -59,6 +59,39 @@ npm run dev
 
 The application will be available at [http://localhost:9002](http://localhost:9002).
 
+## Features
+
+### Script Management
+- **Create and Edit Scripts**: Write screenplays using the built-in editor with Fountain format support
+- **Import Scripts**: Import scripts from .scrite files (Scrite format) or .scribbler files (native format)
+- **Import from Google Docs**: Directly import scripts from Google Docs with AI-powered formatting
+- **Export Scripts**: Export your work in various formats (.scribbler, PDF, Fountain, Final Draft)
+
+### Public Sharing
+- **Public Script Views**: Share your scripts with others via public URLs
+  - View scripts at `/user/{userId}/script/{scriptId}`
+  - Read-only access for non-owners
+  - Full script content, characters, scenes, and notes visible
+- **Public User Profiles**: View other users' profiles and their script portfolio at `/user/{userId}`
+
+### Script Organization
+- **Characters**: Define and manage character profiles
+- **Scenes**: Organize your script into structured scenes
+- **Notes**: Add production notes and ideas
+- **Loglines**: Create concise story summaries
+
+### Deletion Control
+- **Selective Deletion**: When deleting a script, choose exactly what to remove:
+  - Script document itself
+  - All characters
+  - All scenes
+  - All notes
+  - Or any combination of the above
+
+### Collaboration & AI
+- **AI Assistant**: Get writing suggestions and script improvements
+- **Public Access**: Scripts are readable by all authenticated users (write access remains owner-only)
+
 ## Available Scripts
 
 - `npm run dev`: Starts the Next.js development server with Turbopack.

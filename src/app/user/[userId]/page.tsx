@@ -111,7 +111,7 @@ export default function PublicUserProfile() {
                                 User Profile
                             </h1>
                             <div className="text-muted-foreground mt-1">
-                                {userProfile?.bio || &apos;No bio yet.&apos;}
+                                {userProfile?.bio || "No bio yet."}
                             </div>
                         </div>
                     </div>
