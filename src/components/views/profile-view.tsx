@@ -163,12 +163,14 @@ export default function ProfileView({ setView }: ProfileViewProps) {
                                             <Book className="mr-2 h-4 w-4" />
                                             Edit
                                         </Button>
-                                        <Link href={`/user/${user!.uid}/script/${script.id}`} target="_blank" className="flex-1">
-                                            <Button variant="outline" className="w-full">
-                                                <ExternalLink className="mr-2 h-4 w-4" />
-                                                View
-                                            </Button>
-                                        </Link>
+                                        {user && (
+                                            <Link href={`/user/${user.uid}/script/${script.id}`} target="_blank" className="flex-1">
+                                                <Button variant="outline" className="w-full">
+                                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                                    View
+                                                </Button>
+                                            </Link>
+                                        )}
                                     </div>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>

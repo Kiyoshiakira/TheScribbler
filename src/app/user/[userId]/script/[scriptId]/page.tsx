@@ -85,9 +85,14 @@ export default function PublicScriptView() {
     };
 
     const handleEditScript = () => {
-        router.push('/');
-        // Note: In a full implementation, you'd need to set the current script ID
-        // and navigate to the editor view
+        // Navigate to app with script ID in localStorage for the app to pick up
+        try {
+            window.localStorage.setItem('scriptscribbler-current-script-id', scriptId);
+            router.push('/');
+        } catch (error) {
+            console.error('Failed to set script ID in localStorage:', error);
+            router.push('/');
+        }
     };
 
     if (isScriptLoading) {
