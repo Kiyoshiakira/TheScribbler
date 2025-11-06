@@ -31,7 +31,7 @@ interface FindReplaceContextType {
 const FindReplaceContext = createContext<FindReplaceContextType | undefined>(undefined);
 
 export const FindReplaceProvider = ({ children }: { children: ReactNode }) => {
-  const { document, setBlocks, activeMatch, setActiveMatch } = useScript();
+  const { document, setBlocks, setActiveMatch } = useScript();
   const [findValue, setFindValue] = useState('');
   const [replaceValue, setReplaceValue] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);

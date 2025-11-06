@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useContext, ReactNode, useEffect, useRef } from 'react';
+import { useState, ReactNode, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Lightbulb,
@@ -31,6 +31,7 @@ import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import CollabAssistant from './collab-assistant';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { isAiEnabled } from '@/lib/client-ai';
 
 
 interface AnalysisItem {
@@ -103,9 +104,6 @@ const PROOFREAD_STATUS_MESSAGES = [
   'Verifying continuity...',
   'Finalizing suggestions...',
 ];
-
-// Check if AI is available by checking the environment variable set in next.config.ts
-const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
 
 export default function AiFab({
   actions = ['suggestImprovements', 'deepAnalysis', 'proofread', 'openChat'],
@@ -545,7 +543,7 @@ export default function AiFab({
   }
 
 
-  if (!isAiEnabled) {
+  if (!isAiEnabled()) {
     return (
       <TooltipProvider>
         <Tooltip>
