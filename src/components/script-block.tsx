@@ -15,6 +15,13 @@ interface ScriptBlockProps {
   nextBlockType?: ScriptBlockType;
 }
 
+// Dialogue block types for group detection
+const DIALOGUE_TYPES: ScriptBlockType[] = [
+  ScriptBlockType.CHARACTER, 
+  ScriptBlockType.PARENTHETICAL, 
+  ScriptBlockType.DIALOGUE
+];
+
 const getBlockStyles = (
   type: ScriptBlockType,
   previousBlockType?: ScriptBlockType,
@@ -27,19 +34,13 @@ const getBlockStyles = (
     prevType?: ScriptBlockType,
     nextType?: ScriptBlockType
   ): boolean => {
-    const dialogueTypes: ScriptBlockType[] = [
-      ScriptBlockType.CHARACTER, 
-      ScriptBlockType.PARENTHETICAL, 
-      ScriptBlockType.DIALOGUE
-    ];
-    
     // Current block is in dialogue types
-    if (!dialogueTypes.includes(currentType)) return false;
+    if (!DIALOGUE_TYPES.includes(currentType)) return false;
     
     // Check if previous or next block is also a dialogue type
     return (
-      (prevType !== undefined && dialogueTypes.includes(prevType)) ||
-      (nextType !== undefined && dialogueTypes.includes(nextType))
+      (prevType !== undefined && DIALOGUE_TYPES.includes(prevType)) ||
+      (nextType !== undefined && DIALOGUE_TYPES.includes(nextType))
     );
   };
 
@@ -56,7 +57,8 @@ const getBlockStyles = (
       if (tightenSpacing && previousBlockType === ScriptBlockType.DIALOGUE) {
         return 'text-center uppercase mt-2 mb-0';
       }
-      return 'text-center uppercase mt-4 mb-0';
+      // Use mb-1 when not in dialogue group to maintain spacing from following non-dialogue blocks
+      return tightenSpacing ? 'text-center uppercase mt-4 mb-0' : 'text-center uppercase mt-4 mb-1';
     case ScriptBlockType.PARENTHETICAL:
       // Remove vertical margins when grouped and not active
       return tightenSpacing ? 'text-center text-sm my-0' : 'text-center text-sm my-1';
