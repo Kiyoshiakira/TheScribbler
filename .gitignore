@@ -45,3 +45,8 @@ firebase-debug.log
 firestore-debug.log
 test-parser.ts
 sample-screenplay.fountain
+src/test-exports.ts
+
+# Test files
+src/test-exports.ts
+src/comprehensive-test.ts

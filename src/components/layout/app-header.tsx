@@ -32,7 +32,7 @@ import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
 import { parseScriteFile, ParsedScriteData } from '@/lib/scrite-parser';
-import { collection, writeBatch, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import JSZip from 'jszip';
 import { useCurrentScript } from '@/context/current-script-context';
@@ -40,6 +40,11 @@ import type { View } from './AppLayout';
 import { runAiReformatScript } from '@/app/actions';
 import { useGooglePicker } from '@/hooks/use-google-picker';
 import { cn } from '@/lib/utils';
+import { parseScreenplay } from '@/lib/screenplay-parser';
+import { exportToFountain } from '@/lib/export-fountain';
+import { exportToPlainText } from '@/lib/export-txt';
+import { exportToFinalDraft } from '@/lib/export-fdx';
+import { exportToPDF } from '@/lib/export-pdf';
 
 
 interface AppHeaderProps {
@@ -349,6 +354,167 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     }
   };
 
+  const handleExportFountain = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active script to export.' });
+      return;
+    }
+
+    try {
+      const scriptDoc = parseScreenplay(script.content);
+      const fountainText = exportToFountain(scriptDoc, script.title);
+      
+      const blob = new Blob([fountainText], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.fountain`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'Fountain file has been downloaded.' });
+    } catch (error) {
+      console.error('Error exporting to Fountain:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the Fountain file.' });
+    }
+  };
+
+  const handleExportPlainText = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active script to export.' });
+      return;
+    }
+
+    try {
+      const scriptDoc = parseScreenplay(script.content);
+      const plainText = exportToPlainText(scriptDoc, script.title);
+      
+      const blob = new Blob([plainText], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'Text file has been downloaded.' });
+    } catch (error) {
+      console.error('Error exporting to plain text:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the text file.' });
+    }
+  };
+
+  const handleExportFinalDraft = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active script to export.' });
+      return;
+    }
+
+    try {
+      const scriptDoc = parseScreenplay(script.content);
+      const fdxXml = exportToFinalDraft(scriptDoc, script.title);
+      
+      const blob = new Blob([fdxXml], { type: 'application/xml;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.fdx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'Final Draft file has been downloaded.' });
+    } catch (error) {
+      console.error('Error exporting to Final Draft:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the Final Draft file.' });
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active script to export.' });
+      return;
+    }
+
+    try {
+      const scriptDoc = parseScreenplay(script.content);
+      await exportToPDF(scriptDoc, script.title);
+      
+      // The PDF export opens the print dialog, so we show a different message
+      toast({ 
+        title: 'PDF Export', 
+        description: 'Print dialog opened. Choose "Save as PDF" as your destination.' 
+      });
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the PDF.' });
+    }
+  };
+
+  const handleExportGoogleDocs = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active script to export.' });
+      return;
+    }
+
+    // Google Docs export requires OAuth 2.0 access with proper scopes
+    // For now, we'll inform users to use alternative export formats
+    toast({ 
+      title: 'Export to Google Docs', 
+      description: 'To export to Google Docs, please use the Fountain export and import the .fountain file into Google Docs, or use the PDF export option.',
+      duration: 6000,
+    });
+    
+    /* 
+    NOTE: Full Google Docs export implementation requires:
+    1. OAuth 2.0 consent screen setup in Google Cloud Console
+    2. OAuth client credentials configuration
+    3. Proper scopes: https://www.googleapis.com/auth/documents
+    4. User OAuth flow to get access token
+    
+    Once configured, uncomment this code:
+    
+    if (!auth?.currentUser) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Please sign in to export to Google Docs.' });
+      return;
+    }
+
+    const { dismiss } = toast({
+      title: 'Exporting to Google Docs...',
+      description: 'Creating your screenplay in Google Docs.',
+    });
+
+    try {
+      // Get Google OAuth access token (requires proper OAuth flow)
+      const googleAccessToken = await getGoogleAccessToken();
+      
+      const scriptDoc = parseScreenplay(script.content);
+      const documentId = await exportToGoogleDocs(scriptDoc, script.title, googleAccessToken);
+      const docsUrl = getGoogleDocsUrl(documentId);
+      
+      dismiss();
+      toast({ 
+        title: 'Export Successful', 
+        description: 'Your screenplay has been created in Google Docs. Click to open.',
+        action: {
+          label: 'Open',
+          onClick: () => window.open(docsUrl, '_blank'),
+        },
+      });
+    } catch (error) {
+      console.error('Error exporting to Google Docs:', error);
+      dismiss();
+      toast({ 
+        variant: 'destructive', 
+        title: 'Export Failed', 
+        description: error instanceof Error ? error.message : 'Could not create Google Doc.' 
+      });
+    }
+    */
+  };
+
 
   const UserMenu = () => {
     if (!user) {
@@ -486,13 +652,27 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 Export as .scribbler
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>
-                <GoogleDocIcon className="h-4 w-4 mr-2" />
-                Export to Google Docs (Coming Soon)
+            <DropdownMenuItem onClick={handleExportFountain}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as Fountain
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>Export as PDF (Coming Soon)</DropdownMenuItem>
-            <DropdownMenuItem disabled>Export as Fountain (Coming Soon)</DropdownMenuItem>
-            <DropdownMenuItem disabled>Export as Final Draft (Coming Soon)</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportPlainText}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as Plain Text (.txt)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportFinalDraft}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as Final Draft (.fdx)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Export as PDF
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleExportGoogleDocs}>
+                <GoogleDocIcon className="h-4 w-4 mr-2" />
+                Export to Google Docs (Alternative)
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <UserMenu />
