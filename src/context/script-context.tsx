@@ -12,6 +12,8 @@ import { ScriptDocument, ScriptBlock, ScriptBlockType } from '@/lib/editor-types
 import { parseScreenplay, serializeScript } from '@/lib/screenplay-parser';
 import type { Match } from '@/hooks/use-find-replace.tsx';
 
+// Delay to ensure DOM has updated before focusing elements
+const DOM_UPDATE_DELAY_MS = 10;
 
 interface Script {
     id: string;
@@ -40,7 +42,9 @@ interface ScriptContextType {
   setScriptLogline: (logline: string) => void;
   insertBlockAfter: (currentBlockId: string, text?: string, type?: ScriptBlockType) => void;
   cycleBlockType: (blockId: string) => void;
+  skipToDialogue: (blockId: string) => void;
   mergeWithPreviousBlock: (blockId: string) => void;
+  deleteBlock: (blockId: string) => void;
   deleteScene: (startBlockIndex: number, blockCount: number) => void;
   addComment: (blockId: string, content: string) => void;
   isScriptLoading: boolean;
@@ -63,7 +67,9 @@ export const ScriptContext = createContext<ScriptContextType>({
   setScriptLogline: () => {},
   insertBlockAfter: () => {},
   cycleBlockType: () => {},
+  skipToDialogue: () => {},
   mergeWithPreviousBlock: () => {},
+  deleteBlock: () => {},
   deleteScene: () => {},
   addComment: () => {},
   isScriptLoading: true,
@@ -412,6 +418,10 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
          if (currentBlock.type === ScriptBlockType.SCENE_HEADING) {
             newBlockType = ScriptBlockType.ACTION;
         } else if (currentBlock.type === ScriptBlockType.CHARACTER) {
+            // After CHARACTER, create PARENTHETICAL
+            newBlockType = ScriptBlockType.PARENTHETICAL;
+        } else if (currentBlock.type === ScriptBlockType.PARENTHETICAL) {
+            // After PARENTHETICAL, create DIALOGUE
             newBlockType = ScriptBlockType.DIALOGUE;
         } else if (currentBlock.type === ScriptBlockType.DIALOGUE && text.trim() === '') {
             newBlockType = ScriptBlockType.ACTION;
@@ -441,7 +451,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     });
   }, []);
 
-  const cycleBlockType = (blockId: string) => {
+  const cycleBlockType = useCallback((blockId: string) => {
     // Screenplay-specific block types in typical screenplay order
     const typeCycle: ScriptBlockType[] = [
       ScriptBlockType.ACTION,
@@ -482,7 +492,78 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
       return { ...prevDoc, blocks: newBlocks };
     });
-  };
+  }, []);
+
+  const skipToDialogue = useCallback((blockId: string) => {
+    setLocalDocument(prevDoc => {
+      if (!prevDoc) return null;
+      const blockIndex = prevDoc.blocks.findIndex(b => b.id === blockId);
+      if (blockIndex === -1) return prevDoc;
+
+      const currentBlock = prevDoc.blocks[blockIndex];
+      
+      // Only convert CHARACTER and PARENTHETICAL to DIALOGUE
+      if (currentBlock.type !== ScriptBlockType.CHARACTER && currentBlock.type !== ScriptBlockType.PARENTHETICAL) {
+        return prevDoc;
+      }
+      
+      let updatedText = currentBlock.text;
+      
+      // When switching from PARENTHETICAL to DIALOGUE, remove wrapping parentheses if present
+      if (currentBlock.type === ScriptBlockType.PARENTHETICAL) {
+        if (updatedText.startsWith('(') && updatedText.endsWith(')')) {
+          updatedText = updatedText.slice(1, -1);
+        }
+      }
+      
+      const updatedBlock = { ...currentBlock, type: ScriptBlockType.DIALOGUE, text: updatedText };
+      const newBlocks = [...prevDoc.blocks];
+      newBlocks[blockIndex] = updatedBlock;
+
+      return { ...prevDoc, blocks: newBlocks };
+    });
+  }, []);
+
+  const deleteBlock = useCallback((blockId: string) => {
+    setLocalDocument(prevDoc => {
+      if (!prevDoc) return null;
+      const index = prevDoc.blocks.findIndex(b => b.id === blockId);
+      if (index === -1) return prevDoc;
+      
+      const newBlocks = [...prevDoc.blocks];
+      newBlocks.splice(index, 1);
+      
+      // Focus on the previous block if available, or next block if this was the first block
+      setTimeout(() => {
+        if (newBlocks.length > 0) {
+          const targetIndex = Math.min(index > 0 ? index - 1 : 0, newBlocks.length - 1);
+          const targetBlock = newBlocks[targetIndex];
+          const targetElement = document.querySelector(`[data-block-id="${targetBlock.id}"]`) as HTMLElement;
+          if (targetElement && targetElement.focus) {
+            targetElement.focus();
+            // Move cursor to end of block
+            const range = document.createRange();
+            const selection = window.getSelection();
+            if (targetElement.childNodes.length > 0) {
+              const lastNode = targetElement.childNodes[targetElement.childNodes.length - 1];
+              const length = lastNode.textContent?.length || 0;
+              try {
+                range.setStart(lastNode, length);
+                range.collapse(true);
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+              } catch (error) {
+                // Cursor positioning failed, but focus succeeded which is acceptable
+                console.debug('Could not set cursor position after block deletion:', error);
+              }
+            }
+          }
+        }
+      }, DOM_UPDATE_DELAY_MS);
+      
+      return { ...prevDoc, blocks: newBlocks };
+    });
+  }, []);
 
   const mergeWithPreviousBlock = useCallback((blockId: string) => {
     setLocalDocument(prevDoc => {
@@ -594,7 +675,9 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     setScriptLogline,
     insertBlockAfter,
     cycleBlockType,
+    skipToDialogue,
     mergeWithPreviousBlock,
+    deleteBlock,
     deleteScene,
     addComment,
     isScriptLoading,

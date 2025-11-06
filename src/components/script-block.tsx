@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import { useScript } from '@/context/script-context';
 import AiEditContextMenu from './ai-edit-context-menu';
+import { X } from 'lucide-react';
 
 interface ScriptBlockProps {
   block: ScriptBlock;
@@ -91,7 +92,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
   nextBlockType
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock, setActiveBlockId, activeBlockId, document: scriptDocument } = useScript();
+  const { insertBlockAfter, cycleBlockType, skipToDialogue, mergeWithPreviousBlock, deleteBlock, setActiveBlockId, activeBlockId, document: scriptDocument } = useScript();
   const [showAiMenu, setShowAiMenu] = useState(false);
   const [aiMenuPosition, setAiMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
@@ -168,7 +169,12 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
     if (e.key === 'Tab') {
       e.preventDefault(); // Always prevent tab from leaving the editor
       if (!e.shiftKey) {
-        cycleBlockType(block.id);
+        // For CHARACTER and PARENTHETICAL blocks, Tab skips directly to DIALOGUE
+        if (block.type === ScriptBlockType.CHARACTER || block.type === ScriptBlockType.PARENTHETICAL) {
+          skipToDialogue(block.id);
+        } else {
+          cycleBlockType(block.id);
+        }
       }
       // Shift+Tab could cycle backwards in the future, for now just prevent default
       return;
@@ -216,7 +222,19 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
 
 
   return (
-    <div className={cn('group w-full', getBlockStyles(block.type, previousBlockType, nextBlockType, isActive))}>
+    <div className={cn('group/block w-full relative', getBlockStyles(block.type, previousBlockType, nextBlockType, isActive))}>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            deleteBlock(block.id);
+          }}
+          className="absolute right-1 top-1 p-1 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive opacity-0 group-hover/block:opacity-100 transition-opacity z-10"
+          aria-label="Delete block"
+          title="Delete block"
+        >
+          <X className="h-3 w-3" />
+        </button>
         <div
             ref={elementRef}
             contentEditable
