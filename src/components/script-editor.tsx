@@ -106,6 +106,8 @@ export default function ScriptEditor({ isStandalone = false }: ScriptEditorProps
               block={block}
               onChange={handleBlockChange}
               isHighlighted={activeMatch?.blockIndex === index}
+              previousBlockType={index > 0 ? document.blocks[index - 1].type : undefined}
+              nextBlockType={index < document.blocks.length - 1 ? document.blocks[index + 1].type : undefined}
             />
           ))
         )}

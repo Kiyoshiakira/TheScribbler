@@ -11,19 +11,64 @@ interface ScriptBlockProps {
   block: ScriptBlock;
   onChange: (blockId: string, newText: string) => void;
   isHighlighted: boolean;
+  previousBlockType?: ScriptBlockType;
+  nextBlockType?: ScriptBlockType;
 }
 
-const getBlockStyles = (type: ScriptBlockType): string => {
+const getBlockStyles = (
+  type: ScriptBlockType,
+  previousBlockType?: ScriptBlockType,
+  nextBlockType?: ScriptBlockType,
+  isActive?: boolean
+): string => {
+  // Helper to check if a block is part of a dialogue group
+  const isPartOfDialogueGroup = (
+    currentType: ScriptBlockType,
+    prevType?: ScriptBlockType,
+    nextType?: ScriptBlockType
+  ): boolean => {
+    const dialogueTypes: ScriptBlockType[] = [
+      ScriptBlockType.CHARACTER, 
+      ScriptBlockType.PARENTHETICAL, 
+      ScriptBlockType.DIALOGUE
+    ];
+    
+    // Current block is in dialogue types
+    if (!dialogueTypes.includes(currentType)) return false;
+    
+    // Check if previous or next block is also a dialogue type
+    return (
+      (prevType !== undefined && dialogueTypes.includes(prevType)) ||
+      (nextType !== undefined && dialogueTypes.includes(nextType))
+    );
+  };
+
+  const inDialogueGroup = isPartOfDialogueGroup(type, previousBlockType, nextBlockType);
+  const tightenSpacing = inDialogueGroup && !isActive;
+
   switch (type) {
     case ScriptBlockType.SCENE_HEADING:
       return 'font-bold uppercase my-6';
     case ScriptBlockType.ACTION:
       return 'my-4';
     case ScriptBlockType.CHARACTER:
-      return 'text-center uppercase mt-4 mb-1';
+      // Tighten top margin when part of dialogue group and not active
+      if (tightenSpacing && previousBlockType === ScriptBlockType.DIALOGUE) {
+        return 'text-center uppercase mt-2 mb-0';
+      }
+      return 'text-center uppercase mt-4 mb-0';
     case ScriptBlockType.PARENTHETICAL:
-      return 'text-center text-sm my-1';
+      // Remove vertical margins when grouped and not active
+      return tightenSpacing ? 'text-center text-sm my-0' : 'text-center text-sm my-1';
     case ScriptBlockType.DIALOGUE:
+      // Reduce top margin when following parenthetical or character
+      if (tightenSpacing) {
+        if (previousBlockType === ScriptBlockType.PARENTHETICAL) {
+          return 'mt-0 mb-1 w-9/12 md:w-7/12 mx-auto';
+        } else if (previousBlockType === ScriptBlockType.CHARACTER) {
+          return 'mt-0 mb-1 w-9/12 md:w-7/12 mx-auto';
+        }
+      }
       return 'my-1 w-9/12 md:w-7/12 mx-auto';
     case ScriptBlockType.TRANSITION:
       return 'text-right uppercase mt-4 mb-2';
@@ -38,12 +83,21 @@ const getBlockStyles = (type: ScriptBlockType): string => {
   }
 };
 
-const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isHighlighted }) => {
+const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ 
+  block, 
+  onChange, 
+  isHighlighted,
+  previousBlockType,
+  nextBlockType
+}) => {
   const elementRef = useRef<HTMLDivElement>(null);
-  const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock, setActiveBlockId, document: scriptDocument } = useScript();
+  const { insertBlockAfter, cycleBlockType, mergeWithPreviousBlock, setActiveBlockId, activeBlockId, document: scriptDocument } = useScript();
   const [showAiMenu, setShowAiMenu] = useState(false);
   const [aiMenuPosition, setAiMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
+
+  // Check if this block is currently active
+  const isActive = activeBlockId === block.id;
 
   useEffect(() => {
     const element = elementRef.current;
@@ -158,7 +212,7 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({ block, onChange, isH
 
 
   return (
-    <div className={cn('group w-full', getBlockStyles(block.type))}>
+    <div className={cn('group w-full', getBlockStyles(block.type, previousBlockType, nextBlockType, isActive))}>
         <div
             ref={elementRef}
             contentEditable

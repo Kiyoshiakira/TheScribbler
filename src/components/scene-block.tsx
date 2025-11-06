@@ -103,6 +103,8 @@ const SceneBlock: React.FC<SceneBlockProps> = ({
             block={block}
             onChange={onBlockChange}
             isHighlighted={highlightedBlockIndex === startBlockIndex + index}
+            previousBlockType={index > 0 ? blocks[index - 1].type : undefined}
+            nextBlockType={index < blocks.length - 1 ? blocks[index + 1].type : undefined}
           />
         ))}
       </div>
