@@ -98,21 +98,33 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                     const charactersCol = collection(newScriptRef, 'characters');
                     subCollections.characters.forEach((char: any) => {
                         const { id, ...charData } = char;
-                        batch.set(doc(charactersCol), charData);
+                        batch.set(doc(charactersCol), {
+                            ...charData,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp(),
+                        });
                     });
                 }
                 if (subCollections.scenes) {
                     const scenesCol = collection(newScriptRef, 'scenes');
                     subCollections.scenes.forEach((scene: any) => {
                         const { id, ...sceneData } = scene;
-                        batch.set(doc(scenesCol), sceneData);
+                        batch.set(doc(scenesCol), {
+                            ...sceneData,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp(),
+                        });
                     });
                 }
                 if (subCollections.notes) {
                     const notesCol = collection(newScriptRef, 'notes');
                     subCollections.notes.forEach((note: any) => {
                         const { id, ...noteData } = note;
-                        batch.set(doc(notesCol), noteData);
+                        batch.set(doc(notesCol), {
+                            ...noteData,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp(),
+                        });
                     });
                 }
             }
