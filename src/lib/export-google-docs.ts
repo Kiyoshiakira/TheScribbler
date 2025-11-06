@@ -214,9 +214,9 @@ function buildGoogleDocsRequests(scriptDoc: ScriptDocument, title?: string): Goo
 function formatBlockForGoogleDocs(block: { type: string; text: string }): {
   text: string;
   styles: {
-    paragraphStyle?: any;
+    paragraphStyle?: Record<string, unknown>;
     paragraphFields?: string;
-    textStyle?: any;
+    textStyle?: Record<string, unknown>;
     textFields?: string;
   };
 } {

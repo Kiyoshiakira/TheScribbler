@@ -30,9 +30,9 @@ import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
 import { useToast } from '@/hooks/use-toast';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { parseScriteFile, ParsedScriteData } from '@/lib/scrite-parser';
-import { collection, writeBatch, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import JSZip from 'jszip';
 import { useCurrentScript } from '@/context/current-script-context';
@@ -45,7 +45,6 @@ import { exportToFountain } from '@/lib/export-fountain';
 import { exportToPlainText } from '@/lib/export-txt';
 import { exportToFinalDraft } from '@/lib/export-fdx';
 import { exportToPDF } from '@/lib/export-pdf';
-import { exportToGoogleDocs, getGoogleDocsUrl } from '@/lib/export-google-docs';
 
 
 interface AppHeaderProps {
@@ -460,7 +459,23 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       return;
     }
 
-    // Check if user is authenticated with Google
+    // Google Docs export requires OAuth 2.0 access with proper scopes
+    // For now, we'll inform users to use alternative export formats
+    toast({ 
+      title: 'Export to Google Docs', 
+      description: 'To export to Google Docs, please use the Fountain export and import the .fountain file into Google Docs, or use the PDF export option.',
+      duration: 6000,
+    });
+    
+    /* 
+    NOTE: Full Google Docs export implementation requires:
+    1. OAuth 2.0 consent screen setup in Google Cloud Console
+    2. OAuth client credentials configuration
+    3. Proper scopes: https://www.googleapis.com/auth/documents
+    4. User OAuth flow to get access token
+    
+    Once configured, uncomment this code:
+    
     if (!auth?.currentUser) {
       toast({ variant: 'destructive', title: 'Export Failed', description: 'Please sign in to export to Google Docs.' });
       return;
@@ -472,20 +487,9 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     });
 
     try {
-      // Get the user's access token
-      const token = await auth.currentUser.getIdToken();
+      // Get Google OAuth access token (requires proper OAuth flow)
+      const googleAccessToken = await getGoogleAccessToken();
       
-      // For Google Docs API, we need a Google OAuth token, not a Firebase token
-      // This is a simplified version - in production, you'd need proper OAuth flow
-      toast({ 
-        variant: 'destructive',
-        title: 'Export to Google Docs', 
-        description: 'Google Docs export requires additional OAuth setup. Please use the Fountain or PDF export instead.' 
-      });
-      dismiss();
-      
-      /* 
-      // This would be the actual implementation with proper OAuth:
       const scriptDoc = parseScreenplay(script.content);
       const documentId = await exportToGoogleDocs(scriptDoc, script.title, googleAccessToken);
       const docsUrl = getGoogleDocsUrl(documentId);
@@ -493,13 +497,12 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       dismiss();
       toast({ 
         title: 'Export Successful', 
-        description: 'Your screenplay has been created in Google Docs.',
+        description: 'Your screenplay has been created in Google Docs. Click to open.',
         action: {
           label: 'Open',
           onClick: () => window.open(docsUrl, '_blank'),
         },
       });
-      */
     } catch (error) {
       console.error('Error exporting to Google Docs:', error);
       dismiss();
@@ -509,6 +512,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         description: error instanceof Error ? error.message : 'Could not create Google Doc.' 
       });
     }
+    */
   };
 
 
@@ -667,7 +671,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleExportGoogleDocs}>
                 <GoogleDocIcon className="h-4 w-4 mr-2" />
-                Export to Google Docs (Beta)
+                Export to Google Docs (Alternative)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
