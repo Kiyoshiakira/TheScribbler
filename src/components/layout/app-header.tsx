@@ -640,7 +640,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button disabled={isProfileOrDashboard}>
+            <Button>
               <Download className="h-4 w-4 md:mr-2" />
               <span className='hidden md:inline'>Export</span>
               <ChevronDown className="h-4 w-4 ml-0 md:ml-2" />
