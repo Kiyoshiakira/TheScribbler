@@ -358,9 +358,11 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
 
     // Delete characters that no longer appear in the script
     existingCharactersMap.forEach((character) => {
-      const charRef = doc(charactersCollectionRef, character.id!);
-      batch.delete(charRef);
-      hasChanges = true;
+      if (character.id) {
+        const charRef = doc(charactersCollectionRef, character.id);
+        batch.delete(charRef);
+        hasChanges = true;
+      }
     });
 
     // Commit the batch only if there are changes

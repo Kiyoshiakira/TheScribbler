@@ -13,7 +13,7 @@ import {
 } from '../ui/dropdown-menu';
 import { useCollection, useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
-import { collection, query, orderBy, addDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, addDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
 import AiFab from '../ai-fab';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
@@ -375,7 +375,6 @@ export default function ScenesView() {
 
     try {
       const sceneRef = doc(scenesCollection, scene.id);
-      const { deleteDoc } = await import('firebase/firestore');
       await deleteDoc(sceneRef).catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: sceneRef.path,
