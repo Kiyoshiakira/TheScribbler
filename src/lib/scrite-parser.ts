@@ -1,6 +1,5 @@
 
 import JSZip from 'jszip';
-import { runAiReformatScript } from '@/app/actions';
 
 // Internal interfaces for parsing the Scrite JSON structure
 interface ScriteSceneElement {
@@ -63,9 +62,9 @@ export interface ParsedScene {
   time: number; // Estimated time in minutes
 }
 
-export interface ParsedAndFormattedData {
+export interface ParsedScriteData {
   title: string;
-  formattedScript: string;
+  rawScript: string;
   characters: ParsedCharacter[];
   notes: ParsedNote[];
   scenes: ParsedScene[];
@@ -97,11 +96,11 @@ const parseQuillDelta = (delta: any): string => {
 };
 
 /**
- * Parses a .scrite file, extracts content, reformats it via AI, and returns a structured object.
+ * Parses a .scrite file and extracts content into a structured object.
  * @param fileData The ArrayBuffer content of the .scrite file.
- * @returns A promise that resolves to the parsed and formatted data.
+ * @returns A promise that resolves to the parsed data with raw script content.
  */
-export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise<ParsedAndFormattedData> => {
+export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScriteData> => {
   const zip = await JSZip.loadAsync(fileData);
   
   const headerFile = zip.file('_header.json');
@@ -221,13 +220,6 @@ export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise
   // Join lines with single newlines, the blank lines are already in the array
   const rawScript = scriptLines.join('\n').replace(/\n{3,}/g, '\n\n');
 
-  // Call AI to reformat the extracted script
-  const reformatResult = await runAiReformatScript({ rawScript });
-  if (reformatResult.error || !reformatResult.data) {
-    throw new Error('Failed to reformat script content during import.');
-  }
-  const formattedScript = reformatResult.data.formattedScript;
-
   const characters: ParsedCharacter[] = (getAsArray(structure.characters) as ScriteCharacter[]).map(c => ({
     name: c.name || 'Unknown',
     description: parseQuillDelta(c.summary) || c.designation || 'No description.',
@@ -240,5 +232,5 @@ export const parseAndReformatScriteFile = async (fileData: ArrayBuffer): Promise
       category: 'General'
   }));
 
-  return { title, formattedScript, characters, notes, scenes };
+  return { title, rawScript, characters, notes, scenes };
 };
