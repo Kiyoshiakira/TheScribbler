@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, ReactNode, useContext, useCallback } from 'react';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { doc, collection, setDoc, serverTimestamp, query, orderBy, addDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, collection, setDoc, serverTimestamp, query, orderBy, addDoc, getDocs, writeBatch, deleteDoc } from 'firebase/firestore';
 import { useDebounce } from 'use-debounce';
 import type { Character } from '@/components/views/characters-view';
 import type { Scene } from '@/components/views/scenes-view';
@@ -208,6 +208,183 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       updateFirestore();
     }
   }, [debouncedDocument, debouncedTitle, debouncedLogline, isInitialLoad, updateFirestore]);
+
+  // Sync scenes from script blocks to Firestore
+  const syncScenesToFirestore = useCallback(async () => {
+    if (isInitialLoad || !localDocument || !scenesCollection || !scenes) return;
+
+    // Extract scene headings from the document
+    const sceneHeadings: { sceneNumber: number; setting: string }[] = [];
+    let sceneCounter = 0;
+
+    localDocument.blocks.forEach((block) => {
+      if (block.type === ScriptBlockType.SCENE_HEADING) {
+        sceneCounter++;
+        sceneHeadings.push({
+          sceneNumber: sceneCounter,
+          setting: block.text.trim(),
+        });
+      }
+    });
+
+    // Build a map of existing scenes by scene number for quick lookup
+    const existingScenesMap = new Map(scenes.map(s => [s.sceneNumber, s]));
+
+    // Sync scenes to Firestore
+    const batch = writeBatch(firestore);
+    let hasChanges = false;
+
+    // Update or create scenes for each heading found
+    sceneHeadings.forEach(({ sceneNumber, setting }) => {
+      const existingScene = existingScenesMap.get(sceneNumber);
+      
+      if (existingScene) {
+        // Only update if setting has changed
+        if (existingScene.setting !== setting) {
+          const sceneRef = doc(scenesCollection, existingScene.id);
+          batch.set(sceneRef, { setting }, { merge: true });
+          hasChanges = true;
+        }
+        // Remove from map to track which scenes still exist
+        existingScenesMap.delete(sceneNumber);
+      } else {
+        // Create new scene with default values
+        const newSceneRef = doc(scenesCollection);
+        batch.set(newSceneRef, {
+          sceneNumber,
+          setting,
+          description: '',
+          time: 5, // default 5 minutes
+        });
+        hasChanges = true;
+      }
+    });
+
+    // Delete scenes that no longer have corresponding scene headings
+    existingScenesMap.forEach((scene) => {
+      const sceneRef = doc(scenesCollection, scene.id);
+      batch.delete(sceneRef);
+      hasChanges = true;
+    });
+
+    // Commit the batch only if there are changes
+    if (hasChanges) {
+      try {
+        await batch.commit();
+      } catch (error) {
+        console.error('Error syncing scenes:', error);
+        const permissionError = new FirestorePermissionError({
+          path: scenesCollection.path,
+          operation: 'write',
+          requestResourceData: { sceneHeadings }
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
+    }
+  }, [isInitialLoad, localDocument, scenesCollection, scenes, firestore]);
+
+  // Trigger scene sync when document changes (debounced)
+  useEffect(() => {
+    if (!isInitialLoad && debouncedDocument) {
+      syncScenesToFirestore();
+    }
+  }, [debouncedDocument, isInitialLoad, syncScenesToFirestore]);
+
+  // Sync characters from script blocks to Firestore
+  const syncCharactersToFirestore = useCallback(async () => {
+    if (isInitialLoad || !localDocument || !charactersCollectionRef || !characters) return;
+
+    // Extract unique character names from the document
+    const characterNames = new Set<string>();
+    const characterSceneSets = new Map<string, Set<number>>();
+    let currentSceneNumber = 0;
+
+    localDocument.blocks.forEach((block) => {
+      if (block.type === ScriptBlockType.SCENE_HEADING) {
+        currentSceneNumber++;
+      } else if (block.type === ScriptBlockType.CHARACTER) {
+        const characterName = block.text.trim()
+          .replace(/\(V\.O\.\)/gi, '')
+          .replace(/\(O\.S\.\)/gi, '')
+          .trim();
+        
+        if (characterName && currentSceneNumber > 0) {
+          characterNames.add(characterName);
+          
+          // Track unique scenes this character appears in
+          if (!characterSceneSets.has(characterName)) {
+            characterSceneSets.set(characterName, new Set());
+          }
+          characterSceneSets.get(characterName)!.add(currentSceneNumber);
+        }
+      }
+    });
+
+    // Build a map of existing characters by name for quick lookup
+    const existingCharactersMap = new Map(characters.map(c => [c.name, c]));
+
+    // Sync characters to Firestore
+    const batch = writeBatch(firestore);
+    let hasChanges = false;
+
+    // Update or create characters for each name found
+    characterNames.forEach((name) => {
+      const existingCharacter = existingCharactersMap.get(name);
+      const sceneCount = characterSceneSets.get(name)?.size || 0;
+      
+      if (existingCharacter) {
+        // Only update if scene count has changed
+        if (existingCharacter.scenes !== sceneCount) {
+          const charRef = doc(charactersCollectionRef, existingCharacter.id);
+          batch.set(charRef, { scenes: sceneCount }, { merge: true });
+          hasChanges = true;
+        }
+        // Remove from map to track which characters still exist
+        existingCharactersMap.delete(name);
+      } else {
+        // Create new character with default values
+        const newCharRef = doc(charactersCollectionRef);
+        batch.set(newCharRef, {
+          name,
+          description: '',
+          profile: '',
+          scenes: sceneCount,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        hasChanges = true;
+      }
+    });
+
+    // Delete characters that no longer appear in the script
+    existingCharactersMap.forEach((character) => {
+      const charRef = doc(charactersCollectionRef, character.id!);
+      batch.delete(charRef);
+      hasChanges = true;
+    });
+
+    // Commit the batch only if there are changes
+    if (hasChanges) {
+      try {
+        await batch.commit();
+      } catch (error) {
+        console.error('Error syncing characters:', error);
+        const permissionError = new FirestorePermissionError({
+          path: charactersCollectionRef.path,
+          operation: 'write',
+          requestResourceData: { characterNames: Array.from(characterNames) }
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
+    }
+  }, [isInitialLoad, localDocument, charactersCollectionRef, characters, firestore]);
+
+  // Trigger character sync when document changes (debounced)
+  useEffect(() => {
+    if (!isInitialLoad && debouncedDocument) {
+      syncCharactersToFirestore();
+    }
+  }, [debouncedDocument, isInitialLoad, syncCharactersToFirestore]);
 
 
   const setBlocks = useCallback((blocks: ScriptBlock[]) => {
