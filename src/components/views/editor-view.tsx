@@ -11,6 +11,7 @@ import EditorStatusBar from '../editor-status-bar';
 import { useScript } from '@/context/script-context';
 import { ScriptBlockType } from '@/lib/editor-types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { ScrollArea } from '../ui/scroll-area';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -135,44 +136,46 @@ function EditorViewContent() {
         
         {/* Scene Edit Dialog */}
         <Dialog open={isSceneEditOpen} onOpenChange={setIsSceneEditOpen}>
-          <DialogContent className="sm:max-w-xl">
+          <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Edit Scene {editingSceneNumber}</DialogTitle>
               <DialogDescription>
                 Update the scene details below.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="setting">Setting</Label>
-                <Input
-                  id="setting"
-                  value={sceneSettings.setting}
-                  onChange={(e) => setSceneSettings({ ...sceneSettings, setting: e.target.value })}
-                  placeholder="e.g., INT. COFFEE SHOP - DAY"
-                />
+            <ScrollArea className="flex-1 -mx-6 px-6">
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="setting">Setting</Label>
+                  <Input
+                    id="setting"
+                    value={sceneSettings.setting}
+                    onChange={(e) => setSceneSettings({ ...sceneSettings, setting: e.target.value })}
+                    placeholder="e.g., INT. COFFEE SHOP - DAY"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={sceneSettings.description}
+                    onChange={(e) => setSceneSettings({ ...sceneSettings, description: e.target.value })}
+                    placeholder="Brief description of what happens in this scene..."
+                    rows={4}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="time">Estimated Time (minutes)</Label>
+                  <Input
+                    id="time"
+                    type="number"
+                    value={sceneSettings.time}
+                    onChange={(e) => setSceneSettings({ ...sceneSettings, time: parseInt(e.target.value) || 1 })}
+                    min={1}
+                  />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={sceneSettings.description}
-                  onChange={(e) => setSceneSettings({ ...sceneSettings, description: e.target.value })}
-                  placeholder="Brief description of what happens in this scene..."
-                  rows={4}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="time">Estimated Time (minutes)</Label>
-                <Input
-                  id="time"
-                  type="number"
-                  value={sceneSettings.time}
-                  onChange={(e) => setSceneSettings({ ...sceneSettings, time: parseInt(e.target.value) || 1 })}
-                  min={1}
-                />
-              </div>
-            </div>
+            </ScrollArea>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsSceneEditOpen(false)} disabled={isSaving}>
                 Cancel

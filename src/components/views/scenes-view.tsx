@@ -87,54 +87,56 @@ function SceneDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{scene ? 'Edit Scene' : 'Add New Scene'}</DialogTitle>
           <DialogDescription>
             {scene ? 'Update the scene details below.' : 'Create a new scene for your script.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="sceneNumber">Scene Number</Label>
-            <Input
-              id="sceneNumber"
-              type="number"
-              value={sceneNumber}
-              onChange={(e) => setSceneNumber(parseInt(e.target.value) || 1)}
-              min={1}
-            />
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="sceneNumber">Scene Number</Label>
+              <Input
+                id="sceneNumber"
+                type="number"
+                value={sceneNumber}
+                onChange={(e) => setSceneNumber(parseInt(e.target.value) || 1)}
+                min={1}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="setting">Setting *</Label>
+              <Input
+                id="setting"
+                value={setting}
+                onChange={(e) => setSetting(e.target.value)}
+                placeholder="e.g., INT. COFFEE SHOP - DAY"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief description of what happens in this scene..."
+                rows={4}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="time">Estimated Time (minutes)</Label>
+              <Input
+                id="time"
+                type="number"
+                value={time}
+                onChange={(e) => setTime(parseInt(e.target.value) || 1)}
+                min={1}
+              />
+            </div>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="setting">Setting *</Label>
-            <Input
-              id="setting"
-              value={setting}
-              onChange={(e) => setSetting(e.target.value)}
-              placeholder="e.g., INT. COFFEE SHOP - DAY"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of what happens in this scene..."
-              rows={4}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="time">Estimated Time (minutes)</Label>
-            <Input
-              id="time"
-              type="number"
-              value={time}
-              onChange={(e) => setTime(parseInt(e.target.value) || 1)}
-              min={1}
-            />
-          </div>
-        </div>
+        </ScrollArea>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
