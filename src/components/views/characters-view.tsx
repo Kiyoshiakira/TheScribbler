@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { runGetAiCharacterProfile } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
@@ -115,83 +116,85 @@ function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, is
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline">{isNewCharacter ? 'Add New Character' : 'Edit Character'}</DialogTitle>
           <DialogDescription>
             {isNewCharacter ? 'Create a new character profile. Use the AI generator for a detailed starting point.' : 'Edit the details for this character.'}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-4 gap-4 py-4">
-          <div className="col-span-1 flex flex-col items-center gap-2 pt-2">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-              {imageUrl ? (
-                <Image src={imageUrl} alt={name} width={96} height={96} className="object-cover w-full h-full" />
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="grid grid-cols-4 gap-4 py-4">
+            <div className="col-span-1 flex flex-col items-center gap-2 pt-2">
+              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                {imageUrl ? (
+                  <Image src={imageUrl} alt={name} width={96} height={96} className="object-cover w-full h-full" />
+                ) : (
+                  <User className="w-12 h-12 text-muted-foreground" />
+                )}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+            </div>
+            <div className="col-span-3 space-y-4">
+              <div className="grid w-full items-center gap-1.5">
+                <Label htmlFor="description">One-line Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="e.g., A grizzled detective haunted by his past."
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className='flex justify-end items-center'>
+                <Button size="sm" variant="outline" onClick={handleGenerate} disabled={isAiGenerating || isGenerating}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {isAiGenerating || isGenerating ? 'Generating...' : 'Generate with AI'}
+                </Button>
+              </div>
+            </div>
+            <div className="col-span-4 space-y-2">
+              <div className='flex justify-between items-center'>
+                <Label htmlFor="name">Character Name</Label>
+              </div>
+              {isAiGenerating || isGenerating ? (
+                <Skeleton className="h-10 w-2/3" />
               ) : (
-                <User className="w-12 h-12 text-muted-foreground" />
+                <Input id="name" placeholder="Character's Name" value={name} onChange={e => setName(e.target.value)} />
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-          </div>
-          <div className="col-span-3 space-y-4">
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="description">One-line Description</Label>
-              <Textarea
-                id="description"
-                placeholder="e.g., A grizzled detective haunted by his past."
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                rows={2}
-              />
-            </div>
-            <div className='flex justify-end items-center'>
-              <Button size="sm" variant="outline" onClick={handleGenerate} disabled={isAiGenerating || isGenerating}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                {isAiGenerating || isGenerating ? 'Generating...' : 'Generate with AI'}
-              </Button>
+            <div className="col-span-4 space-y-2">
+              <Label htmlFor="profile">Character Profile</Label>
+              {isAiGenerating || isGenerating ? (
+                <div className='space-y-2 pt-2'>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/5" />
+                </div>
+              ) : (
+                <Textarea
+                  id="profile"
+                  className="min-h-[150px]"
+                  placeholder="Full character profile will appear here..."
+                  value={profile}
+                  onChange={e => setProfile(e.target.value)}
+                />
+              )}
             </div>
           </div>
-          <div className="col-span-4 space-y-2">
-            <div className='flex justify-between items-center'>
-              <Label htmlFor="name">Character Name</Label>
-            </div>
-            {isAiGenerating || isGenerating ? (
-              <Skeleton className="h-10 w-2/3" />
-            ) : (
-              <Input id="name" placeholder="Character's Name" value={name} onChange={e => setName(e.target.value)} />
-            )}
-          </div>
-          <div className="col-span-4 space-y-2">
-            <Label htmlFor="profile">Character Profile</Label>
-            {isAiGenerating || isGenerating ? (
-              <div className='space-y-2 pt-2'>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/5" />
-              </div>
-            ) : (
-              <Textarea
-                id="profile"
-                className="min-h-[150px]"
-                placeholder="Full character profile will appear here..."
-                value={profile}
-                onChange={e => setProfile(e.target.value)}
-              />
-            )}
-          </div>
-        </div>
+        </ScrollArea>
         <DialogFooter>
           <Button type="submit" onClick={handleSave} disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
