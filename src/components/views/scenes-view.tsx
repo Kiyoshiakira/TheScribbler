@@ -416,15 +416,7 @@ export default function ScenesView() {
     }
 
     try {
-      // First, delete the script blocks for this scene
-      if (document) {
-        const sceneRange = findSceneBlockRange(document, scene.sceneNumber);
-        if (sceneRange) {
-          deleteScriptBlocks(sceneRange.startIndex, sceneRange.blockCount);
-        }
-      }
-      
-      // Then, delete the Firestore scene metadata
+      // First, delete the Firestore scene metadata
       const sceneRef = doc(scenesCollection, scene.id);
       await deleteDoc(sceneRef).catch((serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -435,6 +427,15 @@ export default function ScenesView() {
         errorEmitter.emit('permission-error', permissionError);
         throw permissionError;
       });
+      
+      // Only delete the script blocks after successful Firestore deletion
+      if (document) {
+        const sceneRange = findSceneBlockRange(document, scene.sceneNumber);
+        if (sceneRange) {
+          deleteScriptBlocks(sceneRange.startIndex, sceneRange.blockCount);
+        }
+      }
+      
       toast({
         title: 'Scene Deleted',
         description: `Scene ${scene.sceneNumber} has been deleted.`,
