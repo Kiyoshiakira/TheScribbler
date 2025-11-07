@@ -136,7 +136,7 @@ function EditorViewContent() {
         
         {/* Scene Edit Dialog */}
         <Dialog open={isSceneEditOpen} onOpenChange={setIsSceneEditOpen}>
-          <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+          <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Edit Scene {editingSceneNumber}</DialogTitle>
               <DialogDescription>
