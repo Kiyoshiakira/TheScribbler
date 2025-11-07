@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/firebase';
 import { useToast } from './use-toast';
 import { getAuth, onIdTokenChanged } from 'firebase/auth';
+import { importFromGoogleDocs, scriptDocumentToText } from '@/lib/import-google-docs';
 
 const DEVELOPER_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const APP_ID = process.env.NEXT_PUBLIC_GOOGLE_APP_ID;
@@ -94,20 +95,29 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
                         documentId: doc.id
                     });
                     
-                    const content = response.result.body.content;
-                    let text = '';
-                    if(content){
-                        content.forEach(p => {
-                            if (p.paragraph && p.paragraph.elements) {
-                                p.paragraph.elements.forEach(elem => {
-                                    if(elem.textRun && elem.textRun.content){
-                                        text += elem.textRun.content;
-                                    }
-                                })
-                            }
-                        })
+                    // Use the new import functionality to preserve formatting
+                    try {
+                        const scriptDoc = importFromGoogleDocs(response.result);
+                        const formattedText = scriptDocumentToText(scriptDoc);
+                        onFilePicked(doc.name, formattedText);
+                    } catch (importError) {
+                        // Fallback to plain text extraction if structured import fails
+                        console.warn('Structured import failed, falling back to plain text:', importError);
+                        const content = response.result.body.content;
+                        let text = '';
+                        if(content){
+                            content.forEach(p => {
+                                if (p.paragraph && p.paragraph.elements) {
+                                    p.paragraph.elements.forEach(elem => {
+                                        if(elem.textRun && elem.textRun.content){
+                                            text += elem.textRun.content;
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                        onFilePicked(doc.name, text);
                     }
-                    onFilePicked(doc.name, text);
                 } catch (error: any) {
                     console.error("Error fetching document content:", error);
                     const errorMessage = error.result?.error?.message || 'Could not fetch document content. This may be due to incorrect API permissions in your Google Cloud project.';

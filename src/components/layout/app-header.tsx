@@ -45,6 +45,7 @@ import { exportToFountain } from '@/lib/export-fountain';
 import { exportToPlainText } from '@/lib/export-txt';
 import { exportToFinalDraft } from '@/lib/export-fdx';
 import { exportToPDF } from '@/lib/export-pdf';
+import { exportToGoogleDocs, getGoogleDocsUrl } from '@/lib/export-google-docs';
 
 
 interface AppHeaderProps {
@@ -459,23 +460,6 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       return;
     }
 
-    // Google Docs export requires OAuth 2.0 access with proper scopes
-    // For now, we'll inform users to use alternative export formats
-    toast({ 
-      title: 'Export to Google Docs', 
-      description: 'To export to Google Docs, please use the Fountain export and import the .fountain file into Google Docs, or use the PDF export option.',
-      duration: 6000,
-    });
-    
-    /* 
-    NOTE: Full Google Docs export implementation requires:
-    1. OAuth 2.0 consent screen setup in Google Cloud Console
-    2. OAuth client credentials configuration
-    3. Proper scopes: https://www.googleapis.com/auth/documents
-    4. User OAuth flow to get access token
-    
-    Once configured, uncomment this code:
-    
     if (!auth?.currentUser) {
       toast({ variant: 'destructive', title: 'Export Failed', description: 'Please sign in to export to Google Docs.' });
       return;
@@ -487,32 +471,43 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     });
 
     try {
-      // Get Google OAuth access token (requires proper OAuth flow)
-      const googleAccessToken = await getGoogleAccessToken();
+      // Get Firebase ID token (user must have Google authentication configured)
+      const idToken = await auth.currentUser.getIdToken();
       
       const scriptDoc = parseScreenplay(script.content);
-      const documentId = await exportToGoogleDocs(scriptDoc, script.title, googleAccessToken);
+      const documentId = await exportToGoogleDocs(scriptDoc, script.title, idToken);
       const docsUrl = getGoogleDocsUrl(documentId);
       
       dismiss();
       toast({ 
         title: 'Export Successful', 
-        description: 'Your screenplay has been created in Google Docs. Click to open.',
-        action: {
-          label: 'Open',
-          onClick: () => window.open(docsUrl, '_blank'),
-        },
+        description: 'Your screenplay has been created in Google Docs.',
+        action: (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.open(docsUrl, '_blank')}
+          >
+            Open
+          </Button>
+        ),
       });
     } catch (error) {
       console.error('Error exporting to Google Docs:', error);
       dismiss();
+      
+      // Provide helpful error messages
+      const errorMessage = error instanceof Error ? error.message : 'Could not create Google Doc.';
+      const isAuthError = errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('authorization');
+      
       toast({ 
         variant: 'destructive', 
         title: 'Export Failed', 
-        description: error instanceof Error ? error.message : 'Could not create Google Doc.' 
+        description: isAuthError 
+          ? 'Google Docs export requires proper OAuth configuration. Please use the Fountain or PDF export as an alternative.'
+          : errorMessage
       });
     }
-    */
   };
 
 
