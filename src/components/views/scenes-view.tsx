@@ -433,6 +433,9 @@ export default function ScenesView() {
         const sceneRange = findSceneBlockRange(document, scene.sceneNumber);
         if (sceneRange) {
           deleteScriptBlocks(sceneRange.startIndex, sceneRange.blockCount);
+        } else {
+          // Scene exists in metadata but not in document - possible data inconsistency
+          console.warn(`Scene ${scene.sceneNumber} exists in Firestore but not found in document. Metadata has been deleted.`);
         }
       }
       
