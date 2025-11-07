@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
+import type { ScriptDocument } from '@/lib/editor-types';
 
 export interface Scene {
   id: string;
@@ -33,6 +34,44 @@ export interface Scene {
   setting: string;
   description: string;
   time: number;
+}
+
+/**
+ * Finds the start index and block count for a scene in the document.
+ * @param document The script document
+ * @param sceneNumber The scene number to find (1-indexed)
+ * @returns An object with startIndex and blockCount, or null if scene not found
+ */
+function findSceneBlockRange(
+  document: ScriptDocument,
+  sceneNumber: number
+): { startIndex: number; blockCount: number } | null {
+  let currentSceneNumber = 0;
+  
+  for (let i = 0; i < document.blocks.length; i++) {
+    const block = document.blocks[i];
+    
+    if (block.type === ScriptBlockType.SCENE_HEADING) {
+      currentSceneNumber++;
+      
+      if (currentSceneNumber === sceneNumber) {
+        // Found the scene to delete
+        let blockCount = 1; // Count the scene heading itself
+        
+        // Count all blocks until the next scene heading or end of document
+        for (let j = i + 1; j < document.blocks.length; j++) {
+          if (document.blocks[j].type === ScriptBlockType.SCENE_HEADING) {
+            break; // Stop at the next scene heading
+          }
+          blockCount++;
+        }
+        
+        return { startIndex: i, blockCount };
+      }
+    }
+  }
+  
+  return null; // Scene not found
 }
 
 function SceneDialog({ 
@@ -379,38 +418,9 @@ export default function ScenesView() {
     try {
       // First, delete the script blocks for this scene
       if (document) {
-        // Find the scene blocks by grouping the document blocks
-        let currentSceneNumber = 0;
-        let sceneStartIndex = -1;
-        let sceneBlockCount = 0;
-        
-        for (let i = 0; i < document.blocks.length; i++) {
-          const block = document.blocks[i];
-          
-          if (block.type === ScriptBlockType.SCENE_HEADING) {
-            currentSceneNumber++;
-            
-            if (currentSceneNumber === scene.sceneNumber) {
-              // Found the scene to delete
-              sceneStartIndex = i;
-              sceneBlockCount = 1; // Count the scene heading itself
-              
-              // Count all blocks until the next scene heading or end of document
-              for (let j = i + 1; j < document.blocks.length; j++) {
-                if (document.blocks[j].type === ScriptBlockType.SCENE_HEADING) {
-                  break; // Stop at the next scene heading
-                }
-                sceneBlockCount++;
-              }
-              
-              break; // Found and counted the scene, exit loop
-            }
-          }
-        }
-        
-        // Delete the script blocks if we found the scene
-        if (sceneStartIndex >= 0 && sceneBlockCount > 0) {
-          deleteScriptBlocks(sceneStartIndex, sceneBlockCount);
+        const sceneRange = findSceneBlockRange(document, scene.sceneNumber);
+        if (sceneRange) {
+          deleteScriptBlocks(sceneRange.startIndex, sceneRange.blockCount);
         }
       }
       
