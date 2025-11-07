@@ -113,6 +113,8 @@ export const FindReplaceProvider = ({ children }: { children: ReactNode }) => {
   const handleReplace = () => {
     if (currentMatchIndex === -1 || !document) return;
     const match = matches[currentMatchIndex];
+    if (!match.blockId) return; // Guard check for blockId
+    
     const block = document.blocks.find(b => b.id === match.blockId);
     if (!block) return;
 
@@ -126,9 +128,11 @@ export const FindReplaceProvider = ({ children }: { children: ReactNode }) => {
     );
     setBlocks(newBlocks);
 
+    // Re-run find immediately via effect or callback
+    // Using setTimeout as a workaround for React state update timing
     setTimeout(() => {
         findMatches();
-    }, 100);
+    }, 0);
   };
 
   const handleReplaceAll = () => {
@@ -139,10 +143,13 @@ export const FindReplaceProvider = ({ children }: { children: ReactNode }) => {
     const sortedMatches = [...matches].sort((a, b) => b.startIndex - a.startIndex);
     
     sortedMatches.forEach(match => {
-        const currentText = blockUpdates.get(match.blockId!) || document.blocks.find(b => b.id === match.blockId)?.text;
+        // Guard check: skip matches without blockId
+        if (!match.blockId) return;
+        
+        const currentText = blockUpdates.get(match.blockId) || document.blocks.find(b => b.id === match.blockId)?.text;
         if (currentText) {
             const newText = currentText.substring(0, match.startIndex) + replaceValue + currentText.substring(match.endIndex);
-            blockUpdates.set(match.blockId!, newText);
+            blockUpdates.set(match.blockId, newText);
         }
     });
 
@@ -291,8 +298,8 @@ export function useFindReplace() {
 
     setContent(newContent);
     
-    // Re-run find to update matches
-    setTimeout(() => findMatches(), 100);
+    // Re-run find immediately - setTimeout(0) ensures state update completes
+    setTimeout(() => findMatches(), 0);
   }, [currentMatchIndex, matches, replaceValue, getContent, setContent, findMatches]);
 
   /**
