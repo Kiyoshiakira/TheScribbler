@@ -31,6 +31,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, Fi
 import { useCurrentScript } from '@/context/current-script-context';
 import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import AiFab from '../ai-fab';
 import { runAiGenerateNote } from '@/app/actions';
 
@@ -107,54 +108,56 @@ function NoteDialog({ note, onSave, open, onOpenChange, isGenerating }: { note: 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="font-headline">{note ? 'Edit Note' : 'Add New Note'}</DialogTitle>
                     <DialogDescription>
                         {note ? 'Edit your note details.' : 'Create a new note to organize your ideas.'}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="title">Title</Label>
-                        {isGenerating ? <Skeleton className='h-10 w-full' /> : <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Note Title" />}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="category">Category</Label>
-                         {isGenerating ? <Skeleton className='h-10 w-full' /> : (
-                            <Select value={category} onValueChange={(value) => setCategory(value as NoteCategory)}>
-                                <SelectTrigger id="category">
-                                    <SelectValue placeholder="Select a category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Object.keys(NOTE_CATEGORIES).map(cat => (
-                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                         )}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="content">Content</Label>
-                        {isGenerating ? <Skeleton className='h-24 w-full' /> : <Textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Jot down your thoughts..." />}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Image</Label>
-                        <div className="flex items-center gap-4">
-                            <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted overflow-hidden">
-                                {imageUrl ? (
-                                    <Image src={imageUrl} alt="Note image" width={96} height={96} className="object-cover w-full h-full" />
-                                ) : (
-                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                                )}
+                <ScrollArea className="flex-1 -mx-6 px-6">
+                    <div className="grid gap-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Title</Label>
+                            {isGenerating ? <Skeleton className='h-10 w-full' /> : <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Note Title" />}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="category">Category</Label>
+                             {isGenerating ? <Skeleton className='h-10 w-full' /> : (
+                                <Select value={category} onValueChange={(value) => setCategory(value as NoteCategory)}>
+                                    <SelectTrigger id="category">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.keys(NOTE_CATEGORIES).map(cat => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                             )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="content">Content</Label>
+                            {isGenerating ? <Skeleton className='h-24 w-full' /> : <Textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Jot down your thoughts..." />}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Image</Label>
+                            <div className="flex items-center gap-4">
+                                <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted overflow-hidden">
+                                    {imageUrl ? (
+                                        <Image src={imageUrl} alt="Note image" width={96} height={96} className="object-cover w-full h-full" />
+                                    ) : (
+                                        <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Upload className="mr-2 h-4 w-4" /> Upload Image
+                                </Button>
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                             </div>
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="mr-2 h-4 w-4" /> Upload Image
-                            </Button>
-                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                         </div>
                     </div>
-                </div>
+                </ScrollArea>
                 <DialogFooter>
                     <Button onClick={handleSave} disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

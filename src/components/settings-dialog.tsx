@@ -13,6 +13,7 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { useSettings } from '@/context/settings-context';
 import { Separator } from './ui/separator';
+import { ScrollArea } from './ui/scroll-area';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { useScript } from '@/context/script-context';
@@ -153,60 +154,60 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline">Settings</DialogTitle>
           <DialogDescription>
             Customize your ScriptScribbler experience.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-6">
-           <div className="space-y-2">
-            <Label>AI Model</Label>
-             <div className='p-3 border rounded-md bg-muted/50 text-sm text-muted-foreground'>
-                The application is configured to use the <strong>gemini-2.5-flash</strong> model for all AI operations.
-             </div>
-          </div>
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="py-4 space-y-6">
+            <div className="space-y-2">
+              <Label>AI Model</Label>
+              <div className='p-3 border rounded-md bg-muted/50 text-sm text-muted-foreground'>
+                  The application is configured to use the <strong>gemini-2.5-flash</strong> model for all AI operations.
+              </div>
+            </div>
 
-          <Separator />
-            
-          <div className="space-y-2">
-            <Label htmlFor="feedback-textarea">Provide Feedback</Label>
-            <p className='text-sm text-muted-foreground'>
-                What do you think of the editor? Would you prefer a single-document feel or a block-based experience? Let us know!
-            </p>
-            <Textarea 
-                id="feedback-textarea"
-                placeholder="I think the editor should..."
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                rows={4}
-            />
-            <div className='flex justify-end'>
-                <Button onClick={handleFeedbackSubmit} disabled={isSubmittingFeedback} variant="secondary">
-                     {isSubmittingFeedback && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Submit Feedback
-                </Button>
+            <Separator />
+              
+            <div className="space-y-2">
+              <Label htmlFor="feedback-textarea">Provide Feedback</Label>
+              <p className='text-sm text-muted-foreground'>
+                  What do you think of the editor? Would you prefer a single-document feel or a block-based experience? Let us know!
+              </p>
+              <Textarea 
+                  id="feedback-textarea"
+                  placeholder="I think the editor should..."
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  rows={4}
+              />
+              <div className='flex justify-end'>
+                  <Button onClick={handleFeedbackSubmit} disabled={isSubmittingFeedback} variant="secondary">
+                      {isSubmittingFeedback && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Submit Feedback
+                  </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Debugging</Label>
+              <div className='flex items-center justify-between p-3 border rounded-md bg-muted/50'>
+                  <p className="text-sm text-muted-foreground">
+                      Export a debug log with current app state and an AI health check.
+                  </p>
+                  <Button variant="secondary" onClick={handleExportDebugLog} disabled={isExporting}>
+                      {isExporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Export
+                  </Button>
+              </div>
             </div>
           </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-             <Label>Debugging</Label>
-             <div className='flex items-center justify-between p-3 border rounded-md bg-muted/50'>
-                <p className="text-sm text-muted-foreground">
-                    Export a debug log with current app state and an AI health check.
-                </p>
-                 <Button variant="secondary" onClick={handleExportDebugLog} disabled={isExporting}>
-                    {isExporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Export
-                </Button>
-             </div>
-          </div>
-
-
-        </div>
+        </ScrollArea>
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>

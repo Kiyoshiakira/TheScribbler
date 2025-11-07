@@ -154,7 +154,7 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline">Edit Profile</DialogTitle>
           <DialogDescription>
