@@ -20,7 +20,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { runGetAiCharacterProfile } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import React from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, addDoc, setDoc, serverTimestamp } from 'firebase/firestore';

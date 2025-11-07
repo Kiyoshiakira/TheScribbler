@@ -32,7 +32,6 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, Fi
 import { useCurrentScript } from '@/context/current-script-context';
 import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Skeleton } from '../ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import AiFab from '../ai-fab';
 import { runAiGenerateNote } from '@/app/actions';
 
