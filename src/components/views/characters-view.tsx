@@ -1,9 +1,15 @@
 
 'use client';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Sparkles, User, FileText, Upload, Loader2, Users } from 'lucide-react';
+import { Plus, Sparkles, User, FileText, Upload, Loader2, Users, MoreHorizontal, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import {
   Dialog,
@@ -22,7 +28,7 @@ import { runGetAiCharacterProfile } from '@/app/actions';
 import { Skeleton } from '../ui/skeleton';
 import React from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, addDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useCurrentScript } from '@/context/current-script-context';
 import AiFab from '../ai-fab';
 
@@ -33,8 +39,8 @@ export interface Character {
   scenes: number;
   profile?: string;
   imageUrl?: string;
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: unknown;
+  updatedAt?: unknown;
 }
 
 function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, isGenerating }: { character: Character | null, onSave: (char: Character) => void, onGenerate: (desc: string, name?: string, profile?: string) => Promise<Character | null>, open: boolean, onOpenChange: (open: boolean) => void, isGenerating: boolean }) {
@@ -227,7 +233,7 @@ export default function CharactersView() {
   const handleOpenDialog = (character: Character | null) => {
     // Remove timestamp properties before passing to the dialog
     if (character) {
-      const { createdAt, updatedAt, ...rest } = character;
+      const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = character;
       setEditingCharacter(rest);
     } else {
       setEditingCharacter(null);
@@ -242,7 +248,7 @@ export default function CharactersView() {
     }
   
     const isNew = !charToSave.id;
-    const { id, createdAt, updatedAt, ...plainCharData } = charToSave;
+    const { id, createdAt: _createdAt, updatedAt: _updatedAt, ...plainCharData } = charToSave;
 
   
     try {
@@ -335,6 +341,48 @@ export default function CharactersView() {
       }
   };
 
+  const handleDeleteCharacter = async (character: Character) => {
+    if (!firestore || !charactersCollection || !character.id) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error', 
+        description: 'Cannot delete character: no active script or character ID.' 
+      });
+      return;
+    }
+
+    if (!confirm(`Delete ${character.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const charRef = doc(charactersCollection, character.id);
+      await deleteDoc(charRef).catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: charRef.path,
+          operation: 'delete',
+          requestResourceData: {},
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
+
+      toast({
+        title: 'Character Deleted',
+        description: `${character.name} has been deleted.`,
+      });
+    } catch (error) {
+      if (!(error instanceof FirestorePermissionError)) {
+        console.error('Error deleting character:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Delete Error',
+          description: 'An unexpected error occurred while deleting the character.',
+        });
+      }
+    }
+  };
+
 
   if (areCharactersLoading) {
     return (
@@ -378,39 +426,69 @@ export default function CharactersView() {
           return (
             <Card
               key={character.id}
-              className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => handleOpenDialog(character)}
+              className="overflow-hidden shadow-sm hover:shadow-lg transition-shadow relative"
             >
-              <CardHeader className="p-0">
-                <div className="aspect-square w-full bg-muted overflow-hidden">
-                  {character.imageUrl ? (
-                    <Image
-                      src={character.imageUrl}
-                      alt={`Portrait of ${character.name}`}
-                      width={200}
-                      height={200}
-                      className="w-full h-full object-cover"
-                      data-ai-hint={'character portrait'}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-muted flex items-center justify-center"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-3">
-                <CardTitle className="font-headline text-base truncate">{character.name}</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1 truncate">{character.description}</p>
-              </CardContent>
-              <CardFooter className="p-3 bg-muted/50 flex justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <User className="h-3 w-3" />
-                  <span>Profile</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <FileText className="h-3 w-3 text-primary" />
-                  <span className="font-medium">{character.scenes} Scenes</span>
-                </div>
-              </CardFooter>
+              <div className="absolute top-2 right-2 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleOpenDialog(character)}>
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-destructive" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCharacter(character);
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="cursor-pointer" onClick={() => handleOpenDialog(character)}>
+                <CardHeader className="p-0">
+                  <div className="aspect-square w-full bg-muted overflow-hidden">
+                    {character.imageUrl ? (
+                      <Image
+                        src={character.imageUrl}
+                        alt={`Portrait of ${character.name}`}
+                        width={200}
+                        height={200}
+                        className="w-full h-full object-cover"
+                        data-ai-hint={'character portrait'}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3">
+                  <CardTitle className="font-headline text-base truncate">{character.name}</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">{character.description}</p>
+                </CardContent>
+                <CardFooter className="p-3 bg-muted/50 flex justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <User className="h-3 w-3" />
+                    <span>Profile</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="h-3 w-3 text-primary" />
+                    <span className="font-medium">{character.scenes} Scenes</span>
+                  </div>
+                </CardFooter>
+              </div>
             </Card>
           );
         })}
