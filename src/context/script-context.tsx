@@ -332,7 +332,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     const batch = writeBatch(firestore);
     let hasChanges = false;
 
-    // Update or create characters for each name found
+    // Update or create characters for each name found in the script
     characterNames.forEach((name) => {
       const existingCharacter = existingCharactersMap.get(name);
       const sceneCount = characterSceneSets.get(name)?.size || 0;
@@ -344,7 +344,7 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
           batch.set(charRef, { scenes: sceneCount }, { merge: true });
           hasChanges = true;
         }
-        // Remove from map to track which characters still exist
+        // Remove from map to track which characters were updated
         existingCharactersMap.delete(name);
       } else {
         // Create new character with default values
@@ -361,11 +361,12 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       }
     });
 
-    // Delete characters that no longer appear in the script
+    // Update scene count to 0 for characters that no longer appear in the script
+    // (but don't delete them - user must manually delete if desired, similar to Scrite)
     existingCharactersMap.forEach((character) => {
-      if (character.id) {
+      if (character.id && character.scenes !== 0) {
         const charRef = doc(charactersCollectionRef, character.id);
-        batch.delete(charRef);
+        batch.set(charRef, { scenes: 0 }, { merge: true });
         hasChanges = true;
       }
     });

@@ -75,7 +75,7 @@ The application uses a **sidebar with tabs** to navigate between different views
 - **Editor Tab**: Write screenplays using the built-in editor with Fountain format support
 - **Logline Tab**: Create and edit concise story summaries for your screenplay
 - **Scenes Tab**: Organize your script into structured scenes with details and metadata
-- **Characters Tab**: Define and manage character profiles with descriptions and portraits
+- **Characters Tab**: Define and manage character profiles with descriptions and portraits (see [Character Management](docs/CHARACTER_MANAGEMENT.md))
 - **Notes Tab**: Add production notes, ideas, and research for your screenplay
 
 **Profile & Settings**: Access your profile and app settings via the user avatar menu in the top-right corner (not in the sidebar).
@@ -85,6 +85,13 @@ The application uses a **sidebar with tabs** to navigate between different views
 - **Import Scripts**: Import scripts from .scrite files (Scrite format) or .scribbler files (native format)
 - **Import from Google Docs**: Directly import scripts from Google Docs with AI-powered formatting
 - **Export Scripts**: Export your work in various formats (.scribbler, PDF, Fountain, Final Draft)
+
+### Character Management (Scrite-inspired)
+- **Automatic Creation**: Characters are automatically created when first mentioned in dialogue
+- **Scene Tracking**: Automatic tracking of how many scenes each character appears in
+- **Independent Persistence**: Characters persist even when removed from script content (prevents accidental data loss)
+- **Manual Deletion Only**: Characters must be explicitly deleted from the Characters tab
+- See [detailed documentation](docs/CHARACTER_MANAGEMENT.md) for more information
 
 ### Public Sharing (Separate Routes)
 
