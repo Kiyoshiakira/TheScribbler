@@ -15,8 +15,6 @@ import {
   Users,
   NotebookPen,
   LayoutDashboard,
-  User,
-  LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { View } from './AppLayout';
