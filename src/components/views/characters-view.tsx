@@ -258,7 +258,7 @@ export default function CharactersView() {
                 throw permissionError;
             });
         } else {
-            const charDocRef = doc(charactersCollection, charToSave.id);
+            const charDocRef = doc(charactersCollection, id);
             const updateData = { ...plainCharData, updatedAt: serverTimestamp() };
             await setDoc(charDocRef, updateData, { merge: true }).catch((serverError) => {
                 const permissionError = new FirestorePermissionError({
