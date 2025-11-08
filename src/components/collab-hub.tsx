@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Mic, Square, Phone, History } from 'lucide-react';
+import { Send, Mic, Square, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -37,6 +37,7 @@ export default function CollabHub() {
   const [chatInput, setChatInput] = useState('');
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
+  const [isManuallyTyping, setIsManuallyTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -48,11 +49,12 @@ export default function CollabHub() {
   } = useSpeechRecognition();
 
   useEffect(() => {
-    // Only update input from transcript when actively listening and transcript has content
-    if (listening && transcript) {
+    // Only update input from transcript when actively listening, transcript has content,
+    // and user is not manually typing
+    if (listening && transcript && !isManuallyTyping) {
       setChatInput(transcript);
     }
-  }, [transcript, listening]);
+  }, [transcript, listening, isManuallyTyping]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -74,8 +76,10 @@ export default function CollabHub() {
   const handleVoiceToggle = () => {
     if (listening) {
       SpeechRecognition.stopListening();
+      setIsManuallyTyping(false);
     } else {
       resetTranscript();
+      setIsManuallyTyping(false);
       SpeechRecognition.startListening({ continuous: true });
     }
   };
@@ -128,8 +132,12 @@ export default function CollabHub() {
           ref={inputRef}
           placeholder={listening ? 'Listening...' : 'Send a message...'}
           value={chatInput}
-          onChange={e => setChatInput(e.target.value)}
+          onChange={e => {
+            setChatInput(e.target.value);
+            setIsManuallyTyping(true);
+          }}
           onKeyDown={e => e.key === 'Enter' && handleSendChat()}
+          onBlur={() => setIsManuallyTyping(false)}
           disabled={isChatLoading}
           className="text-sm h-8"
         />
