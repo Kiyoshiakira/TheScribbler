@@ -82,35 +82,35 @@ export default function CollabHub() {
 
   const ChatView = () => (
     <div className="h-full flex flex-col min-h-0">
-      <ScrollArea className="flex-1 rounded-md border p-4" ref={scrollAreaRef}>
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 rounded-md border p-2" ref={scrollAreaRef}>
+        <div className="space-y-2">
           {chatHistory.map((msg, index) => (
             <div
               key={index}
               className={cn(
-                'flex items-start gap-3',
+                'flex items-start gap-2',
                 msg.sender === 'me' ? 'justify-end' : ''
               )}
             >
               {msg.sender === 'other' && (
-                <Avatar className="w-8 h-8">
+                <Avatar className="w-7 h-7">
                   <AvatarImage src={msg.avatar} alt={msg.name} />
                   <AvatarFallback>{msg.name.charAt(0)}</AvatarFallback>
                 </Avatar>
               )}
               <div
                 className={cn(
-                  'p-3 rounded-lg max-w-sm',
+                  'p-2 rounded-lg max-w-[220px]',
                   msg.sender === 'me'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 )}
               >
-                 {msg.sender === 'other' && <p className="text-xs font-bold mb-1">{msg.name}</p>}
-                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                 {msg.sender === 'other' && <p className="text-xs font-bold mb-0.5">{msg.name}</p>}
+                <p className="text-xs whitespace-pre-wrap">{msg.text}</p>
               </div>
               {msg.sender === 'me' && (
-                 <Avatar className="w-8 h-8">
+                 <Avatar className="w-7 h-7">
                   <AvatarImage src={msg.avatar} alt={msg.name} />
                   <AvatarFallback>{msg.name.charAt(0)}</AvatarFallback>
                 </Avatar>
@@ -119,13 +119,14 @@ export default function CollabHub() {
           ))}
         </div>
       </ScrollArea>
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2">
         <Input
           placeholder={listening ? 'Listening...' : 'Send a message...'}
           value={chatInput}
           onChange={e => setChatInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSendChat()}
           disabled={isChatLoading}
+          className="text-sm h-8"
         />
         {browserSupportsSpeechRecognition && (
           <Button
@@ -133,35 +134,38 @@ export default function CollabHub() {
             size="icon"
             onClick={handleVoiceToggle}
             disabled={isChatLoading}
+            className="h-8 w-8"
           >
             {listening ? (
-              <Square className="w-4 h-4 text-red-500 fill-red-500" />
+              <Square className="w-3 h-3 text-red-500 fill-red-500" />
             ) : (
-              <Mic className="w-4 h-4" />
+              <Mic className="w-3 h-3" />
             )}
           </Button>
         )}
         <Button
           onClick={handleSendChat}
           disabled={isChatLoading || !chatInput.trim()}
+          size="sm"
+          className="h-8"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-3 h-3" />
         </Button>
       </div>
     </div>
   );
 
   const NotificationsView = () => (
-    <ScrollArea className="h-full rounded-md border p-2">
-        <div className="space-y-4">
+    <ScrollArea className="h-full rounded-md border p-1.5">
+        <div className="space-y-2">
             {placeholderNotifications.map((note, index) => (
-                <div key={index} className="flex items-start gap-3 p-2 hover:bg-muted/50 rounded-md">
-                     <Avatar className="w-8 h-8">
+                <div key={index} className="flex items-start gap-2 p-1.5 hover:bg-muted/50 rounded-md">
+                     <Avatar className="w-7 h-7">
                         <AvatarImage src={note.user.avatar} alt={note.user.name} />
                         <AvatarFallback>{note.user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                        <p className="text-sm">
+                        <p className="text-xs">
                             <span className="font-semibold">{note.user.name}</span> {note.action}
                         </p>
                         <p className="text-xs text-muted-foreground">{note.time}</p>
@@ -175,22 +179,22 @@ export default function CollabHub() {
   return (
     <div className="h-full flex flex-col">
       <Tabs defaultValue="chat" className="flex-1 flex flex-col min-h-0">
-        <div className='flex items-center justify-between pr-2 gap-2'>
-            <TabsList>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="notifications">Activity</TabsTrigger>
+        <div className='flex items-center justify-between pr-1.5 gap-2'>
+            <TabsList className="h-8">
+            <TabsTrigger value="chat" className="text-xs px-3">Chat</TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs px-3">Activity</TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2">
-                <Button variant={isVoiceConnected ? "destructive" : "outline"} size="sm" onClick={handleVoiceConnectToggle}>
-                    <Phone className="mr-2 h-4 w-4" />
-                    {isVoiceConnected ? 'Disconnect' : 'Voice Connect'}
+            <div className="flex items-center gap-1.5">
+                <Button variant={isVoiceConnected ? "destructive" : "outline"} size="sm" onClick={handleVoiceConnectToggle} className="h-7 text-xs px-2">
+                    <Phone className="mr-1.5 h-3 w-3" />
+                    {isVoiceConnected ? 'Disconnect' : 'Voice'}
                 </Button>
             </div>
         </div>
-        <TabsContent value="chat" className="flex-1 mt-4 min-h-0">
+        <TabsContent value="chat" className="flex-1 mt-2 min-h-0">
           <ChatView />
         </TabsContent>
-        <TabsContent value="notifications" className="flex-1 mt-4 min-h-0">
+        <TabsContent value="notifications" className="flex-1 mt-2 min-h-0">
           <NotificationsView />
         </TabsContent>
       </Tabs>
