@@ -15,6 +15,14 @@ const AiGenerateCharacterProfileInputSchema = z.object({
   characterDescription: z
     .string()
     .describe('A brief description or traits of the character.'),
+  characterName: z
+    .string()
+    .optional()
+    .describe('The character name already provided by the user (if any). Use this name instead of generating a new one.'),
+  existingProfile: z
+    .string()
+    .optional()
+    .describe('Any existing character profile text. Build upon this rather than replacing it.'),
 });
 export type AiGenerateCharacterProfileInput = z.infer<
   typeof AiGenerateCharacterProfileInputSchema
@@ -46,23 +54,53 @@ const prompt = ai.definePrompt({
     },
     input: { schema: AiGenerateCharacterProfileInputSchema },
     output: { schema: AiGenerateCharacterProfileOutputSchema },
-    prompt: `You are an expert screenwriter and character creator.
+    prompt: `You are an expert screenwriter and character creator with deep understanding of character development and narrative coherence.
 
-  Your task is to generate a detailed character profile based on a simple description.
-
-  **Instructions:**
-  1.  Create a plausible full name for the character.
-  2.  Write a rich, narrative-style character profile that includes:
-      -   **Backstory:** Key life events and formative experiences.
-      -   **Personality:** Core traits, strengths, flaws, and contradictions.
-      -   **Motivations:** Their primary goals, desires, and what drives them.
-      -   **Fears:** What they are most afraid of, both physically and emotionally.
-      -   **Quirks:** Interesting habits or unique characteristics that make them memorable.
+  Your task is to generate or enhance a detailed character profile, respecting any context already provided by the user.
 
   **Character Description:**
   \`\`\`
   {{{characterDescription}}}
   \`\`\`
+
+  {{#if characterName}}
+  **User-Provided Character Name:**
+  The user has already chosen the name "{{{characterName}}}" for this character. You MUST use this exact name. Do NOT generate a different name.
+  {{else}}
+  **Character Name:**
+  Create a plausible and memorable full name that fits the character description.
+  {{/if}}
+
+  {{#if existingProfile}}
+  **Existing Profile (User's Work in Progress):**
+  \`\`\`
+  {{{existingProfile}}}
+  \`\`\`
+  
+  **Your Task:** Carefully read the existing profile above. Build upon it, expand it, and enhance it while preserving the user's creative choices and voice. Do NOT replace their work - instead, enrich and complete it. Fill in missing elements and add depth while maintaining consistency with what they've already written.
+  {{else}}
+  **Your Task:** Write a rich, narrative-style character profile from scratch.
+  {{/if}}
+
+  **Profile Requirements:**
+  Your character profile should include these elements (whether creating new or enhancing existing):
+  -   **Backstory:** Key life events and formative experiences that shaped who they are.
+  -   **Personality:** Core traits, strengths, flaws, and contradictions that make them complex and believable.
+  -   **Motivations:** Their primary goals, desires, and what drives them forward.
+  -   **Fears:** What they are most afraid of, both physically and emotionally.
+  -   **Quirks:** Interesting habits, mannerisms, or unique characteristics that make them memorable.
+  -   **Relationships:** How they relate to others and their social dynamics.
+
+  **Writing Style:**
+  - Write in an engaging, narrative style that brings the character to life
+  - Be specific and concrete rather than generic
+  - Create depth and nuance - avoid one-dimensional characters
+  - Ensure internal consistency and logical coherence
+  - Make the character feel real and compelling
+
+  {{#if existingProfile}}
+  Remember: Respect and build upon the user's existing work. Match their tone and style.
+  {{/if}}
   `,
 });
 

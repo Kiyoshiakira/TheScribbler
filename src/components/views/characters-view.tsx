@@ -37,7 +37,7 @@ export interface Character {
   updatedAt?: any;
 }
 
-function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, isGenerating }: { character: Character | null, onSave: (char: Character) => void, onGenerate: (desc: string) => Promise<Character | null>, open: boolean, onOpenChange: (open: boolean) => void, isGenerating: boolean }) {
+function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, isGenerating }: { character: Character | null, onSave: (char: Character) => void, onGenerate: (desc: string, name?: string, profile?: string) => Promise<Character | null>, open: boolean, onOpenChange: (open: boolean) => void, isGenerating: boolean }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [profile, setProfile] = useState('');
@@ -68,9 +68,11 @@ function CharacterDialog({ character, onSave, onGenerate, open, onOpenChange, is
       return;
     }
     setIsAiGenerating(true);
-    setProfile('');
-    setName('');
-    const profileData = await onGenerate(description);
+    // Don't clear the name and profile - pass them to AI for context
+    const currentName = name;
+    const currentProfile = profile;
+    
+    const profileData = await onGenerate(description, currentName, currentProfile);
     setIsAiGenerating(false);
 
     if (profileData) {
@@ -284,7 +286,7 @@ export default function CharactersView() {
     }
   };
   
-  const handleGenerateCharacter = async (description: string): Promise<Character | null> => {
+  const handleGenerateCharacter = async (description: string, characterName?: string, existingProfile?: string): Promise<Character | null> => {
       if (!description) {
           toast({
               variant: 'destructive',
@@ -295,7 +297,11 @@ export default function CharactersView() {
       }
       setIsGenerating(true);
       
-      const result = await runGetAiCharacterProfile({ characterDescription: description });
+      const result = await runGetAiCharacterProfile({ 
+        characterDescription: description,
+        characterName: characterName || undefined,
+        existingProfile: existingProfile || undefined,
+      });
       
       setIsGenerating(false);
 
