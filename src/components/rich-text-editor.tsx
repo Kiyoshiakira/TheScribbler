@@ -104,7 +104,6 @@ export default function RichTextEditor({
       'color',
       'background',
       'list',
-      'bullet',
       'align',
       'blockquote',
       'code-block',

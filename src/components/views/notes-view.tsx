@@ -36,6 +36,7 @@ import { Skeleton } from '../ui/skeleton';
 import AiFab from '../ai-fab';
 import { runAiGenerateNote } from '@/app/actions';
 import DOMPurify from 'isomorphic-dompurify';
+import { cleanObject } from '@/lib/firestore-utils';
 
 const NOTE_CATEGORIES = {
   Plot: 'bg-yellow-100 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800/50',
@@ -274,10 +275,19 @@ export default function NotesView() {
     }
     try {
       if (noteToSave.id) {
+        // Update existing note - merge to preserve existing fields
         const d = doc(notesCollection as any, noteToSave.id);
-        await setDoc(d, { ...noteToSave, updatedAt: serverTimestamp() }, { merge: true });
+        const updateData = cleanObject({ ...noteToSave, updatedAt: serverTimestamp() });
+        await setDoc(d, updateData, { merge: true });
       } else {
-        const added = await addDoc(notesCollection as any, { ...noteToSave, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+        // Create new note - exclude id field and remove undefined values
+        const { id, ...noteData } = noteToSave;
+        const docData = cleanObject({
+          ...noteData,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        const added = await addDoc(notesCollection as any, docData);
         noteToSave.id = added.id;
       }
       toast({ title: 'Saved', description: 'Note saved successfully.' });
