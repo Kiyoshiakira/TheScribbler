@@ -56,6 +56,17 @@ export default function CollabHub() {
     }
   }, [transcript, listening, isManuallyTyping]);
 
+  // Reset manual typing flag after a delay when user stops typing
+  useEffect(() => {
+    if (isManuallyTyping) {
+      const timer = setTimeout(() => {
+        // Only reset if not currently typing (input hasn't changed in 500ms)
+        setIsManuallyTyping(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [chatInput, isManuallyTyping]);
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -71,15 +82,17 @@ export default function CollabHub() {
     const userMessage: ChatMessage = { sender: 'me', text: chatInput, name: 'Jane', avatar: PlaceHolderImages.find(i => i.id === 'user2')?.imageUrl || '' };
     setChatHistory(prev => [...prev, userMessage]);
     setChatInput('');
+    setIsManuallyTyping(false); // Reset manual typing flag after sending
   };
 
   const handleVoiceToggle = () => {
     if (listening) {
       SpeechRecognition.stopListening();
-      setIsManuallyTyping(false);
+      // Don't reset isManuallyTyping here to preserve user's typing mode
     } else {
       resetTranscript();
       setIsManuallyTyping(false);
+      setChatInput(''); // Clear input when starting voice mode
       SpeechRecognition.startListening({ continuous: true });
     }
   };
@@ -133,11 +146,17 @@ export default function CollabHub() {
           placeholder={listening ? 'Listening...' : 'Send a message...'}
           value={chatInput}
           onChange={e => {
-            setChatInput(e.target.value);
-            setIsManuallyTyping(true);
+            const newValue = e.target.value;
+            setChatInput(newValue);
+            // Set manual typing mode and stop listening if user types
+            if (!isManuallyTyping && listening && newValue !== transcript) {
+              setIsManuallyTyping(true);
+              SpeechRecognition.stopListening();
+            } else {
+              setIsManuallyTyping(true);
+            }
           }}
           onKeyDown={e => e.key === 'Enter' && handleSendChat()}
-          onBlur={() => setIsManuallyTyping(false)}
           disabled={isChatLoading}
           className="text-sm h-10 border-2 focus-visible:ring-2"
         />
