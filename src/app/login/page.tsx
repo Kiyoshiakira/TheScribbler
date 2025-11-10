@@ -8,6 +8,7 @@ import {
   signInWithRedirect,
   GoogleAuthProvider,
 } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,11 +25,12 @@ import { useFirebase } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Chrome, Eye, EyeOff } from 'lucide-react';
+import { Chrome, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useRedirectResult } from '@/firebase/auth/use-redirect-result';
 
 function LoginCard() {
   // Use useFirebase instead of useAuth to get nullable auth
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -40,6 +42,8 @@ function LoginCard() {
   const [signUpPassword, setSignUpPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
 
+  // Handle Google redirect result
+  const redirectResult = useRedirectResult(auth);
 
   // Log auth availability for debugging
   React.useEffect(() => {
@@ -48,6 +52,56 @@ function LoginCard() {
       authType: auth ? typeof auth : 'undefined',
     });
   }, [auth]);
+
+  // Process redirect result from Google Sign-In
+  React.useEffect(() => {
+    const processRedirectResult = async () => {
+      if (!redirectResult.isProcessing && redirectResult.userCredential && firestore) {
+        const user = redirectResult.userCredential.user;
+        console.log('[LoginPage] Processing Google sign-in result for user:', user.uid);
+
+        try {
+          // Check if user profile exists in Firestore
+          const userDocRef = doc(firestore, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            // Profile exists, redirect to home
+            console.log('[LoginPage] Profile exists, redirecting to home');
+            toast({
+              title: 'Welcome Back!',
+              description: 'Successfully signed in with Google.',
+            });
+            router.push('/');
+          } else {
+            // Profile doesn't exist, redirect to onboarding
+            console.log('[LoginPage] Profile does not exist, redirecting to onboarding');
+            toast({
+              title: 'Welcome!',
+              description: 'Please complete your profile setup.',
+            });
+            router.push('/onboarding');
+          }
+        } catch (error: any) {
+          console.error('[LoginPage] Error checking user profile:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to verify your profile. Please try again.',
+          });
+        }
+      } else if (!redirectResult.isProcessing && redirectResult.error) {
+        console.error('[LoginPage] Error in Google redirect:', redirectResult.error);
+        toast({
+          variant: 'destructive',
+          title: 'Google Sign-In Error',
+          description: redirectResult.error.message || 'Failed to sign in with Google.',
+        });
+      }
+    };
+
+    processRedirectResult();
+  }, [redirectResult, firestore, router, toast]);
 
   const validateInputs = (action: 'signIn' | 'signUp'): string | null => {
     const email = action === 'signIn' ? signInEmail : signUpEmail;
@@ -117,8 +171,29 @@ function LoginCard() {
 
       if (action === 'signUp') {
         console.log('[LoginPage] Calling createUserWithEmailAndPassword');
-        await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+        const userCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
         console.log('[LoginPage] Sign up successful');
+        
+        // Create basic profile in Firestore for email sign-ups
+        if (firestore) {
+          try {
+            const userDocRef = doc(firestore, 'users', userCredential.user.uid);
+            await setDoc(userDocRef, {
+              displayName: trimmedEmail.split('@')[0], // Use email prefix as default display name
+              email: trimmedEmail,
+              photoURL: '',
+              bio: '',
+              coverImageUrl: '',
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            });
+            console.log('[LoginPage] Created user profile in Firestore');
+          } catch (error) {
+            console.error('[LoginPage] Error creating user profile:', error);
+            // Don't fail the sign-up, just log the error
+          }
+        }
+        
         toast({
           title: 'Account Created',
           description: "You've been successfully signed up! Redirecting...",
@@ -185,128 +260,137 @@ function LoginCard() {
 
   return (
     <Card className="w-full max-w-md shadow-lg">
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex items-center gap-2">
-          <Logo />
-          <h1 className="text-2xl font-bold font-headline">ScriptScribbler</h1>
-        </div>
-        <CardTitle className="font-headline text-2xl">Welcome</CardTitle>
-        <CardDescription>
-          Sign in or create an account to get started.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          <TabsContent value="signin">
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-signin">Email</Label>
-                <Input
-                  id="email-signin"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={signInEmail}
-                  onChange={(e) => setSignInEmail(e.target.value)}
-                  disabled={isLoading || isGoogleLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-signin">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password-signin"
-                    type={showPassword ? 'text' : 'password'}
-                    value={signInPassword}
-                    onChange={(e) => setSignInPassword(e.target.value)}
-                    disabled={isLoading || isGoogleLoading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
-                    onClick={() => setShowPassword(prev => !prev)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+      {redirectResult.isProcessing ? (
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Processing Google Sign-In...</p>
+        </CardContent>
+      ) : (
+        <>
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex items-center gap-2">
+              <Logo />
+              <h1 className="text-2xl font-bold font-headline">ScriptScribbler</h1>
+            </div>
+            <CardTitle className="font-headline text-2xl">Welcome</CardTitle>
+            <CardDescription>
+              Sign in or create an account to get started.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin">
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email-signin">Email</Label>
+                    <Input
+                      id="email-signin"
+                      type="email"
+                      placeholder="m@example.com"
+                      value={signInEmail}
+                      onChange={(e) => setSignInEmail(e.target.value)}
+                      disabled={isLoading || isGoogleLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password-signin">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password-signin"
+                        type={showPassword ? 'text' : 'password'}
+                        value={signInPassword}
+                        onChange={(e) => setSignInPassword(e.target.value)}
+                        disabled={isLoading || isGoogleLoading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                        onClick={() => setShowPassword(prev => !prev)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+                <CardFooter className="px-0 pt-6">
+                  <Button onClick={() => handleAuthAction('signIn')} className="w-full" disabled={isLoading || isGoogleLoading}>
+                    {isLoading ? 'Signing In...' : 'Sign In'}
+                  </Button>
+                </CardFooter>
+              </TabsContent>
+              <TabsContent value="signup">
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email-signup">Email</Label>
+                    <Input
+                      id="email-signup"
+                      type="email"
+                      placeholder="m@example.com"
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
+                      disabled={isLoading || isGoogleLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password-signup">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password-signup"
+                        type={showPassword ? 'text' : 'password'}
+                        value={signUpPassword}
+                        onChange={(e) => setSignUpPassword(e.target.value)}
+                        disabled={isLoading || isGoogleLoading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                        onClick={() => setShowPassword(prev => !prev)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <CardFooter className="px-0 pt-6">
+                  <Button onClick={() => handleAuthAction('signUp')} className="w-full" disabled={isLoading || isGoogleLoading}>
+                    {isLoading ? 'Creating Account...' : 'Create Account'}
+                  </Button>
+                </CardFooter>
+              </TabsContent>
+            </Tabs>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
               </div>
             </div>
-            <CardFooter className="px-0 pt-6">
-              <Button onClick={() => handleAuthAction('signIn')} className="w-full" disabled={isLoading || isGoogleLoading}>
-                {isLoading ? 'Signing In...' : 'Sign In'}
+            <div className="grid grid-cols-1 gap-2">
+              <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                {isGoogleLoading ? (
+                  'Redirecting to Google...'
+                ) : (
+                  <>
+                    <Chrome className="mr-2 h-4 w-4" />
+                    Google
+                  </>
+                )}
               </Button>
-            </CardFooter>
-          </TabsContent>
-          <TabsContent value="signup">
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-signup">Email</Label>
-                <Input
-                  id="email-signup"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={signUpEmail}
-                  onChange={(e) => setSignUpEmail(e.target.value)}
-                  disabled={isLoading || isGoogleLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-signup">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password-signup"
-                    type={showPassword ? 'text' : 'password'}
-                    value={signUpPassword}
-                    onChange={(e) => setSignUpPassword(e.target.value)}
-                    disabled={isLoading || isGoogleLoading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
-                    onClick={() => setShowPassword(prev => !prev)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
             </div>
-            <CardFooter className="px-0 pt-6">
-              <Button onClick={() => handleAuthAction('signUp')} className="w-full" disabled={isLoading || isGoogleLoading}>
-                {isLoading ? 'Creating Account...' : 'Create Account'}
-              </Button>
-            </CardFooter>
-          </TabsContent>
-        </Tabs>
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-2">
-          <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
-            {isGoogleLoading ? (
-              'Redirecting to Google...'
-            ) : (
-              <>
-                <Chrome className="mr-2 h-4 w-4" />
-                Google
-              </>
-            )}
-          </Button>
-        </div>
-      </CardContent>
+          </CardContent>
+        </>
+      )}
     </Card>
   );
 }
