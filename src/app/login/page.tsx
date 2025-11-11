@@ -5,7 +5,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithRedirect,
-  signInWithPopup,
   GoogleAuthProvider,
   setPersistence,
   browserLocalPersistence,
@@ -272,25 +271,6 @@ function LoginCard() {
     }
   };
 
-  // Quick debug helper: temporary popup button to surface errors immediately (remove after debugging)
-  const handleGoogleSignInPopupDebug = async () => {
-    if (!auth) {
-      toast({ variant: 'destructive', title: 'Auth not ready', description: 'Firebase auth not available.' });
-      return;
-    }
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      console.log('[LoginPage][DEBUG] signInWithPopup result:', result);
-      toast({ title: 'Popup Sign-In', description: 'Popup sign-in returned. Check console for details.' });
-      // If popup sign-in succeeds, ensure user is redirected:
-      router.push('/');
-    } catch (err: any) {
-      console.error('[LoginPage][DEBUG] signInWithPopup error:', err);
-      toast({ variant: 'destructive', title: 'Popup sign-in error', description: err.message || String(err) });
-    }
-  };
-
   return (
     <Card className="w-full max-w-md shadow-lg">
       {redirectResult.isProcessing ? (
@@ -419,11 +399,6 @@ function LoginCard() {
                     Google
                   </>
                 )}
-              </Button>
-
-              {/* Debug button — remove after testing */}
-              <Button variant="ghost" onClick={handleGoogleSignInPopupDebug}>
-                Debug Google Popup Sign-In
               </Button>
             </div>
           </CardContent>
