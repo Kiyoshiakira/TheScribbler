@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,7 +5,10 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithRedirect,
+  signInWithPopup,
   GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -31,6 +33,7 @@ import { useRedirectResult } from '@/firebase/auth/use-redirect-result';
 function LoginCard() {
   // Use useFirebase instead of useAuth to get nullable auth
   const { auth, firestore } = useFirebase();
+  const { user: currentUser, isUserLoading } = useUser();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -52,6 +55,15 @@ function LoginCard() {
       authType: auth ? typeof auth : 'undefined',
     });
   }, [auth]);
+
+  // Fallback: if redirect returned no result but onAuthStateChanged shows a signed-in user,
+  // navigate to home. This handles cases where getRedirectResult returns null but the user is signed in.
+  React.useEffect(() => {
+    if (!redirectResult.isProcessing && !redirectResult.userCredential && currentUser) {
+      console.log('[LoginPage] No redirect result but user exists in onAuthStateChanged; redirecting to /');
+      router.push('/');
+    }
+  }, [redirectResult, currentUser, router]);
 
   // Process redirect result from Google Sign-In
   React.useEffect(() => {
@@ -238,8 +250,11 @@ function LoginCard() {
 
     setIsGoogleLoading(true);
     try {
+      // Ensure auth persistence is explicitly set to local so redirect state survives navigation/reloads.
+      await setPersistence(auth, browserLocalPersistence);
+
       const provider = new GoogleAuthProvider();
-      // Add scopes to request access to Google Drive and Docs
+      // Add scopes to request access to Google Drive and Docs (optional — comment out for troubleshooting)
       provider.addScope('https://www.googleapis.com/auth/drive.readonly');
       provider.addScope('https://www.googleapis.com/auth/documents.readonly');
       console.log('[LoginPage] Calling signInWithRedirect for Google');
@@ -257,6 +272,24 @@ function LoginCard() {
     }
   };
 
+  // Quick debug helper: temporary popup button to surface errors immediately (remove after debugging)
+  const handleGoogleSignInPopupDebug = async () => {
+    if (!auth) {
+      toast({ variant: 'destructive', title: 'Auth not ready', description: 'Firebase auth not available.' });
+      return;
+    }
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      console.log('[LoginPage][DEBUG] signInWithPopup result:', result);
+      toast({ title: 'Popup Sign-In', description: 'Popup sign-in returned. Check console for details.' });
+      // If popup sign-in succeeds, ensure user is redirected:
+      router.push('/');
+    } catch (err: any) {
+      console.error('[LoginPage][DEBUG] signInWithPopup error:', err);
+      toast({ variant: 'destructive', title: 'Popup sign-in error', description: err.message || String(err) });
+    }
+  };
 
   return (
     <Card className="w-full max-w-md shadow-lg">
@@ -386,6 +419,11 @@ function LoginCard() {
                     Google
                   </>
                 )}
+              </Button>
+
+              {/* Debug button — remove after testing */}
+              <Button variant="ghost" onClick={handleGoogleSignInPopupDebug}>
+                Debug Google Popup Sign-In
               </Button>
             </div>
           </CardContent>
