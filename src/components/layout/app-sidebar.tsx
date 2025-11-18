@@ -16,6 +16,10 @@ import {
   NotebookPen,
   LayoutDashboard,
   ChevronDown,
+  ListTree,
+  FileText,
+  MapPin,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { View } from './AppLayout';
@@ -73,6 +77,18 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
     { view: 'notes', label: 'Notes', icon: StickyNote },
   ] as const;
 
+  const storyMenuItems = [
+    { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { view: 'outline', label: 'Outline', icon: ListTree },
+    { view: 'chapters', label: 'Chapters', icon: FileText },
+    { view: 'characters', label: 'Characters', icon: Users },
+    { view: 'world', label: 'World', icon: MapPin },
+    { view: 'timeline', label: 'Timeline', icon: Clock },
+    { view: 'story-notes', label: 'Notes', icon: StickyNote },
+  ] as const;
+
+  const menuItems = currentTool === 'StoryScribbler' ? storyMenuItems : scriptMenuItems;
+
   return (
     <Sidebar collapsible="icon" side="left">
       <SidebarHeader>
@@ -105,7 +121,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
-          {scriptMenuItems.map(item => (
+          {menuItems.map(item => (
             <SidebarMenuItem key={item.view}>
               <SidebarMenuButton
                 onClick={() => handleViewChange(item.view)}

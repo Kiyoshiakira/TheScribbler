@@ -15,14 +15,19 @@ import LoglineView from '../views/logline-view';
 import ScenesView from '../views/scenes-view';
 import CharactersView from '../views/characters-view';
 import NotesView from '../views/notes-view';
-import StoryScribblerView from '../views/story-scribbler-view';
+import OutlineTab from '../views/story-tabs/outline-tab';
+import ChaptersTab from '../views/story-tabs/chapters-tab';
+import StoryCharactersTab from '../views/story-tabs/story-characters-tab';
+import WorldBuildingTab from '../views/story-tabs/world-building-tab';
+import TimelineTab from '../views/story-tabs/timeline-tab';
+import StoryNotesTab from '../views/story-tabs/story-notes-tab';
 import { useUser, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { EditProfileDialog } from '../edit-profile-dialog';
 import { doc } from 'firebase/firestore';
 import { useTool } from '@/context/tool-context';
 
 
-export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile';
+export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile' | 'outline' | 'chapters' | 'world' | 'timeline' | 'story-notes';
 
 /**
  * This is the internal component that renders the main app layout.
@@ -47,6 +52,24 @@ function AppLayoutInternal() {
   }, [user, firestore]);
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+
+  // When the tool changes, switch to an appropriate default view
+  React.useEffect(() => {
+    if (currentTool === 'StoryScribbler') {
+      // When switching to Story Scribbler, switch to outline view
+      // unless we're on dashboard or profile
+      if (view !== 'dashboard' && view !== 'profile') {
+        setView('outline');
+      }
+    } else {
+      // When switching to Script Scribbler, switch to dashboard or editor
+      // unless we're already on a valid script view
+      const scriptViews: View[] = ['dashboard', 'editor', 'scenes', 'characters', 'notes', 'logline', 'profile'];
+      if (!scriptViews.includes(view)) {
+        setView('dashboard');
+      }
+    }
+  }, [currentTool, view]);
 
   // This effect handles the initial view logic once all data is loaded.
   React.useEffect(() => {
@@ -80,15 +103,23 @@ function AppLayoutInternal() {
   };
 
   const renderView = () => {
-    // If StoryScribbler is selected, only show StoryScribbler view, Dashboard, or Profile
+    // If StoryScribbler is selected, show Story Scribbler views
     if (currentTool === 'StoryScribbler') {
       if (view === 'profile') {
         return <ProfileView setView={handleSetView} />;
       } else if (view === 'dashboard') {
         return <DashboardView setView={handleSetView} />;
-      } else {
-        // For any other view, show the StoryScribbler placeholder
-        return <StoryScribblerView />;
+      }
+      
+      // Story Scribbler specific views
+      switch(view) {
+        case 'outline': return <OutlineTab />;
+        case 'chapters': return <ChaptersTab />;
+        case 'characters': return <StoryCharactersTab />;
+        case 'world': return <WorldBuildingTab />;
+        case 'timeline': return <TimelineTab />;
+        case 'story-notes': return <StoryNotesTab />;
+        default: return <OutlineTab />; // Default to outline for Story Scribbler
       }
     }
 
