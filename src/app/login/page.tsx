@@ -103,10 +103,32 @@ function LoginCard() {
         }
       } else if (!redirectResult.isProcessing && redirectResult.error) {
         console.error('[LoginPage] Error in Google redirect:', redirectResult.error);
+        
+        // Provide helpful error messages based on the error type
+        let errorTitle = 'Google Sign-In Error';
+        let errorDescription = redirectResult.error.message || 'Failed to sign in with Google.';
+        
+        const errorMessage = redirectResult.error.message || '';
+        const errorCode = (redirectResult.error as any).code || '';
+        
+        if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
+          errorTitle = 'Domain Not Authorized';
+          errorDescription = 'Your domain is not authorized for Google Sign-In. Go to Firebase Console > Authentication > Sign-in method > Authorized domains and add your current domain (check your browser\'s address bar).';
+        } else if (errorCode === 'auth/operation-not-allowed') {
+          errorTitle = 'Google Sign-In Not Enabled';
+          errorDescription = 'Google sign-in provider is not enabled. Go to Firebase Console > Authentication > Sign-in method and enable Google.';
+        } else if (errorMessage.includes('403') || errorMessage.includes('access_denied')) {
+          errorTitle = 'Access Denied (403)';
+          errorDescription = 'Google denied access. This may be due to: (1) Domain not authorized in Firebase, (2) OAuth consent screen not configured, or (3) Required scopes not approved. See troubleshooting guide for setup instructions.';
+        } else if (errorCode === 'auth/popup-closed-by-user' || errorCode === 'auth/cancelled-popup-request') {
+          errorTitle = 'Sign-In Cancelled';
+          errorDescription = 'The sign-in process was cancelled. Please try again.';
+        }
+        
         toast({
           variant: 'destructive',
-          title: 'Google Sign-In Error',
-          description: redirectResult.error.message || 'Failed to sign in with Google.',
+          title: errorTitle,
+          description: errorDescription,
         });
       }
     };
@@ -221,10 +243,40 @@ function LoginCard() {
       router.push('/');
     } catch (error: any) {
       console.error(`[LoginPage] Error during ${action}:`, error);
+      
+      // Provide helpful error messages based on error codes
+      let errorTitle = `Error during ${action}`;
+      let errorDescription = error.message || 'An unexpected error occurred.';
+      
+      const errorCode = error.code || '';
+      
+      if (errorCode === 'auth/operation-not-allowed') {
+        errorTitle = 'Email/Password Sign-In Not Enabled';
+        errorDescription = 'Email/Password authentication is not enabled in your Firebase project. Go to Firebase Console > Authentication > Sign-in method and enable Email/Password.';
+      } else if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found') {
+        errorTitle = 'Invalid Credentials';
+        errorDescription = 'The email or password you entered is incorrect. Please check your credentials and try again.';
+      } else if (errorCode === 'auth/email-already-in-use') {
+        errorTitle = 'Email Already in Use';
+        errorDescription = 'An account with this email already exists. Please sign in instead or use a different email.';
+      } else if (errorCode === 'auth/weak-password') {
+        errorTitle = 'Weak Password';
+        errorDescription = 'The password is too weak. Please use a stronger password with at least 6 characters.';
+      } else if (errorCode === 'auth/invalid-email') {
+        errorTitle = 'Invalid Email';
+        errorDescription = 'The email address is not valid. Please enter a valid email address.';
+      } else if (errorCode === 'auth/too-many-requests') {
+        errorTitle = 'Too Many Attempts';
+        errorDescription = 'Access temporarily disabled due to too many failed attempts. Please try again later or reset your password.';
+      } else if (errorCode === 'auth/network-request-failed') {
+        errorTitle = 'Network Error';
+        errorDescription = 'Unable to connect to authentication service. Please check your internet connection and try again.';
+      }
+      
       toast({
         variant: 'destructive',
-        title: `Error during ${action}`,
-        description: error.message || 'An unexpected error occurred.',
+        title: errorTitle,
+        description: errorDescription,
       });
     } finally {
       setIsLoading(false);
@@ -253,7 +305,10 @@ function LoginCard() {
       await setPersistence(auth, browserLocalPersistence);
 
       const provider = new GoogleAuthProvider();
-      // Add scopes to request access to Google Drive and Docs (optional — comment out for troubleshooting)
+      // Note: Google Drive and Docs scopes are optional and only needed for the import feature.
+      // They are NOT required for basic sign-in. If you encounter 403 errors during sign-in,
+      // you may need to authorize these scopes in your Google Cloud Console OAuth consent screen.
+      // For troubleshooting, you can comment out these lines to sign in without Drive/Docs access.
       provider.addScope('https://www.googleapis.com/auth/drive.readonly');
       provider.addScope('https://www.googleapis.com/auth/documents.readonly');
       console.log('[LoginPage] Calling signInWithRedirect for Google');
@@ -262,10 +317,29 @@ function LoginCard() {
       // Firebase automatically handles the redirect result on page load.
     } catch (error: any) {
       console.error('[LoginPage] Error signing in with Google:', error);
+      
+      // Provide more helpful error messages for common issues
+      let errorTitle = 'Google Sign-In Error';
+      let errorDescription = error.message || 'An unexpected error occurred.';
+      
+      // Check for 403/authorization errors
+      if (error.code === 'auth/unauthorized-domain' || 
+          error.message?.includes('403') || 
+          error.message?.includes('unauthorized')) {
+        errorTitle = 'Domain Not Authorized';
+        errorDescription = 'Your domain is not authorized for Google Sign-In. Please add your domain (e.g., localhost or your workspace domain) to the authorized domains list in Firebase Console under Authentication > Sign-in method > Authorized domains.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorTitle = 'Google Sign-In Not Enabled';
+        errorDescription = 'Google sign-in is not enabled in your Firebase project. Please enable it in Firebase Console under Authentication > Sign-in method.';
+      } else if (error.code === 'auth/popup-blocked') {
+        errorTitle = 'Redirect Blocked';
+        errorDescription = 'Your browser blocked the sign-in redirect. Please allow redirects for this site and try again.';
+      }
+      
       toast({
         variant: 'destructive',
-        title: 'Google Sign-In Error',
-        description: error.message || 'An unexpected error occurred.',
+        title: errorTitle,
+        description: errorDescription,
       });
       setIsGoogleLoading(false);
     }

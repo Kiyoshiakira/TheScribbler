@@ -85,7 +85,9 @@ Here are the main commands you can use during development:
 
 ## Common Setup Issues
 
-### Login Fails or Editor is Not Loading
+### Login Fails, 403 Errors, or Editor is Not Loading
+
+**⚠️ See the [Complete 403 Troubleshooting Guide](../docs/TROUBLESHOOTING_403_ERRORS.md) for detailed solutions.**
 
 This is often caused by an issue with Firebase authentication or data fetching. If you see errors in the browser console like `(auth/invalid-credential)`, `(auth/operation-not-allowed)`, or a Google 403 error page, follow these steps:
 
