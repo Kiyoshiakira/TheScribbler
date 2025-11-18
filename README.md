@@ -2,11 +2,16 @@
 
 The Scribbler is a modern, collaborative writing application built with Next.js, Firebase, and Google's Generative AI. It provides powerful tools to assist writers in their creative process, with specialized interfaces for different types of writing.
 
+<<<<<<< HEAD
 ## Tools
 
 The Scribbler currently includes:
 - **ScriptScribbler**: A screenwriting tool with AI-powered features for screenplay writing
 - **StoryScribbler**: Coming soon - tools for story writing and organization
+=======
+
+ScriptScribbler is a modern, collaborative screenwriting application built with Next.js, Firebase, and Google's Generative AI. It provides a powerful editor with AI-powered tools to assist writers in their creative process.
+>>>>>>> a4931b8 (Editing the readme)
 
 ## Application Architecture
 
