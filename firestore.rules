@@ -10,7 +10,7 @@
  * Data Structure:
  * - /users/{userId}: Public-readable user profile information.
  * - /users/{userId}/scripts/{scriptId}: Core script documents.
- * - /users/{userId}/scripts/{scriptId}/[characters|notes|scenes|comments|versions|outline]/{docId}: Subcollections for script data.
+ * - /users/{userId}/scripts/{scriptId}/[characters|notes|scenes|comments|versions|outline|chapters|storyCharacters|storyNotes|timeline|worldBuilding]/{docId}: Subcollections for script data.
  * - /error-reports/{reportId}: Collection for users to submit error logs.
  *
  * Key Security Decisions:
@@ -125,6 +125,76 @@ service cloud.firestore {
         }
 
         // Any authenticated user can read outline items, but only owner can write
+        allow read: if request.auth != null;
+        allow write: if isOwner();
+    }
+
+    /**
+     * @description Controls access to chapters within a script. Publicly readable but only owner can write.
+     * @path /users/{userId}/scripts/{scriptId}/chapters/{chapterId}
+     */
+    match /users/{userId}/scripts/{scriptId}/chapters/{chapterId} {
+        function isOwner() {
+          return request.auth != null && request.auth.uid == userId;
+        }
+
+        // Any authenticated user can read chapters, but only owner can write
+        allow read: if request.auth != null;
+        allow write: if isOwner();
+    }
+
+    /**
+     * @description Controls access to story characters within a script. Publicly readable but only owner can write.
+     * @path /users/{userId}/scripts/{scriptId}/storyCharacters/{characterId}
+     */
+    match /users/{userId}/scripts/{scriptId}/storyCharacters/{characterId} {
+        function isOwner() {
+          return request.auth != null && request.auth.uid == userId;
+        }
+
+        // Any authenticated user can read story characters, but only owner can write
+        allow read: if request.auth != null;
+        allow write: if isOwner();
+    }
+
+    /**
+     * @description Controls access to story notes within a script. Publicly readable but only owner can write.
+     * @path /users/{userId}/scripts/{scriptId}/storyNotes/{noteId}
+     */
+    match /users/{userId}/scripts/{scriptId}/storyNotes/{noteId} {
+        function isOwner() {
+          return request.auth != null && request.auth.uid == userId;
+        }
+
+        // Any authenticated user can read story notes, but only owner can write
+        allow read: if request.auth != null;
+        allow write: if isOwner();
+    }
+
+    /**
+     * @description Controls access to timeline items within a script. Publicly readable but only owner can write.
+     * @path /users/{userId}/scripts/{scriptId}/timeline/{timelineId}
+     */
+    match /users/{userId}/scripts/{scriptId}/timeline/{timelineId} {
+        function isOwner() {
+          return request.auth != null && request.auth.uid == userId;
+        }
+
+        // Any authenticated user can read timeline items, but only owner can write
+        allow read: if request.auth != null;
+        allow write: if isOwner();
+    }
+
+    /**
+     * @description Controls access to world building elements within a script. Publicly readable but only owner can write.
+     * @path /users/{userId}/scripts/{scriptId}/worldBuilding/{worldId}
+     */
+    match /users/{userId}/scripts/{scriptId}/worldBuilding/{worldId} {
+        function isOwner() {
+          return request.auth != null && request.auth.uid == userId;
+        }
+
+        // Any authenticated user can read world building elements, but only owner can write
         allow read: if request.auth != null;
         allow write: if isOwner();
     }
