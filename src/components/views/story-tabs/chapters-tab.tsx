@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Loader2, FileText, Edit } from 'lucide-react';
+import { Plus, Trash2, Loader2, FileText, Edit, Maximize2, Minimize2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { useFullscreen } from '@/hooks/use-fullscreen';
+import { cn } from '@/lib/utils';
 
 interface Chapter {
   id?: string;
@@ -50,6 +52,7 @@ export default function ChaptersTab() {
 
   const handleOpenDialog = (chapter: Chapter | null = null) => {
     if (chapter) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = chapter;
       setEditingChapter(rest);
     } else {
@@ -71,6 +74,7 @@ export default function ChaptersTab() {
     }
 
     const isNew = !chapterToSave.id;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, createdAt: _createdAt, updatedAt: _updatedAt, ...plainData } = chapterToSave;
 
     // Calculate word count
@@ -80,6 +84,7 @@ export default function ChaptersTab() {
     try {
       if (isNew) {
         const docData = { ...dataWithWordCount, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await addDoc(chaptersCollection, docData).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
             path: chaptersCollection.path,
@@ -92,6 +97,7 @@ export default function ChaptersTab() {
       } else {
         const chapterDocRef = doc(chaptersCollection, id);
         const updateData = { ...dataWithWordCount, updatedAt: serverTimestamp() };
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await setDoc(chapterDocRef, updateData, { merge: true }).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
             path: chapterDocRef.path,
@@ -261,7 +267,9 @@ function ChapterDialog({
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const contentAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { isFullscreen, toggleFullscreen } = useFullscreen(contentAreaRef);
 
   useEffect(() => {
     if (open) {
@@ -314,17 +322,38 @@ function ChapterDialog({
               rows={2}
             />
           </div>
-          <div className="space-y-2">
+          <div 
+            ref={contentAreaRef}
+            className={cn(
+              "space-y-2",
+              isFullscreen && "bg-background p-4"
+            )}
+          >
             <div className="flex items-center justify-between">
               <Label htmlFor="content">Content</Label>
-              <span className="text-xs text-muted-foreground">{wordCount} words</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{wordCount} words</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
             <Textarea
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write your chapter content here..."
-              rows={12}
+              rows={isFullscreen ? 30 : 12}
               className="font-mono text-sm"
             />
           </div>

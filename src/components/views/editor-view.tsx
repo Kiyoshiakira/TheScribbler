@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import AiFab from '@/components/ai-fab';
 import ScriptEditor from '@/components/script-editor';
 import { Button } from '../ui/button';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Maximize2, Minimize2 } from 'lucide-react';
 import { FindReplaceDialog } from '../find-replace-dialog';
 import { FindReplaceProvider } from '@/hooks/use-find-replace';
 import EditorStatusBar from '../editor-status-bar';
@@ -19,7 +19,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { collection, doc, setDoc } from 'firebase/firestore';
-import type { Scene } from './scenes-view';
+import { useFullscreen } from '@/hooks/use-fullscreen';
+import { cn } from '@/lib/utils';
 
 function EditorViewContent() {
   const [isFindOpen, setIsFindOpen] = useState(false);
@@ -27,12 +28,14 @@ function EditorViewContent() {
   const [editingSceneNumber, setEditingSceneNumber] = useState<number | null>(null);
   const [sceneSettings, setSceneSettings] = useState({ setting: '', description: '', time: 5 });
   const [isSaving, setIsSaving] = useState(false);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   
   const { document, insertBlockAfter, scenes } = useScript();
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
   const { currentScriptId } = useCurrentScript();
+  const { isFullscreen, toggleFullscreen } = useFullscreen(editorContainerRef);
 
   const scenesCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'scenes') : null),
@@ -72,6 +75,7 @@ function EditorViewContent() {
       
       if (scene?.id) {
         const sceneDocRef = doc(scenesCollection, scene.id);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await setDoc(sceneDocRef, {
           setting: sceneSettings.setting,
           description: sceneSettings.description,
@@ -107,8 +111,32 @@ function EditorViewContent() {
   };
 
   return (
-      <div className="relative h-full w-full flex flex-col">
-        <div className="flex-shrink-0 flex justify-end p-2">
+      <div 
+        ref={editorContainerRef}
+        className={cn(
+          "relative h-full w-full flex flex-col",
+          isFullscreen && "bg-background"
+        )}
+      >
+        <div className="flex-shrink-0 flex justify-end gap-2 p-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
+            >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="mr-2 h-4 w-4" />
+                    Exit Fullscreen
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="mr-2 h-4 w-4" />
+                    Fullscreen
+                  </>
+                )}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setIsFindOpen(true)}>
                 <Search className="mr-2 h-4 w-4" />
                 Find & Replace
