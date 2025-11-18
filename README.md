@@ -217,7 +217,11 @@ The application will be available at [http://localhost:9002](http://localhost:90
 - **Script Analysis** - AI-powered script review and feedback
 - **Character Insights** - AI-generated character suggestions
 - **Scene Suggestions** - Story development assistance
+- **Document-Aware Editing** - Semantic understanding with RAG for long documents
+- **Structured Editing Tools** - Apply formatting rules, generate structures, and more
+- **Creative Consistency** - Maintains Skylantia universe terminology and style
 - See [docs/AI_EDITOR_FEATURES.md](docs/AI_EDITOR_FEATURES.md) for comprehensive AI features
+- See [docs/AI_DOCUMENT_AWARE_EDITING.md](docs/AI_DOCUMENT_AWARE_EDITING.md) for advanced editing capabilities
 
 ### StoryScribbler Features
 
