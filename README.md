@@ -351,7 +351,8 @@ This is often caused by an issue with Firebase authentication setup. Common issu
 
 4.  **Check Firestore Rules:** Ensure `firestore.rules` are deployed and allow authenticated users access.
     *   Look for `FirebaseError: Missing or insufficient permissions` in browser console
-    *   Deploy rules: `firebase deploy --only firestore:rules`
+    *   **See [FIRESTORE_RULES_DEPLOYMENT.md](FIRESTORE_RULES_DEPLOYMENT.md) for comprehensive deployment guide**
+    *   Quick deploy: `firebase deploy --only firestore:rules` (requires Firebase CLI)
 
 5.  **Verify Environment Variables:** Check that `.env.local` has all required Firebase configuration.
 

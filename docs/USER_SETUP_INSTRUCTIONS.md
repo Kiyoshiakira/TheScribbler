@@ -93,7 +93,15 @@ After setting up your local environment, deploy the security rules:
 firebase deploy --only firestore:rules
 ```
 
-**How to verify:** Create a script in the app. It should save without permission errors.
+**⚠️ Important:** If you encounter permission errors when using Story Scribbler features (outline, chapters, timeline, etc.), ensure the latest Firestore rules are deployed.
+
+📘 **See [FIRESTORE_RULES_DEPLOYMENT.md](../FIRESTORE_RULES_DEPLOYMENT.md) for:**
+- Detailed deployment instructions
+- Multiple deployment options (Console, CLI, Studio)
+- Troubleshooting permission errors
+- Security model explanation
+
+**How to verify:** Create a script in the app. It should save without permission errors. Try accessing Story Scribbler features (Outline, Chapters, etc.) to ensure all subcollections work.
 
 ---
 
