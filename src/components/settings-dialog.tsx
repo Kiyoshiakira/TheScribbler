@@ -27,6 +27,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Slider } from './ui/slider';
 import { Switch } from './ui/switch';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -133,12 +134,12 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setIsSubmittingFeedback(true);
     try {
         const feedbackCollectionRef = collection(firestore, 'feedback');
-        const feedbackData = {
+        const feedbackData = sanitizeFirestorePayload({
             userId: user.uid,
             feedback: feedbackText,
             submittedAt: serverTimestamp(),
             url: window.location.href,
-        };
+        });
         await addDoc(feedbackCollectionRef, feedbackData).catch((serverError) => {
             const permissionError = new FirestorePermissionError({
                 path: feedbackCollectionRef.path,

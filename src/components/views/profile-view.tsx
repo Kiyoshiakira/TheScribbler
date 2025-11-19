@@ -91,6 +91,12 @@ export default function ProfileView({ setView }: ProfileViewProps) {
         setIsDeleting(true);
         const scriptRef = doc(firestore, 'users', user.uid, 'scripts', scriptId);
 
+        // Show initial progress toast
+        const { update, dismiss } = toast({
+            title: 'Deleting...',
+            description: 'Starting deletion process...',
+        });
+
         try {
             const batch = writeBatch(firestore);
             
@@ -99,23 +105,39 @@ export default function ProfileView({ setView }: ProfileViewProps) {
             if (deleteScenes) subcollectionsToDelete.push('scenes');
             if (deleteNotes) subcollectionsToDelete.push('notes');
 
-            for (const sub of subcollectionsToDelete) {
+            let totalItems = 0;
+            for (let i = 0; i < subcollectionsToDelete.length; i++) {
+                const sub = subcollectionsToDelete[i];
+                update({
+                    title: 'Deleting...',
+                    description: `Processing ${sub}... (${i + 1}/${subcollectionsToDelete.length})`,
+                });
+                
                 const subcollectionRef = collection(scriptRef, sub);
                 const snapshot = await getDocs(subcollectionRef);
+                totalItems += snapshot.size;
                 snapshot.forEach((doc) => batch.delete(doc.ref));
             }
             
             if (deleteScriptDoc) {
                 batch.delete(scriptRef);
+                totalItems += 1;
             }
+
+            update({
+                title: 'Deleting...',
+                description: `Committing deletion of ${totalItems} item(s)...`,
+            });
 
             await batch.commit();
 
+            dismiss();
             toast({
                 title: 'Delete Successful',
-                description: 'The selected script components have been deleted.',
+                description: `Successfully deleted ${totalItems} item(s).`,
             });
         } catch (error: any) {
+             dismiss();
              const permissionError = new FirestorePermissionError({
                 path: scriptRef.path,
                 operation: 'delete',

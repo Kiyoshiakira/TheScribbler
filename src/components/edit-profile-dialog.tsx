@@ -14,6 +14,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { User } from 'firebase/auth';
 import { ScrollArea } from './ui/scroll-area';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -93,14 +94,14 @@ export function EditProfileDialog({ open, onOpenChange, user, profile }: EditPro
       }
      
       const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
-      const profileData = { 
+      const profileData = sanitizeFirestorePayload({ 
         displayName,
         email: auth.currentUser.email,
         photoURL,
         bio, 
         coverImageUrl, 
         updatedAt: serverTimestamp() 
-      };
+      });
 
       await setDoc(userDocRef, profileData, { merge: true }).catch((serverError) => {
         const permissionError = new FirestorePermissionError({

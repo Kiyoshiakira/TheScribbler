@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Chrome, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRedirectResult } from '@/firebase/auth/use-redirect-result';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 function LoginCard() {
   // Use useFirebase instead of useAuth to get nullable auth
@@ -211,7 +212,7 @@ function LoginCard() {
         if (firestore) {
           try {
             const userDocRef = doc(firestore, 'users', userCredential.user.uid);
-            await setDoc(userDocRef, {
+            await setDoc(userDocRef, sanitizeFirestorePayload({
               displayName: trimmedEmail.split('@')[0], // Use email prefix as default display name
               email: trimmedEmail,
               photoURL: '',
@@ -219,7 +220,7 @@ function LoginCard() {
               coverImageUrl: '',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
-            });
+            }));
             console.log('[LoginPage] Created user profile in Firestore');
           } catch (error) {
             console.error('[LoginPage] Error creating user profile:', error);

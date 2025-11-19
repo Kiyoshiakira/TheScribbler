@@ -16,6 +16,7 @@ import type { View } from "../layout/AppLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useTool } from "@/context/tool-context";
 import { useSettings } from "@/context/settings-context";
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 
 function StatCard({ title, value, icon, isLoading }: { title: string, value: number, icon: React.ReactNode, isLoading: boolean }) {
@@ -132,14 +133,14 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
         if (!firestore || !user) return;
         try {
             const scriptsCollectionRef = collection(firestore, 'users', user.uid, 'scripts');
-            const scriptData = {
+            const scriptData = sanitizeFirestorePayload({
                 title: 'Untitled Script',
                 content: 'SCENE 1\n\nINT. ROOM - DAY\n\nA new story begins.',
                 logline: '',
                 authorId: user.uid,
                 createdAt: serverTimestamp(),
                 lastModified: serverTimestamp(),
-            };
+            });
             const newScriptDoc = await addDoc(scriptsCollectionRef, scriptData).catch(() => {
                 const permissionError = new FirestorePermissionError({
                     path: scriptsCollectionRef.path,
@@ -171,14 +172,14 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
         if (!firestore || !user) return;
         try {
             const scriptsCollectionRef = collection(firestore, 'users', user.uid, 'scripts');
-            const scriptData = {
+            const scriptData = sanitizeFirestorePayload({
                 title: 'AI-Assisted Script',
                 content: 'INT. WRITER\'S ROOM - DAY\n\nA blank page awaits. The AI assistant stands ready to help craft your story.\n\n(Click the AI assistant button in the bottom right to start collaborating)',
                 logline: 'An AI-assisted screenplay waiting to be written',
                 authorId: user.uid,
                 createdAt: serverTimestamp(),
                 lastModified: serverTimestamp(),
-            };
+            });
             const newScriptDoc = await addDoc(scriptsCollectionRef, scriptData).catch(() => {
                 const permissionError = new FirestorePermissionError({
                     path: scriptsCollectionRef.path,

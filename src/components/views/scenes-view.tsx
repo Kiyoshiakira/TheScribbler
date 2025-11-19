@@ -27,6 +27,7 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import type { ScriptDocument } from '@/lib/editor-types';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 export interface Scene {
   id: string;
@@ -303,11 +304,12 @@ export default function ScenesView() {
       if (editingScene?.id) {
         // Update existing scene
         const sceneDocRef = doc(scenesCollection, editingScene.id);
-        await setDoc(sceneDocRef, sceneData, { merge: true }).catch((serverError) => {
+        const sanitizedSceneData = sanitizeFirestorePayload(sceneData);
+        await setDoc(sceneDocRef, sanitizedSceneData, { merge: true }).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
             path: sceneDocRef.path,
             operation: 'update',
-            requestResourceData: sceneData,
+            requestResourceData: sanitizedSceneData,
           });
           errorEmitter.emit('permission-error', permissionError);
           throw permissionError;
@@ -318,11 +320,12 @@ export default function ScenesView() {
         });
       } else {
         // Create new scene
-        await addDoc(scenesCollection, sceneData).catch((serverError) => {
+        const sanitizedSceneData = sanitizeFirestorePayload(sceneData);
+        await addDoc(scenesCollection, sanitizedSceneData).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
             path: scenesCollection.path,
             operation: 'create',
-            requestResourceData: sceneData,
+            requestResourceData: sanitizedSceneData,
           });
           errorEmitter.emit('permission-error', permissionError);
           throw permissionError;
@@ -377,12 +380,12 @@ export default function ScenesView() {
     if (!firestore || !scenesCollection) return;
 
     try {
-      const duplicatedScene = {
+      const duplicatedScene = sanitizeFirestorePayload({
         sceneNumber: nextSceneNumber,
         setting: scene.setting + ' (Copy)',
         description: scene.description,
         time: scene.time,
-      };
+      });
       await addDoc(scenesCollection, duplicatedScene).catch((serverError) => {
         const permissionError = new FirestorePermissionError({
           path: scenesCollection.path,

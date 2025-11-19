@@ -191,9 +191,15 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             
             batch.set(newScriptRef, scriptData);
 
+            let totalItems = 1; // Count the script itself
+            
             if (subCollections) {
                 if (subCollections.characters) {
                     const charactersCol = collection(newScriptRef, 'characters');
+                    update({
+                        title: 'Importing...',
+                        description: `Adding ${subCollections.characters.length} character(s)...`,
+                    });
                     subCollections.characters.forEach((char: any) => {
                         const { id, ...charData } = char;
                         // Sanitize character data to remove undefined values
@@ -204,9 +210,14 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                         });
                         batch.set(doc(charactersCol), sanitizedCharData);
                     });
+                    totalItems += subCollections.characters.length;
                 }
                 if (subCollections.scenes) {
                     const scenesCol = collection(newScriptRef, 'scenes');
+                    update({
+                        title: 'Importing...',
+                        description: `Adding ${subCollections.scenes.length} scene(s)...`,
+                    });
                     subCollections.scenes.forEach((scene: any) => {
                         const { id, ...sceneData } = scene;
                         // Sanitize scene data to remove undefined values
@@ -217,9 +228,14 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                         });
                         batch.set(doc(scenesCol), sanitizedSceneData);
                     });
+                    totalItems += subCollections.scenes.length;
                 }
                 if (subCollections.notes) {
                     const notesCol = collection(newScriptRef, 'notes');
+                    update({
+                        title: 'Importing...',
+                        description: `Adding ${subCollections.notes.length} note(s)...`,
+                    });
                     subCollections.notes.forEach((note: any) => {
                         const { id, ...noteData } = note;
                         // Sanitize note data to remove undefined values
@@ -230,8 +246,14 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                         });
                         batch.set(doc(notesCol), sanitizedNoteData);
                     });
+                    totalItems += subCollections.notes.length;
                 }
             }
+
+            update({
+                title: 'Importing...',
+                description: `Committing ${totalItems} item(s) to database...`,
+            });
 
             await batch.commit().catch((serverError) => {
                 const permissionError = new FirestorePermissionError({
@@ -246,7 +268,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             dismiss();
             toast({
                 title: 'Import Successful',
-                description: `"${title}" has been added to your scripts.`,
+                description: `"${title}" with ${totalItems} item(s) has been added to your scripts.`,
             });
             setCurrentScriptId(newScriptRef.id);
             setView('dashboard');
@@ -395,8 +417,11 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         
         batch.set(newStoryRef, storyData);
 
-        // Import Story Scribbler specific collections
+        let totalItems = 1; // Count the story itself
+
+        // Import Story Scribbler specific collections with progress tracking
         if (importedOutline.length > 0) {
+            update({ id: 'story-import-toast', description: `Adding ${importedOutline.length} outline item(s)...` });
             const outlineCol = collection(newStoryRef, 'outline');
             importedOutline.forEach((item: any) => {
                 const sanitizedData = sanitizeFirestorePayload({
@@ -406,8 +431,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 });
                 batch.set(doc(outlineCol), sanitizedData);
             });
+            totalItems += importedOutline.length;
         }
         if (importedChapters.length > 0) {
+            update({ id: 'story-import-toast', description: `Adding ${importedChapters.length} chapter(s)...` });
             const chaptersCol = collection(newStoryRef, 'chapters');
             importedChapters.forEach((chapter: any) => {
                 const sanitizedData = sanitizeFirestorePayload({
@@ -417,8 +444,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 });
                 batch.set(doc(chaptersCol), sanitizedData);
             });
+            totalItems += importedChapters.length;
         }
         if (importedStoryCharacters.length > 0) {
+            update({ id: 'story-import-toast', description: `Adding ${importedStoryCharacters.length} character(s)...` });
             const storyCharsCol = collection(newStoryRef, 'storyCharacters');
             importedStoryCharacters.forEach((char: any) => {
                 const sanitizedData = sanitizeFirestorePayload({
@@ -428,8 +457,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 });
                 batch.set(doc(storyCharsCol), sanitizedData);
             });
+            totalItems += importedStoryCharacters.length;
         }
         if (importedWorldBuilding.length > 0) {
+            update({ id: 'story-import-toast', description: `Adding ${importedWorldBuilding.length} world element(s)...` });
             const worldCol = collection(newStoryRef, 'worldBuilding');
             importedWorldBuilding.forEach((element: any) => {
                 const sanitizedData = sanitizeFirestorePayload({
@@ -439,8 +470,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 });
                 batch.set(doc(worldCol), sanitizedData);
             });
+            totalItems += importedWorldBuilding.length;
         }
         if (importedTimeline.length > 0) {
+            update({ id: 'story-import-toast', description: `Adding ${importedTimeline.length} timeline event(s)...` });
             const timelineCol = collection(newStoryRef, 'timeline');
             importedTimeline.forEach((event: any) => {
                 const sanitizedData = sanitizeFirestorePayload({
@@ -450,8 +483,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 });
                 batch.set(doc(timelineCol), sanitizedData);
             });
+            totalItems += importedTimeline.length;
         }
         if (importedStoryNotes.length > 0) {
+            update({ id: 'story-import-toast', description: `Adding ${importedStoryNotes.length} note(s)...` });
             const storyNotesCol = collection(newStoryRef, 'storyNotes');
             importedStoryNotes.forEach((note: any) => {
                 const sanitizedData = sanitizeFirestorePayload({
@@ -461,7 +496,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 });
                 batch.set(doc(storyNotesCol), sanitizedData);
             });
+            totalItems += importedStoryNotes.length;
         }
+
+        update({ id: 'story-import-toast', description: `Committing ${totalItems} item(s) to database...` });
 
         await batch.commit().catch((serverError) => {
             const permissionError = new FirestorePermissionError({
@@ -476,7 +514,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         dismiss();
         toast({
             title: 'Import Successful',
-            description: `"${projectData.title || 'Untitled Story'}" has been added to your stories.`,
+            description: `"${projectData.title || 'Untitled Story'}" with ${totalItems} item(s) has been added to your stories.`,
         });
         setCurrentScriptId(newStoryRef.id);
         setView('dashboard');

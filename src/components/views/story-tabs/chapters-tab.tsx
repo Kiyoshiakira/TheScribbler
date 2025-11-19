@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useFullscreen } from '@/hooks/use-fullscreen';
 import { cn } from '@/lib/utils';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 interface Chapter {
   id?: string;
@@ -83,7 +84,7 @@ export default function ChaptersTab() {
 
     try {
       if (isNew) {
-        const docData = { ...dataWithWordCount, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+        const docData = sanitizeFirestorePayload({ ...dataWithWordCount, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await addDoc(chaptersCollection, docData).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
@@ -96,7 +97,7 @@ export default function ChaptersTab() {
         });
       } else {
         const chapterDocRef = doc(chaptersCollection, id);
-        const updateData = { ...dataWithWordCount, updatedAt: serverTimestamp() };
+        const updateData = sanitizeFirestorePayload({ ...dataWithWordCount, updatedAt: serverTimestamp() });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await setDoc(chapterDocRef, updateData, { merge: true }).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
