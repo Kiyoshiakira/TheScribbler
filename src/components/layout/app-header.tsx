@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '../ui/sidebar';
 import { GoogleDocIcon } from '../ui/icons';
-import { useAuth, useUser, useFirestore, FirestorePermissionError, errorEmitter, useDoc, useMemoFirebase } from '@/firebase';
+import { useAuth, useUser, useFirestore, FirestorePermissionError, errorEmitter, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
@@ -47,7 +47,55 @@ import { exportToFinalDraft } from '@/lib/export-fdx';
 import { exportToPDF } from '@/lib/export-pdf';
 import { exportToGoogleDocs, getGoogleDocsUrl } from '@/lib/export-google-docs';
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
+import { useTool } from '@/context/tool-context';
 
+// Story Scribbler interfaces
+interface OutlineItem {
+  id?: string;
+  title: string;
+  description: string;
+  order: number;
+  parentId?: string;
+}
+
+interface Chapter {
+  id?: string;
+  title: string;
+  summary: string;
+  content: string;
+  order: number;
+  wordCount?: number;
+}
+
+interface StoryCharacter {
+  id?: string;
+  name: string;
+  role: string;
+  description: string;
+  imageUrl?: string;
+}
+
+interface WorldElement {
+  id?: string;
+  name: string;
+  type: string;
+  description: string;
+}
+
+interface TimelineEvent {
+  id?: string;
+  title: string;
+  description: string;
+  timeframe: string;
+  category: string;
+}
+
+interface StoryNote {
+  id?: string;
+  title: string;
+  content: string;
+  category: string;
+}
 
 interface AppHeaderProps {
   activeView: View;
@@ -63,6 +111,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
+  const { currentTool } = useTool();
 
   const userProfileRef = useMemoFirebase(() => {
     if (user && firestore) {
@@ -71,6 +120,39 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     return null;
   }, [user, firestore]);
   const { data: userProfile } = useDoc(userProfileRef);
+
+  // Story Scribbler collections
+  const outlineCollection = useMemoFirebase(
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'outline') : null),
+    [firestore, user, currentScriptId]
+  );
+  const chaptersCollection = useMemoFirebase(
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'chapters') : null),
+    [firestore, user, currentScriptId]
+  );
+  const storyCharactersCollection = useMemoFirebase(
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'storyCharacters') : null),
+    [firestore, user, currentScriptId]
+  );
+  const worldBuildingCollection = useMemoFirebase(
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'worldBuilding') : null),
+    [firestore, user, currentScriptId]
+  );
+  const timelineCollection = useMemoFirebase(
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'timeline') : null),
+    [firestore, user, currentScriptId]
+  );
+  const storyNotesCollection = useMemoFirebase(
+    () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'storyNotes') : null),
+    [firestore, user, currentScriptId]
+  );
+
+  const { data: outlineItems } = useCollection<OutlineItem>(outlineCollection);
+  const { data: chapters } = useCollection<Chapter>(chaptersCollection);
+  const { data: storyCharacters } = useCollection<StoryCharacter>(storyCharactersCollection);
+  const { data: worldElements } = useCollection<WorldElement>(worldBuildingCollection);
+  const { data: timelineEvents } = useCollection<TimelineEvent>(timelineCollection);
+  const { data: storyNotes } = useCollection<StoryNote>(storyNotesCollection);
 
   const handleSignOut = async () => {
     if (auth) {
@@ -210,11 +292,13 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       handleScriteImport(file);
     } else if (file.name.endsWith('.scribbler')) {
       handleScribblerImport(file);
+    } else if (file.name.endsWith('.story')) {
+      handleStoryImport(file);
     } else {
       toast({
         variant: 'destructive',
         title: 'Unsupported File Type',
-        description: 'Please select a .scrite or .scribbler file.',
+        description: 'Please select a .scrite, .scribbler, or .story file.',
       });
     }
 
@@ -257,6 +341,146 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
 
     } catch (error) {
         console.error('Scribbler import failed:', error);
+        dismiss();
+        if (!(error instanceof FirestorePermissionError)) {
+            toast({
+                variant: 'destructive',
+                title: 'Import Failed',
+                description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+            });
+        }
+    }
+  }
+
+  const handleStoryImport = async (file: File) => {
+    if (!firestore || !user) return;
+    const { dismiss, update } = toast({
+      id: 'story-import-toast',
+      title: 'Importing Story File...',
+      description: 'Reading the story archive.',
+    });
+    
+    try {
+        const zip = await JSZip.loadAsync(await file.arrayBuffer());
+        
+        const projectFile = zip.file('project.json');
+        if (!projectFile) throw new Error('Invalid .story file: project.json not found.');
+        
+        update({ id: 'story-import-toast', description: 'Parsing story data...' });
+        const projectData = JSON.parse(await projectFile.async('string'));
+        
+        const importedOutline = zip.file('outline.json') ? JSON.parse(await zip.file('outline.json')!.async('string')) : [];
+        const importedChapters = zip.file('chapters.json') ? JSON.parse(await zip.file('chapters.json')!.async('string')) : [];
+        const importedStoryCharacters = zip.file('storyCharacters.json') ? JSON.parse(await zip.file('storyCharacters.json')!.async('string')) : [];
+        const importedWorldBuilding = zip.file('worldBuilding.json') ? JSON.parse(await zip.file('worldBuilding.json')!.async('string')) : [];
+        const importedTimeline = zip.file('timeline.json') ? JSON.parse(await zip.file('timeline.json')!.async('string')) : [];
+        const importedStoryNotes = zip.file('storyNotes.json') ? JSON.parse(await zip.file('storyNotes.json')!.async('string')) : [];
+        
+        update({ id: 'story-import-toast', title: 'Saving to Database...', description: 'Writing new story and sub-collections.' });
+        
+        const batch = writeBatch(firestore);
+        const newStoryRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
+        
+        // Sanitize the story data
+        const storyData = sanitizeFirestorePayload({
+            title: projectData.title || 'Untitled Story Import',
+            content: projectData.content || '',
+            logline: projectData.logline || '',
+            authorId: user.uid,
+            createdAt: serverTimestamp(),
+            lastModified: serverTimestamp(),
+        });
+        
+        batch.set(newStoryRef, storyData);
+
+        // Import Story Scribbler specific collections
+        if (importedOutline.length > 0) {
+            const outlineCol = collection(newStoryRef, 'outline');
+            importedOutline.forEach((item: any) => {
+                const sanitizedData = sanitizeFirestorePayload({
+                    ...item,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                batch.set(doc(outlineCol), sanitizedData);
+            });
+        }
+        if (importedChapters.length > 0) {
+            const chaptersCol = collection(newStoryRef, 'chapters');
+            importedChapters.forEach((chapter: any) => {
+                const sanitizedData = sanitizeFirestorePayload({
+                    ...chapter,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                batch.set(doc(chaptersCol), sanitizedData);
+            });
+        }
+        if (importedStoryCharacters.length > 0) {
+            const storyCharsCol = collection(newStoryRef, 'storyCharacters');
+            importedStoryCharacters.forEach((char: any) => {
+                const sanitizedData = sanitizeFirestorePayload({
+                    ...char,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                batch.set(doc(storyCharsCol), sanitizedData);
+            });
+        }
+        if (importedWorldBuilding.length > 0) {
+            const worldCol = collection(newStoryRef, 'worldBuilding');
+            importedWorldBuilding.forEach((element: any) => {
+                const sanitizedData = sanitizeFirestorePayload({
+                    ...element,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                batch.set(doc(worldCol), sanitizedData);
+            });
+        }
+        if (importedTimeline.length > 0) {
+            const timelineCol = collection(newStoryRef, 'timeline');
+            importedTimeline.forEach((event: any) => {
+                const sanitizedData = sanitizeFirestorePayload({
+                    ...event,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                batch.set(doc(timelineCol), sanitizedData);
+            });
+        }
+        if (importedStoryNotes.length > 0) {
+            const storyNotesCol = collection(newStoryRef, 'storyNotes');
+            importedStoryNotes.forEach((note: any) => {
+                const sanitizedData = sanitizeFirestorePayload({
+                    ...note,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                });
+                batch.set(doc(storyNotesCol), sanitizedData);
+            });
+        }
+
+        await batch.commit().catch((serverError) => {
+            const permissionError = new FirestorePermissionError({
+                path: `users/${user.uid}/scripts`,
+                operation: 'write',
+                requestResourceData: { story: "Batch write for story import" },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            throw permissionError;
+        });
+
+        dismiss();
+        toast({
+            title: 'Import Successful',
+            description: `"${projectData.title || 'Untitled Story'}" has been added to your stories.`,
+        });
+        setCurrentScriptId(newStoryRef.id);
+        setView('dashboard');
+
+    } catch (error) {
+        console.error('Story import failed:', error);
         dismiss();
         if (!(error instanceof FirestorePermissionError)) {
             toast({
@@ -363,6 +587,66 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     } catch (error) {
       console.error("Error generating zip file:", error);
       toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the project file.' });
+    }
+  };
+
+  const handleStoryExport = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active story to export.' });
+      return;
+    }
+
+    const zip = new JSZip();
+
+    const meta = {
+      exportedAt: new Date().toISOString(),
+      appVersion: '1.0.0',
+      storyTitle: script.title,
+      fileType: 'story',
+    };
+    zip.file('meta.json', JSON.stringify(meta, null, 2));
+
+    const projectData = {
+      title: script.title,
+      logline: script.logline || '',
+      content: script.content,
+    };
+    zip.file('project.json', JSON.stringify(projectData, null, 2));
+
+    // Include Story Scribbler specific collections
+    if (outlineItems && outlineItems.length > 0) {
+      zip.file('outline.json', JSON.stringify(outlineItems.map(({ id, ...rest }) => rest), null, 2));
+    }
+    if (chapters && chapters.length > 0) {
+      zip.file('chapters.json', JSON.stringify(chapters.map(({ id, ...rest }) => rest), null, 2));
+    }
+    if (storyCharacters && storyCharacters.length > 0) {
+      zip.file('storyCharacters.json', JSON.stringify(storyCharacters.map(({ id, ...rest }) => rest), null, 2));
+    }
+    if (worldElements && worldElements.length > 0) {
+      zip.file('worldBuilding.json', JSON.stringify(worldElements.map(({ id, ...rest }) => rest), null, 2));
+    }
+    if (timelineEvents && timelineEvents.length > 0) {
+      zip.file('timeline.json', JSON.stringify(timelineEvents.map(({ id, ...rest }) => rest), null, 2));
+    }
+    if (storyNotes && storyNotes.length > 0) {
+      zip.file('storyNotes.json', JSON.stringify(storyNotes.map(({ id, ...rest }) => rest), null, 2));
+    }
+
+    try {
+      const content = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.story`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'Your story has been downloaded.' });
+    } catch (error) {
+      console.error("Error generating zip file:", error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the story file.' });
     }
   };
 
@@ -623,7 +907,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
-            accept=".scrite,.scribbler"
+            accept=".scrite,.scribbler,.story"
         />
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -635,7 +919,9 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={triggerFileSelect}>
                     <FileJson className="h-4 w-4 mr-2" />
-                    Import .scrite or .scribbler file
+                    {currentTool === 'StoryScribbler' 
+                      ? 'Import .story file'
+                      : 'Import .scrite or .scribbler file'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={openPicker}>
@@ -653,32 +939,43 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-             <DropdownMenuItem onClick={handleExport}>
-                <FileJson className="h-4 w-4 mr-2" />
-                Export as .scribbler
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleExportFountain}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as Fountain
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportPlainText}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as Plain Text (.txt)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportFinalDraft}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as Final Draft (.fdx)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportPDF}>
-                <Download className="h-4 w-4 mr-2" />
-                Export as PDF
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleExportGoogleDocs}>
-                <GoogleDocIcon className="h-4 w-4 mr-2" />
-                Export to Google Docs (Alternative)
-            </DropdownMenuItem>
+            {currentTool === 'StoryScribbler' ? (
+              <>
+                <DropdownMenuItem onClick={handleStoryExport}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  Export as .story
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem onClick={handleExport}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  Export as .scribbler
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportFountain}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as Fountain
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPlainText}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as Plain Text (.txt)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportFinalDraft}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as Final Draft (.fdx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleExportGoogleDocs}>
+                  <GoogleDocIcon className="h-4 w-4 mr-2" />
+                  Export to Google Docs (Alternative)
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
         <UserMenu />
