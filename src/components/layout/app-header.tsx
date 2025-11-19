@@ -516,7 +516,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             console.warn('AI reformatting failed, using raw script:', reformatResult.error);
         }
         
-        update({ id: 'scrite-import-toast', title: 'Saving to Database...', description: 'Writing new script and sub-collections.' });
+        update({ title: 'Saving to Database...', description: 'Writing new script and sub-collections.' });
         
         await processImportedContent(parsedData.title, formattedScript, {
             characters: parsedData.characters,

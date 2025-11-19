@@ -6,6 +6,14 @@ import { useToast } from './use-toast';
 import { getAuth, onIdTokenChanged } from 'firebase/auth';
 import { importFromGoogleDocs, scriptDocumentToText } from '@/lib/import-google-docs';
 
+// Extend window type for Google API
+declare global {
+  interface Window {
+    gapi: typeof gapi;
+    google: typeof google;
+  }
+}
+
 const DEVELOPER_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const APP_ID = process.env.NEXT_PUBLIC_GOOGLE_APP_ID;
 
@@ -74,16 +82,16 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
             return;
         }
 
-        const docsView = new window.google.picker.View(window.google.picker.ViewId.DOCS)
+        const docsView = new (window.google.picker as any).View((window.google.picker as any).ViewId.DOCS)
             .setMimeTypes("application/vnd.google-apps.document");
             
-        const picker = new window.google.picker.PickerBuilder()
+        const picker = new (window.google.picker as any).PickerBuilder()
         .setAppId(APP_ID!)
         .setDeveloperKey(DEVELOPER_KEY!)
         .setOAuthToken(oauthToken)
         .addView(docsView)
         .setCallback(async (data: google.picker.ResponseObject) => {
-            if (data.action === window.google.picker.Action.PICKED) {
+            if (data.action === (window.google.picker as any).Action.PICKED) {
                 const doc = data.docs[0];
                 if (!doc) return;
 
@@ -91,7 +99,7 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
                 
                 try {
                     await window.gapi.client.load('https://docs.googleapis.com/$discovery/rest?version=v1');
-                    const response = await window.gapi.client.docs.documents.get({
+                    const response = await (window.gapi.client as any).docs.documents.get({
                         documentId: doc.id
                     });
                     
@@ -106,9 +114,9 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
                         const content = response.result.body.content;
                         let text = '';
                         if(content){
-                            content.forEach(p => {
+                            content.forEach((p: { paragraph?: { elements?: Array<{ textRun?: { content?: string } }> } }) => {
                                 if (p.paragraph && p.paragraph.elements) {
-                                    p.paragraph.elements.forEach(elem => {
+                                    p.paragraph.elements.forEach((elem: { textRun?: { content?: string } }) => {
                                         if(elem.textRun && elem.textRun.content){
                                             text += elem.textRun.content;
                                         }
