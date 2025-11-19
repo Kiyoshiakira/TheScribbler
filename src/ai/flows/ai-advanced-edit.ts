@@ -8,10 +8,8 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
-import { getEditingPrompt } from '@/lib/ai-system-prompts';
-import { enrichDocumentWithSemantics, semanticToStandardDocument, SemanticDocument } from '@/lib/semantic-document-model';
+import { enrichDocumentWithSemantics, semanticToStandardDocument } from '@/lib/semantic-document-model';
 import { getRelevantContext } from '@/lib/rag-service';
 import { ScriptDocument } from '@/lib/editor-types';
 import {
@@ -19,7 +17,6 @@ import {
   ApplyStyleRuleInputSchema,
   generateStructureTemplate,
   GenerateStructureInputSchema,
-  prepareSearchAndInsertContext,
   SearchAndInsertInputSchema,
 } from '@/lib/ai-tools';
 
@@ -55,67 +52,68 @@ export async function aiAdvancedEdit(
 }
 
 // Define the tools that the AI can call
-const styleRuleTool = ai.defineTool(
-  {
-    name: 'apply_style_rule',
-    description: 'Apply a formatting rule to enforce consistency across the screenplay. Use this when the user asks to fix formatting, capitalize scene headings, standardize character names, etc.',
-    inputSchema: ApplyStyleRuleInputSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      changesCount: z.number(),
-    }),
-  },
-  async (input) => {
-    // This is a mock implementation - in real usage, we'd need the actual document
-    // The actual tool execution happens in the flow where we have access to the document
-    return {
-      success: true,
-      message: `Would apply ${input.ruleName} to ${input.scope}`,
-      changesCount: 0,
-    };
-  }
-);
+// Note: The following tool definitions are placeholders for future function calling implementation
+// They are currently defined but not actively used in the flow
 
-const generateStructureTool = ai.defineTool(
-  {
-    name: 'generate_structure',
-    description: 'Generate a structured template or expand a simple element into a complex structure. Use this when the user wants to create act structure, scene sequences, dialogue exchanges, or plot points.',
-    inputSchema: GenerateStructureInputSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      blocksCount: z.number(),
-    }),
-  },
-  async (input) => {
-    return {
-      success: true,
-      message: `Would generate ${input.structureType} structure`,
-      blocksCount: 0,
-    };
-  }
-);
+// const styleRuleTool = ai.defineTool(
+//   {
+//     name: 'apply_style_rule',
+//     description: 'Apply a formatting rule to enforce consistency across the screenplay.',
+//     inputSchema: ApplyStyleRuleInputSchema,
+//     outputSchema: z.object({
+//       success: z.boolean(),
+//       message: z.string(),
+//       changesCount: z.number(),
+//     }),
+//   },
+//   async (input) => {
+//     return {
+//       success: true,
+//       message: `Would apply ${input.ruleName} to ${input.scope}`,
+//       changesCount: 0,
+//     };
+//   }
+// );
 
-const searchAndInsertTool = ai.defineTool(
-  {
-    name: 'search_and_insert',
-    description: 'Search existing story notes and world-building content, then insert relevant information into the screenplay. Use this when the user wants to add details grounded in their existing notes.',
-    inputSchema: SearchAndInsertInputSchema,
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      foundContext: z.boolean(),
-    }),
-  },
-  async (input) => {
-    return {
-      success: true,
-      message: `Would search for "${input.query}" and insert ${input.contentType}`,
-      foundContext: true,
-    };
-  }
-);
+// const generateStructureTool = ai.defineTool(
+//   {
+//     name: 'generate_structure',
+//     description: 'Generate a structured template or expand a simple element into a complex structure.',
+//     inputSchema: GenerateStructureInputSchema,
+//     outputSchema: z.object({
+//       success: z.boolean(),
+//       message: z.string(),
+//       blocksCount: z.number(),
+//     }),
+//   },
+//   async (input) => {
+//     return {
+//       success: true,
+//       message: `Would generate ${input.structureType} structure`,
+//       blocksCount: 0,
+//     };
+//   }
+// );
+
+// const searchAndInsertTool = ai.defineTool(
+//   {
+//     name: 'search_and_insert',
+//     description: 'Search existing story notes and world-building content.',
+//     inputSchema: SearchAndInsertInputSchema,
+//     outputSchema: z.object({
+//       success: z.boolean(),
+//       message: z.string(),
+//       foundContext: z.boolean(),
+//     }),
+//   },
+//   async (input) => {
+//     return {
+//       success: true,
+//       message: `Would search for "${input.query}" and insert ${input.contentType}`,
+//       foundContext: true,
+//     };
+//   }
+// );
 
 const aiAdvancedEditFlow = ai.defineFlow(
   {
@@ -127,7 +125,9 @@ const aiAdvancedEditFlow = ai.defineFlow(
     // Convert to semantic document
     const semanticDoc = enrichDocumentWithSemantics(input.document as ScriptDocument);
     
-    // Use RAG if document is long
+    // TODO: Use RAG context for better AI responses
+    // Currently the RAG context is calculated but not yet integrated into the LLM prompt
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let contextToUse: string;
     if (input.useRAG && semanticDoc.blocks.length > 50) {
       const ragResult = getRelevantContext(
@@ -148,7 +148,7 @@ const aiAdvancedEditFlow = ai.defineFlow(
     if (instruction.includes('format') || instruction.includes('uppercase') || 
         instruction.includes('capitalize') || instruction.includes('fix spacing')) {
       
-      let ruleName: any = 'remove-extra-spaces';
+      let ruleName: 'remove-extra-spaces' | 'uppercase-scene-headings' | 'uppercase-characters' | 'capitalize-transitions' = 'remove-extra-spaces';
       if (instruction.includes('scene') || instruction.includes('heading')) {
         ruleName = 'uppercase-scene-headings';
       } else if (instruction.includes('character')) {
@@ -176,7 +176,7 @@ const aiAdvancedEditFlow = ai.defineFlow(
         (instruction.includes('act') || instruction.includes('structure') || 
          instruction.includes('scene') || instruction.includes('plot point'))) {
       
-      let structureType: any = 'act-structure';
+      let structureType: 'act-structure' | 'scene-sequence' | 'plot-points' | 'dialogue-exchange' = 'act-structure';
       if (instruction.includes('scene')) structureType = 'scene-sequence';
       else if (instruction.includes('plot point')) structureType = 'plot-points';
       else if (instruction.includes('dialogue')) structureType = 'dialogue-exchange';

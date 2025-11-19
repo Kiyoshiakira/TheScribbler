@@ -11,8 +11,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { getWritingAssistPrompt } from '@/lib/ai-system-prompts';
-import { enrichDocumentWithSemantics, getBlockContext } from '@/lib/semantic-document-model';
-import { ScriptDocument } from '@/lib/editor-types';
 
 const ScriptBlockSchema = z.object({
   id: z.string(),

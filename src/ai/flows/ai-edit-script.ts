@@ -10,9 +10,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import { getEditingPrompt } from '@/lib/ai-system-prompts';
-import { enrichDocumentWithSemantics } from '@/lib/semantic-document-model';
-import { getRelevantContext } from '@/lib/rag-service';
 
 const ScriptBlockSchema = z.object({
   id: z.string(),
