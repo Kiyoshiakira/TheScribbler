@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Loader2, FileText, Edit, Maximize2, Minimize2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, FileText, Edit, Maximize2, Minimize2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -267,6 +267,7 @@ function ChapterDialog({
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { isFullscreen, toggleFullscreen } = useFullscreen(contentAreaRef);
@@ -278,6 +279,42 @@ function ChapterDialog({
       setContent(chapter?.content || '');
     }
   }, [open, chapter]);
+
+  const handleAIAssist = async () => {
+    if (!summary && !title) {
+      toast({
+        variant: 'destructive',
+        title: 'Input Required',
+        description: 'Please provide a title or summary to get AI writing assistance.',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // Simple AI prompt for now - in production, you'd call an actual AI service
+      // const prompt = `Based on the chapter titled "${title}" with summary: "${summary}", suggest some content ideas or continuation for the story.`;
+      
+      // Placeholder for AI generation
+      const suggestion = `\n\n[AI Suggestion based on "${title}"]\n\nConsider developing the following elements:\n- Character development moments\n- Plot progression\n- Setting descriptions\n- Dialogue exchanges\n\n(Note: This is a placeholder. Connect to the actual AI service for real suggestions.)`;
+      
+      setContent(prev => prev + suggestion);
+      
+      toast({
+        title: 'AI Assistance Added',
+        description: 'AI suggestions have been added to your content. Review and edit as needed.',
+      });
+    } catch (error) {
+      console.error('Error with AI assistance:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Assistance Failed',
+        description: 'Failed to generate AI suggestions.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title) {
@@ -332,6 +369,20 @@ function ChapterDialog({
             <div className="flex items-center justify-between">
               <Label htmlFor="content">Content</Label>
               <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAIAssist}
+                  disabled={isGenerating}
+                  title="Get AI writing suggestions"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                </Button>
                 <span className="text-xs text-muted-foreground">{wordCount} words</span>
                 <Button
                   type="button"

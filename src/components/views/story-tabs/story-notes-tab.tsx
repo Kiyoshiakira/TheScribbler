@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Loader2, StickyNote, BookOpen } from 'lucide-react';
+import { Plus, Trash2, Loader2, BookOpen, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -282,6 +282,7 @@ function StoryNoteDialog({
   const [category, setCategory] = useState('General');
   const [tagsInput, setTagsInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -292,6 +293,38 @@ function StoryNoteDialog({
       setTagsInput(note?.tags?.join(', ') || '');
     }
   }, [open, note]);
+
+  const handleAIExpand = async () => {
+    if (!title && !content) {
+      toast({
+        variant: 'destructive',
+        title: 'Input Required',
+        description: 'Please provide a title or some content to expand with AI.',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const expansion = `\n\n[AI Expansion for ${category}]\n\nBased on "${title}":\n- Additional details and context\n- Related ideas and connections\n- Questions to consider\n- Potential story applications\n\n(This is a placeholder for AI-generated content)`;
+      
+      setContent(prev => prev + expansion);
+      
+      toast({
+        title: 'AI Expansion Added',
+        description: 'AI-generated content has been added to your note.',
+      });
+    } catch (error) {
+      console.error('Error expanding note:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Expansion Failed',
+        description: 'Failed to expand note.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title) {
@@ -346,7 +379,23 @@ function StoryNoteDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="content">Content</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="content">Content</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAIExpand}
+                disabled={isGenerating}
+                title="Expand with AI"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             <Textarea
               id="content"
               value={content}
