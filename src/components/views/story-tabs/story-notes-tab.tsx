@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { collection, addDoc, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
@@ -85,7 +86,7 @@ export default function StoryNotesTab() {
 
     try {
       if (isNew) {
-        const docData = { ...plainData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+        const docData = sanitizeFirestorePayload({ ...plainData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await addDoc(notesCollection, docData).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
@@ -98,7 +99,7 @@ export default function StoryNotesTab() {
         });
       } else {
         const noteDocRef = doc(notesCollection, id);
-        const updateData = { ...plainData, updatedAt: serverTimestamp() };
+        const updateData = sanitizeFirestorePayload({ ...plainData, updatedAt: serverTimestamp() });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         await setDoc(noteDocRef, updateData, { merge: true }).catch((serverError) => {
           const permissionError = new FirestorePermissionError({

@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, User } from 'lucide-react';
 import { Logo } from '@/components/layout/app-sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 export default function OnboardingPage() {
   const { user, isUserLoading } = useUser();
@@ -73,7 +74,7 @@ export default function OnboardingPage() {
 
       // Create user profile in Firestore
       const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
+      await setDoc(userDocRef, sanitizeFirestorePayload({
         displayName: trimmedDisplayName,
         email: user.email,
         photoURL: user.photoURL || '',
@@ -81,7 +82,7 @@ export default function OnboardingPage() {
         coverImageUrl: '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      }));
 
       toast({
         title: 'Profile Created',
