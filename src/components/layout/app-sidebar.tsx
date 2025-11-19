@@ -24,31 +24,31 @@ import {
 import { cn } from '@/lib/utils';
 import type { View } from './AppLayout';
 import { useCurrentScript } from '@/context/current-script-context';
-import { useTool } from '@/context/tool-context';
+import { useTool, type ToolType } from '@/context/tool-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Image from 'next/image';
 
-export const Logo = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-8 w-8 text-primary"
-  >
-    <path d="M4 6h16" />
-    <path d="M4 12h16" />
-    <path d="M4 18h16" />
-    <path d="M12 4v16" />
-  </svg>
-);
+export const Logo = ({ variant = 'default' }: { variant?: 'default' | ToolType }) => {
+  const logoSrc = 
+    variant === 'ScriptScribbler' ? '/images/scriptscribbler.png' :
+    variant === 'StoryScribbler' ? '/images/storyscribbler.png' :
+    '/images/logo.png';
+  
+  return (
+    <Image 
+      src={logoSrc} 
+      alt="The Scribbler Logo" 
+      width={32} 
+      height={32} 
+      className="object-contain"
+    />
+  );
+};
 
 interface AppSidebarProps {
   activeView: View;
@@ -94,7 +94,7 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
       <SidebarHeader>
         <div className="flex flex-col items-center justify-center gap-1 p-2 w-full">
           <button onClick={() => handleViewChange('dashboard')}>
-            <Logo />
+            <Logo variant={currentTool} />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded hover:bg-accent transition-colors">

@@ -11,6 +11,7 @@ import {
   User as UserIcon,
   Loader2,
   CheckCircle,
+  Info,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,8 @@ import { exportToPDF } from '@/lib/export-pdf';
 import { exportToGoogleDocs, getGoogleDocsUrl } from '@/lib/export-google-docs';
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 import { useTool } from '@/context/tool-context';
+import { AboutDialog } from '@/components/about-dialog';
+import { useState } from 'react';
 
 // Story Scribbler interfaces
 interface OutlineItem {
@@ -112,6 +115,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
   const { currentTool } = useTool();
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => {
     if (user && firestore) {
@@ -833,6 +837,10 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setAboutOpen(true)}>
+            <Info className="mr-2 h-4 w-4" />
+            <span>About</span>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -981,6 +989,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         <UserMenu />
       </div>
     </header>
+    <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
     </>
   );
 }
