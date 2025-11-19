@@ -31,12 +31,12 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
           <SettingsProvider>
-            <CurrentScriptProvider>
-              <ToolProvider>
+            <ToolProvider>
+              <CurrentScriptProvider>
                 {children}
                 <Toaster />
-              </ToolProvider>
-            </CurrentScriptProvider>
+              </CurrentScriptProvider>
+            </ToolProvider>
           </SettingsProvider>
         </FirebaseClientProvider>
       </body>
