@@ -46,6 +46,7 @@ import { exportToPlainText } from '@/lib/export-txt';
 import { exportToFinalDraft } from '@/lib/export-fdx';
 import { exportToPDF } from '@/lib/export-pdf';
 import { exportToGoogleDocs, getGoogleDocsUrl } from '@/lib/export-google-docs';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 
 interface AppHeaderProps {
@@ -91,46 +92,56 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             const batch = writeBatch(firestore);
             const newScriptRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
             
-            batch.set(newScriptRef, {
+            // Sanitize the script data to remove any undefined values
+            const scriptData = sanitizeFirestorePayload({
                 title: title,
                 content: content,
+                logline: '', // Initialize logline as empty string instead of leaving it undefined
                 authorId: user.uid,
                 createdAt: serverTimestamp(),
                 lastModified: serverTimestamp(),
             });
+            
+            batch.set(newScriptRef, scriptData);
 
             if (subCollections) {
                 if (subCollections.characters) {
                     const charactersCol = collection(newScriptRef, 'characters');
                     subCollections.characters.forEach((char: any) => {
                         const { id, ...charData } = char;
-                        batch.set(doc(charactersCol), {
+                        // Sanitize character data to remove undefined values
+                        const sanitizedCharData = sanitizeFirestorePayload({
                             ...charData,
                             createdAt: serverTimestamp(),
                             updatedAt: serverTimestamp(),
                         });
+                        batch.set(doc(charactersCol), sanitizedCharData);
                     });
                 }
                 if (subCollections.scenes) {
                     const scenesCol = collection(newScriptRef, 'scenes');
                     subCollections.scenes.forEach((scene: any) => {
                         const { id, ...sceneData } = scene;
-                        batch.set(doc(scenesCol), {
+                        // Sanitize scene data to remove undefined values
+                        const sanitizedSceneData = sanitizeFirestorePayload({
                             ...sceneData,
                             createdAt: serverTimestamp(),
                             updatedAt: serverTimestamp(),
                         });
+                        batch.set(doc(scenesCol), sanitizedSceneData);
                     });
                 }
                 if (subCollections.notes) {
                     const notesCol = collection(newScriptRef, 'notes');
                     subCollections.notes.forEach((note: any) => {
                         const { id, ...noteData } = note;
-                        batch.set(doc(notesCol), {
+                        // Sanitize note data to remove undefined values
+                        const sanitizedNoteData = sanitizeFirestorePayload({
                             ...noteData,
                             createdAt: serverTimestamp(),
                             updatedAt: serverTimestamp(),
                         });
+                        batch.set(doc(notesCol), sanitizedNoteData);
                     });
                 }
             }

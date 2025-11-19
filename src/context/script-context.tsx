@@ -11,6 +11,7 @@ import type { Note } from '@/components/views/notes-view';
 import { ScriptDocument, ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import { parseScreenplay, serializeScript } from '@/lib/screenplay-parser';
 import type { Match } from '@/hooks/use-find-replace.tsx';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 // Delay to ensure DOM has updated before focusing elements
 const DOM_UPDATE_DELAY_MS = 10;
@@ -160,18 +161,22 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     setSaveStatus('saving');
 
     const versionsCollectionRef = collection(scriptDocRef, 'versions');
-    const versionData = {
+    
+    // Sanitize version data to ensure no undefined values
+    const versionData = sanitizeFirestorePayload({
         title: localScript.title,
         logline: localScript.logline || '',
         content: newContent,
         timestamp: serverTimestamp()
-    };
-    const mainScriptUpdateData = {
+    });
+    
+    // Sanitize main script update data to ensure no undefined values
+    const mainScriptUpdateData = sanitizeFirestorePayload({
         content: newContent,
         title: localScript.title,
-        logline: localScript.logline,
+        logline: localScript.logline || '', // Ensure logline is at least an empty string
         lastModified: serverTimestamp()
-    }
+    });
 
     try {
         const batch = writeBatch(firestore);
