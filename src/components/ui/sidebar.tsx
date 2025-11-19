@@ -569,9 +569,12 @@ const SidebarMenuButton = React.forwardRef<
       >
         {React.Children.map(children, (child, index) => {
           if (index === 0 && React.isValidElement(child)) {
+            const childClassName = typeof child.props === 'object' && child.props !== null && 'className' in child.props 
+              ? child.props.className 
+              : undefined;
             return React.cloneElement(child, {
-              className: cn('shrink-0 size-4', child.props.className),
-            });
+              className: cn('shrink-0 size-4', childClassName),
+            } as Partial<unknown>);
           }
           if (index === 1) {
             return (

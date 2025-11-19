@@ -123,7 +123,7 @@ export default function RichTextEditor({
   const { quill, quillRef } = useQuill({ modules, formats, theme: 'snow' });
 
   // Debounced parent callback so parent state isn't updated on every keystroke.
-  const debouncedOnChange = useDebouncedCallback<(html: string) => void>(onChange, debounceMs);
+  const debouncedOnChange = useDebouncedCallback(onChange as (...args: unknown[]) => void, debounceMs);
 
   // Track whether we initialized quill content
   const initializedRef = useRef(false);
@@ -154,8 +154,8 @@ export default function RichTextEditor({
     quill.on('text-change', handleTextChange);
 
     // Setup image handler (uploads image via uploadImage callback if provided)
-    const toolbar = quill.getModule('toolbar');
-    if (toolbar) {
+    const toolbar = quill.getModule('toolbar') as { addHandler?: (name: string, handler: () => void) => void } | null;
+    if (toolbar && toolbar.addHandler) {
       toolbar.addHandler('image', async () => {
         // open file picker
         const input = document.createElement('input');
