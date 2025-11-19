@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Loader2, User, Upload, Users } from 'lucide-react';
+import { Plus, Trash2, Loader2, User, Upload, Users, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { aiGenerateCharacterProfile } from '@/ai/flows/ai-generate-character-profile';
 
 interface StoryCharacter {
   id?: string;
@@ -265,6 +266,7 @@ function CharacterDialog({
   const [goals, setGoals] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -288,6 +290,67 @@ function CharacterDialog({
         setImageUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGenerateWithAI = async () => {
+    if (!description && !name) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Input Required', 
+        description: 'Please provide at least a name or description to generate character details with AI.' 
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const result = await aiGenerateCharacterProfile({
+        characterDescription: description || `A ${role.toLowerCase()} character`,
+        characterName: name || undefined,
+        existingProfile: [personality, background, goals].filter(Boolean).join('\n\n'),
+      });
+
+      // Update fields with AI-generated content
+      if (!name && result.name) {
+        setName(result.name);
+      }
+      
+      // Parse the profile to extract different sections if possible
+      const profileText = result.profile;
+      
+      // If fields are empty, fill them with the generated profile
+      if (!personality && !background && !goals) {
+        // Split the profile into sections if it contains clear markers
+        const sections = profileText.split('\n\n');
+        if (sections.length >= 3) {
+          setPersonality(sections[0]);
+          setBackground(sections[1]);
+          setGoals(sections[2]);
+        } else {
+          // Otherwise put it all in personality
+          setPersonality(profileText);
+        }
+      } else {
+        // Enhance existing content
+        if (!personality) setPersonality(profileText);
+        if (!background) setBackground(profileText);
+        if (!goals) setGoals(profileText);
+      }
+
+      toast({
+        title: 'AI Generation Complete',
+        description: 'Character profile has been generated. Review and edit as needed.',
+      });
+    } catch (error) {
+      console.error('Error generating character profile:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Generation Failed',
+        description: error instanceof Error ? error.message : 'Failed to generate character profile.',
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -315,10 +378,28 @@ function CharacterDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-headline">{character?.id ? 'Edit Character' : 'Add Character'}</DialogTitle>
-          <DialogDescription>
-            {character?.id ? 'Edit your character details.' : 'Create a new character for your story.'}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="font-headline">{character?.id ? 'Edit Character' : 'Add Character'}</DialogTitle>
+              <DialogDescription>
+                {character?.id ? 'Edit your character details.' : 'Create a new character for your story.'}
+              </DialogDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateWithAI}
+              disabled={isGenerating}
+              title="Generate character details with AI"
+            >
+              {isGenerating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              AI Generate
+            </Button>
+          </div>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto space-y-4 py-4">
           <div className="grid grid-cols-4 gap-4">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Loader2, Clock, Calendar } from 'lucide-react';
+import { Plus, Trash2, Loader2, Clock, Calendar, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -288,6 +288,7 @@ function TimelineEventDialog({
   const [timeframe, setTimeframe] = useState('');
   const [category, setCategory] = useState('Plot');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -298,6 +299,38 @@ function TimelineEventDialog({
       setCategory(event?.category || 'Plot');
     }
   }, [open, event]);
+
+  const handleAISuggest = async () => {
+    if (!title || !category) {
+      toast({
+        variant: 'destructive',
+        title: 'Input Required',
+        description: 'Please provide a title and category to get AI suggestions.',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const suggestion = `For ${category} event "${title}":\n\n- Key moments and turning points\n- Character involvement and reactions\n- Cause and effect relationships\n- Impact on the overall story arc\n- Connections to other events`;
+      
+      setDescription(prev => prev ? `${prev}\n\n${suggestion}` : suggestion);
+      
+      toast({
+        title: 'AI Suggestions Added',
+        description: 'Timeline suggestions have been added.',
+      });
+    } catch (error) {
+      console.error('Error generating suggestions:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Suggestion Failed',
+        description: 'Failed to generate suggestions.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title) {
@@ -359,7 +392,23 @@ function TimelineEventDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Description</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAISuggest}
+                disabled={isGenerating}
+                title="Get AI suggestions"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}

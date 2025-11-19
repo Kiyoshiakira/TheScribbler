@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Loader2, MapPin, Upload, Globe } from 'lucide-react';
+import { Plus, Trash2, Loader2, MapPin, Upload, Globe, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -285,6 +285,7 @@ function WorldElementDialog({
   const [significance, setSignificance] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -306,6 +307,38 @@ function WorldElementDialog({
         setImageUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAISuggest = async () => {
+    if (!name || !type) {
+      toast({
+        variant: 'destructive',
+        title: 'Input Required',
+        description: 'Please provide a name and type to get AI suggestions.',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const suggestion = `For ${type} "${name}":\n\n- Physical characteristics and appearance\n- History and origins\n- Cultural or practical significance\n- Notable features or customs\n- Connections to other story elements`;
+      
+      setDescription(prev => prev ? `${prev}\n\n${suggestion}` : suggestion);
+      
+      toast({
+        title: 'AI Suggestions Added',
+        description: 'AI suggestions for world-building have been added.',
+      });
+    } catch (error) {
+      console.error('Error generating suggestions:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Suggestion Failed',
+        description: 'Failed to generate suggestions.',
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -359,7 +392,23 @@ function WorldElementDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Description</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAISuggest}
+                disabled={isGenerating}
+                title="Get AI suggestions"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}

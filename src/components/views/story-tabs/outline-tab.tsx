@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Loader2 } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Loader2, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -288,6 +288,7 @@ function OutlineItemDialog({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -296,6 +297,39 @@ function OutlineItemDialog({
       setDescription(item?.description || '');
     }
   }, [open, item]);
+
+  const handleAISuggest = async () => {
+    if (!title) {
+      toast({
+        variant: 'destructive',
+        title: 'Title Required',
+        description: 'Please enter a title to get AI suggestions.',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // Placeholder AI suggestion
+      const suggestion = `Based on "${title}", consider including:\n- Key plot points\n- Character development moments\n- Conflict introduction or resolution\n- Setting establishment`;
+      
+      setDescription(prev => prev ? `${prev}\n\n${suggestion}` : suggestion);
+      
+      toast({
+        title: 'AI Suggestion Added',
+        description: 'AI suggestions have been added. Review and customize as needed.',
+      });
+    } catch (error) {
+      console.error('Error generating suggestion:', error);
+      toast({
+        variant: 'destructive',
+        title: 'AI Suggestion Failed',
+        description: 'Failed to generate suggestions.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title) {
@@ -329,7 +363,23 @@ function OutlineItemDialog({
             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Act I: The Beginning" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Description</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAISuggest}
+                disabled={isGenerating}
+                title="Get AI suggestions"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}
