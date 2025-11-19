@@ -9,6 +9,7 @@ import { FindReplaceDialog } from '../find-replace-dialog';
 import { FindReplaceProvider } from '@/hooks/use-find-replace';
 import EditorStatusBar from '../editor-status-bar';
 import { useScript } from '@/context/script-context';
+import { useSettings } from '@/context/settings-context';
 import { ScriptBlockType } from '@/lib/editor-types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
@@ -31,11 +32,15 @@ function EditorViewContent() {
   const editorContainerRef = useRef<HTMLDivElement>(null);
   
   const { document, insertBlockAfter, scenes } = useScript();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
   const { currentScriptId } = useCurrentScript();
   const { isFullscreen, toggleFullscreen } = useFullscreen(editorContainerRef);
+  
+  // Check if AI features are enabled (default to true for backwards compatibility)
+  const aiEnabled = settings.aiFeatureEnabled !== false;
 
   const scenesCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'scenes') : null),
@@ -159,7 +164,7 @@ function EditorViewContent() {
           </div>
         </div>
         <EditorStatusBar />
-        <AiFab />
+        {aiEnabled && <AiFab />}
         <FindReplaceDialog open={isFindOpen} onOpenChange={setIsFindOpen} />
         
         {/* Scene Edit Dialog */}

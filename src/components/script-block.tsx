@@ -5,6 +5,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 import { useScript } from '@/context/script-context';
+import { useSettings } from '@/context/settings-context';
 import AiEditContextMenu from './ai-edit-context-menu';
 import { X } from 'lucide-react';
 
@@ -93,12 +94,16 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const { insertBlockAfter, cycleBlockType, skipToDialogue, mergeWithPreviousBlock, deleteBlock, setActiveBlockId, activeBlockId, document: scriptDocument } = useScript();
+  const { settings } = useSettings();
   const [showAiMenu, setShowAiMenu] = useState(false);
   const [aiMenuPosition, setAiMenuPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState('');
 
   // Check if this block is currently active
   const isActive = activeBlockId === block.id;
+  
+  // Check if AI features are enabled (default to true for backwards compatibility)
+  const aiEnabled = settings.aiFeatureEnabled !== false;
 
   useEffect(() => {
     const element = elementRef.current;
@@ -128,6 +133,9 @@ const ScriptBlockComponent: React.FC<ScriptBlockProps> = ({
   }
 
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only show AI menu if AI features are enabled
+    if (!aiEnabled) return;
+    
     const selection = window.getSelection();
     const text = selection?.toString().trim();
     

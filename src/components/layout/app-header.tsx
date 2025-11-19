@@ -30,6 +30,7 @@ import { useAuth, useUser, useFirestore, FirestorePermissionError, errorEmitter,
 import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
+import { useSettings } from '@/context/settings-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
 import { parseScriteFile, ParsedScriteData } from '@/lib/scrite-parser';
@@ -111,6 +112,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const firestore = useFirestore();
   const router = useRouter();
   const { script, characters, scenes, notes, setScriptTitle, isScriptLoading, saveStatus } = useScript();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
@@ -951,36 +953,60 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
               <>
                 <DropdownMenuItem onClick={handleStoryExport}>
                   <FileJson className="h-4 w-4 mr-2" />
-                  Export as .story
+                  Export as .story (Default)
                 </DropdownMenuItem>
               </>
             ) : (
               <>
-                <DropdownMenuItem onClick={handleExport}>
-                  <FileJson className="h-4 w-4 mr-2" />
-                  Export as .scribbler
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Quick Export</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => {
+                  const format = settings.exportFormat || 'pdf';
+                  switch(format) {
+                    case 'pdf': handleExportPDF(); break;
+                    case 'fountain': handleExportFountain(); break;
+                    case 'finalDraft': handleExportFinalDraft(); break;
+                    case 'plainText': handleExportPlainText(); break;
+                    case 'scribbler': handleExport(); break;
+                    case 'googleDocs': handleExportGoogleDocs(); break;
+                    default: handleExportPDF();
+                  }
+                }}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as {
+                    settings.exportFormat === 'fountain' ? 'Fountain' :
+                    settings.exportFormat === 'finalDraft' ? 'Final Draft' :
+                    settings.exportFormat === 'plainText' ? 'Plain Text' :
+                    settings.exportFormat === 'scribbler' ? 'Scribbler' :
+                    settings.exportFormat === 'googleDocs' ? 'Google Docs' :
+                    'PDF'
+                  } (Default)
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">All Formats</DropdownMenuLabel>
+                <DropdownMenuItem onClick={handleExport}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  .scribbler
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportFountain}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export as Fountain
+                  Fountain
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPlainText}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export as Plain Text (.txt)
+                  Plain Text (.txt)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportFinalDraft}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export as Final Draft (.fdx)
+                  Final Draft (.fdx)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPDF}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export as PDF
+                  PDF
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleExportGoogleDocs}>
                   <GoogleDocIcon className="h-4 w-4 mr-2" />
-                  Export to Google Docs (Alternative)
+                  Google Docs (Alternative)
                 </DropdownMenuItem>
               </>
             )}

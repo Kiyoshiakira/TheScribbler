@@ -20,9 +20,13 @@ import { useCurrentScript } from '@/context/current-script-context';
 import { useScript } from '@/context/script-context';
 import { runAiDiagnoseAppHealth } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Moon, Sun, Monitor } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Slider } from './ui/slider';
+import { Switch } from './ui/switch';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -30,7 +34,18 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { settings, isSettingsLoading, setProjectLinkingMode } = useSettings();
+  const { 
+    settings, 
+    isSettingsLoading, 
+    setProjectLinkingMode,
+    setTheme,
+    setExportFormat,
+    setEditorFontSize,
+    setAiFeatureEnabled,
+    setProfilePublic,
+    setScriptSharingDefault,
+    setLanguage,
+  } = useSettings();
   const [isExporting, setIsExporting] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
@@ -155,98 +170,300 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline">Settings</DialogTitle>
           <DialogDescription>
             Customize your experience with The Scribbler.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="py-4 space-y-6">
-            <div className="space-y-3">
-              <Label>Project Linking Mode</Label>
-              <p className="text-sm text-muted-foreground">
-                Choose whether to work on the same project in both ScriptScribbler and StoryScribbler, or maintain separate projects for each.
-              </p>
-              <RadioGroup 
-                value={settings.projectLinkingMode || 'shared'} 
-                onValueChange={(value) => setProjectLinkingMode(value as 'shared' | 'separate')}
-                className="space-y-3"
-              >
-                <div className="flex items-start space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="shared" id="shared-mode" className="mt-0.5" />
-                  <div className="flex-1">
-                    <Label htmlFor="shared-mode" className="font-medium cursor-pointer">
-                      Single Shared Project
+        <Tabs defaultValue="general" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="editor">Editor</TabsTrigger>
+            <TabsTrigger value="privacy">Privacy</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          </TabsList>
+          
+          <ScrollArea className="flex-1 -mx-6 px-6 mt-4">
+            {/* General Settings Tab */}
+            <TabsContent value="general" className="space-y-6 mt-0">
+              {/* Theme Selection */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Theme</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose your preferred color theme for the application.
+                </p>
+                <RadioGroup 
+                  value={settings.theme || 'system'} 
+                  onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="light" id="theme-light" />
+                    <Sun className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-light" className="flex-1 cursor-pointer font-normal">
+                      Light
                     </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Work on the same project across both ScriptScribbler and StoryScribbler. When you switch tools, you'll continue working on the same script/story.
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="dark" id="theme-dark" />
+                    <Moon className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-dark" className="flex-1 cursor-pointer font-normal">
+                      Dark
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="system" id="theme-system" />
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-system" className="flex-1 cursor-pointer font-normal">
+                      System/Auto
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Separator />
+
+              {/* Export Format Selection */}
+              <div className="space-y-3">
+                <Label htmlFor="export-format" className="text-base font-semibold">Default Export Format</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose the default format when exporting your scripts.
+                </p>
+                <Select 
+                  value={settings.exportFormat || 'pdf'} 
+                  onValueChange={(value) => setExportFormat(value as any)}
+                >
+                  <SelectTrigger id="export-format">
+                    <SelectValue placeholder="Select default export format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                    <SelectItem value="fountain">Fountain</SelectItem>
+                    <SelectItem value="finalDraft">Final Draft (.fdx)</SelectItem>
+                    <SelectItem value="plainText">Plain Text (.txt)</SelectItem>
+                    <SelectItem value="scribbler">Scribbler (.scribbler)</SelectItem>
+                    <SelectItem value="googleDocs">Google Docs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              {/* Language Selection */}
+              <div className="space-y-3">
+                <Label htmlFor="language" className="text-base font-semibold">Language</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose your preferred language for the interface (feature coming soon).
+                </p>
+                <Select 
+                  value={settings.language || 'en'} 
+                  onValueChange={(value) => setLanguage(value as any)}
+                  disabled
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="fr">Français</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="ja">日本語</SelectItem>
+                    <SelectItem value="zh">中文</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+
+            {/* Editor Settings Tab */}
+            <TabsContent value="editor" className="space-y-6 mt-0">
+              {/* Editor Font Size */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Editor Font Size</Label>
+                <p className="text-sm text-muted-foreground">
+                  Adjust the text size in the script editor ({settings.editorFontSize || 16}px).
+                </p>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-muted-foreground w-12">12px</span>
+                  <Slider
+                    value={[settings.editorFontSize || 16]}
+                    onValueChange={([value]) => setEditorFontSize(value)}
+                    min={12}
+                    max={24}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-muted-foreground w-12">24px</span>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* AI Features Toggle */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="ai-features" className="text-base font-semibold">AI Features</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Show or hide AI-powered tools and suggestions in the editor.
                     </p>
                   </div>
+                  <Switch
+                    id="ai-features"
+                    checked={settings.aiFeatureEnabled !== false}
+                    onCheckedChange={setAiFeatureEnabled}
+                  />
                 </div>
-                <div className="flex items-start space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="separate" id="separate-mode" className="mt-0.5" />
-                  <div className="flex-1">
-                    <Label htmlFor="separate-mode" className="font-medium cursor-pointer">
-                      Separate Projects
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Maintain different projects for ScriptScribbler and StoryScribbler. Each tool will remember its own active project independently.
+              </div>
+            </TabsContent>
+
+            {/* Privacy Settings Tab */}
+            <TabsContent value="privacy" className="space-y-6 mt-0">
+              {/* Profile Visibility */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="profile-public" className="text-base font-semibold">Public Profile</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Make your profile visible to other users.
                     </p>
                   </div>
+                  <Switch
+                    id="profile-public"
+                    checked={settings.profilePublic !== false}
+                    onCheckedChange={setProfilePublic}
+                  />
                 </div>
-              </RadioGroup>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <Label>AI Model</Label>
-              <div className='p-3 border rounded-md bg-muted/50 text-sm text-muted-foreground'>
-                  The application is configured to use the <strong>gemini-2.5-flash</strong> model for all AI operations.
               </div>
-            </div>
 
-            <Separator />
-              
-            <div className="space-y-2">
-              <Label htmlFor="feedback-textarea">Provide Feedback</Label>
-              <p className='text-sm text-muted-foreground'>
-                  What do you think of the editor? Would you prefer a single-document feel or a block-based experience? Let us know!
-              </p>
-              <Textarea 
-                  id="feedback-textarea"
-                  placeholder="I think the editor should..."
-                  value={feedbackText}
-                  onChange={(e) => setFeedbackText(e.target.value)}
-                  rows={4}
-              />
-              <div className='flex justify-end'>
-                  <Button onClick={handleFeedbackSubmit} disabled={isSubmittingFeedback} variant="secondary">
-                      {isSubmittingFeedback && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Submit Feedback
-                  </Button>
+              <Separator />
+
+              {/* Script Sharing Default */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Default Script Sharing</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose the default visibility for new scripts you create.
+                </p>
+                <RadioGroup 
+                  value={settings.scriptSharingDefault || 'private'} 
+                  onValueChange={(value) => setScriptSharingDefault(value as 'public' | 'private')}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="private" id="sharing-private" />
+                    <div className="flex-1">
+                      <Label htmlFor="sharing-private" className="font-medium cursor-pointer">
+                        Private
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        New scripts are only visible to you by default.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="public" id="sharing-public" />
+                    <div className="flex-1">
+                      <Label htmlFor="sharing-public" className="font-medium cursor-pointer">
+                        Public
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        New scripts are visible to all users by default.
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
               </div>
-            </div>
+            </TabsContent>
 
-            <Separator />
-
-            <div className="space-y-2">
-              <Label>Debugging</Label>
-              <div className='flex items-center justify-between p-3 border rounded-md bg-muted/50'>
-                  <p className="text-sm text-muted-foreground">
-                      Export a debug log with current app state and an AI health check.
-                  </p>
-                  <Button variant="secondary" onClick={handleExportDebugLog} disabled={isExporting}>
-                      {isExporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Export
-                  </Button>
+            {/* Advanced Settings Tab */}
+            <TabsContent value="advanced" className="space-y-6 mt-0">
+              {/* Project Linking Mode */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Project Linking Mode</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose whether to work on the same project in both ScriptScribbler and StoryScribbler, or maintain separate projects for each.
+                </p>
+                <RadioGroup 
+                  value={settings.projectLinkingMode || 'shared'} 
+                  onValueChange={(value) => setProjectLinkingMode(value as 'shared' | 'separate')}
+                  className="space-y-3"
+                >
+                  <div className="flex items-start space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="shared" id="shared-mode" className="mt-0.5" />
+                    <div className="flex-1">
+                      <Label htmlFor="shared-mode" className="font-medium cursor-pointer">
+                        Single Shared Project
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Work on the same project across both ScriptScribbler and StoryScribbler. When you switch tools, you'll continue working on the same script/story.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="separate" id="separate-mode" className="mt-0.5" />
+                    <div className="flex-1">
+                      <Label htmlFor="separate-mode" className="font-medium cursor-pointer">
+                        Separate Projects
+                      </Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Maintain different projects for ScriptScribbler and StoryScribbler. Each tool will remember its own active project independently.
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
               </div>
-            </div>
-          </div>
-        </ScrollArea>
-        <DialogFooter>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label>AI Model</Label>
+                <div className='p-3 border rounded-md bg-muted/50 text-sm text-muted-foreground'>
+                    The application is configured to use the <strong>gemini-2.5-flash</strong> model for all AI operations.
+                </div>
+              </div>
+
+              <Separator />
+                
+              <div className="space-y-2">
+                <Label htmlFor="feedback-textarea">Provide Feedback</Label>
+                <p className='text-sm text-muted-foreground'>
+                    What do you think of the editor? Would you prefer a single-document feel or a block-based experience? Let us know!
+                </p>
+                <Textarea 
+                    id="feedback-textarea"
+                    placeholder="I think the editor should..."
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    rows={4}
+                />
+                <div className='flex justify-end'>
+                    <Button onClick={handleFeedbackSubmit} disabled={isSubmittingFeedback} variant="secondary">
+                        {isSubmittingFeedback && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit Feedback
+                    </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label>Debugging</Label>
+                <div className='flex items-center justify-between p-3 border rounded-md bg-muted/50'>
+                    <p className="text-sm text-muted-foreground">
+                        Export a debug log with current app state and an AI health check.
+                    </p>
+                    <Button variant="secondary" onClick={handleExportDebugLog} disabled={isExporting}>
+                        {isExporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Export
+                    </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </ScrollArea>
+        </Tabs>
+        <DialogFooter className="mt-4">
           <Button onClick={() => onOpenChange(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>

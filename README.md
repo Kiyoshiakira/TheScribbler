@@ -12,6 +12,7 @@ The Scribbler is a modern, collaborative writing application built with Next.js,
 - **🎬 ScriptScribbler** - Professional screenplay editor with Fountain syntax support
 - **📚 StoryScribbler** - Comprehensive story development tool with outline, chapters, and world-building
 - **🤖 AI-Powered Features** - Intelligent writing assistance powered by Google's Gemini
+- **⚙️ Comprehensive Settings** - Theme selection, export formats, editor customization, and privacy controls
 - **👥 Character Management** - Scrite-inspired character tracking and profiles
 - **🎭 Scene Organization** - Visual scene blocks with metadata and collapsible sections
 - **🔄 Public Sharing** - Share your scripts and stories with others via public URLs
@@ -95,7 +96,7 @@ The Scribbler is a **single-page application (SPA)** with a **tabbed sidebar int
 
 **Top-Right User Menu:**
 - **Profile** - User profile and script portfolio management
-- **Settings** - Application preferences and configuration
+- **Settings** - Application preferences (theme, export defaults, editor font size, AI features, privacy)
 - **Sign Out** - Secure logout
 
 **Tool Selector:**
@@ -295,6 +296,18 @@ When deleting a script from the Profile view, choose exactly what to remove:
 - Automatic save as you type
 - Access your work from any device
 - Offline support (coming soon)
+
+#### ⚙️ Comprehensive Settings Menu
+Customize your writing experience with extensive preferences:
+- **Theme Selection** - Light, Dark, or System/Auto mode with automatic detection
+- **Export Defaults** - Set your preferred export format for quick exports
+- **Editor Font Size** - Adjustable font size (12-24px) for comfortable writing
+- **AI Features Toggle** - Show/hide AI-powered tools throughout the application
+- **Privacy Controls** - Profile visibility and script sharing defaults
+- **Language Selection** - Interface language (ready for future i18n support)
+- **Project Linking** - Shared or separate projects between Script/Story Scribbler
+- All settings persist automatically and take effect immediately
+- See [SETTINGS_IMPLEMENTATION.md](SETTINGS_IMPLEMENTATION.md) for details
 
 ## 📖 Documentation
 

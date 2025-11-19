@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { CurrentScriptProvider } from '@/context/current-script-context';
 import { SettingsProvider } from '@/context/settings-context';
+import { ThemeProvider } from '@/context/theme-provider';
 import { ToolProvider } from '@/context/tool-context';
 
 export const metadata: Metadata = {
@@ -31,12 +32,14 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
           <SettingsProvider>
-            <ToolProvider>
-              <CurrentScriptProvider>
-                {children}
-                <Toaster />
-              </CurrentScriptProvider>
-            </ToolProvider>
+            <ThemeProvider>
+              <ToolProvider>
+                <CurrentScriptProvider>
+                  {children}
+                  <Toaster />
+                </CurrentScriptProvider>
+              </ToolProvider>
+            </ThemeProvider>
           </SettingsProvider>
         </FirebaseClientProvider>
       </body>
