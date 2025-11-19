@@ -207,11 +207,15 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
       model: googleAI.model('gemini-2.5-flash'),
       config: {
         temperature: 0.3,
-        systemInstruction: generateSystemPrompt({
-          includeScreenplayFormat: true,
-          includeSkylantia: false,
-          customInstructions: 'You are a helpful assistant for a screenwriting application. Provide clear, actionable advice.',
-        }),
+        systemInstruction: {
+          parts: [{
+            text: generateSystemPrompt({
+              includeScreenplayFormat: true,
+              includeSkylantia: false,
+              customInstructions: 'You are a helpful assistant for a screenwriting application. Provide clear, actionable advice.',
+            }),
+          }],
+        },
       },
       input: { 
         schema: z.object({

@@ -50,7 +50,9 @@ const prompt = ai.definePrompt({
   model: googleAI.model('gemini-2.5-flash'),
   config: {
     temperature: 0.7,
-    systemInstruction: getWritingAssistPrompt(false), // Set to true if working with Skylantia
+    systemInstruction: {
+      parts: [{ text: getWritingAssistPrompt(false) }], // Set to true if working with Skylantia
+    },
   },
   input: { schema: AiWritingAssistInputSchema },
   output: { schema: AiWritingAssistOutputSchema },

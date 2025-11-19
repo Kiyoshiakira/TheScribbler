@@ -53,7 +53,9 @@ const prompt = ai.definePrompt({
   model: googleAI.model('gemini-2.5-flash'),
   config: {
     temperature: 0.3,
-    systemInstruction: getEditingPrompt(false), // Set to true if working with Skylantia
+    systemInstruction: {
+      parts: [{ text: getEditingPrompt(false) }], // Set to true if working with Skylantia
+    },
   },
   input: { schema: AiEditScriptInputSchema },
   output: { schema: AiEditScriptOutputSchema },
