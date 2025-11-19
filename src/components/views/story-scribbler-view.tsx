@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Book, 
@@ -17,9 +16,47 @@ import StoryCharactersTab from './story-tabs/story-characters-tab';
 import WorldBuildingTab from './story-tabs/world-building-tab';
 import TimelineTab from './story-tabs/timeline-tab';
 import StoryNotesTab from './story-tabs/story-notes-tab';
+import type { View } from '../layout/AppLayout';
 
-export default function StoryScribblerView() {
-  const [activeTab, setActiveTab] = useState('outline');
+type StoryTab = 'outline' | 'chapters' | 'characters' | 'world' | 'timeline' | 'notes';
+
+interface StoryScribblerViewProps {
+  activeView: View;
+  setView: (view: View) => void;
+}
+
+export default function StoryScribblerView({ activeView, setView }: StoryScribblerViewProps) {
+  // Map view names to tab values (internal tab component uses 'notes', view uses 'story-notes')
+  const viewToTab = (view: View): StoryTab => {
+    switch (view) {
+      case 'outline': return 'outline';
+      case 'chapters': return 'chapters';
+      case 'characters': return 'characters';
+      case 'world': return 'world';
+      case 'timeline': return 'timeline';
+      case 'story-notes': return 'notes'; // Map story-notes view to notes tab
+      default: return 'outline'; // Default to outline for Story Scribbler
+    }
+  };
+
+  // Map tab values to view names (internal tab uses 'notes', view uses 'story-notes')
+  const tabToView = (tab: string): View => {
+    switch (tab) {
+      case 'outline': return 'outline';
+      case 'chapters': return 'chapters';
+      case 'characters': return 'characters';
+      case 'world': return 'world';
+      case 'timeline': return 'timeline';
+      case 'notes': return 'story-notes'; // Map notes tab to story-notes view
+      default: return 'outline';
+    }
+  };
+
+  const activeTab = viewToTab(activeView);
+
+  const handleTabChange = (tab: string) => {
+    setView(tabToView(tab));
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -28,7 +65,7 @@ export default function StoryScribblerView() {
         <h1 className="text-3xl font-bold font-headline">Story Scribbler</h1>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-6 mb-4">
           <TabsTrigger value="outline" className="flex items-center gap-2">
             <ListTree className="h-4 w-4" />

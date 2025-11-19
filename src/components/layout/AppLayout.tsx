@@ -15,12 +15,7 @@ import LoglineView from '../views/logline-view';
 import ScenesView from '../views/scenes-view';
 import CharactersView from '../views/characters-view';
 import NotesView from '../views/notes-view';
-import OutlineTab from '../views/story-tabs/outline-tab';
-import ChaptersTab from '../views/story-tabs/chapters-tab';
-import StoryCharactersTab from '../views/story-tabs/story-characters-tab';
-import WorldBuildingTab from '../views/story-tabs/world-building-tab';
-import TimelineTab from '../views/story-tabs/timeline-tab';
-import StoryNotesTab from '../views/story-tabs/story-notes-tab';
+import StoryScribblerView from '../views/story-scribbler-view';
 import { useUser, useDoc, useMemoFirebase, useFirestore } from '@/firebase';
 import { EditProfileDialog } from '../edit-profile-dialog';
 import { doc } from 'firebase/firestore';
@@ -114,16 +109,9 @@ function AppLayoutInternal() {
         return <DashboardView setView={handleSetView} />;
       }
       
-      // Story Scribbler specific views
-      switch(view) {
-        case 'outline': return <OutlineTab />;
-        case 'chapters': return <ChaptersTab />;
-        case 'characters': return <StoryCharactersTab />;
-        case 'world': return <WorldBuildingTab />;
-        case 'timeline': return <TimelineTab />;
-        case 'story-notes': return <StoryNotesTab />;
-        default: return <OutlineTab />; // Default to outline for Story Scribbler
-      }
+      // Story Scribbler specific views - use the unified StoryScribblerView
+      // which handles all tabs internally
+      return <StoryScribblerView activeView={view} setView={handleSetView} />;
     }
 
     // ScriptScribbler views (existing logic)
