@@ -28,15 +28,15 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
         </DialogHeader>
         <ScrollArea className="h-[calc(90vh-120px)] pr-4">
           <div className="space-y-6">
-            {/* ScriptScribbler Section */}
+            {/* ScriptScribbler Section - Using transparent PNG logo */}
             <div className="space-y-3">
               <div className="flex items-center gap-4">
                 <Image 
                   src="/images/scriptscribbler.png" 
                   alt="ScriptScribbler" 
-                  width={300} 
-                  height={300} 
-                  className="object-contain"
+                  width={80} 
+                  height={80} 
+                  className="object-contain flex-shrink-0"
                 />
                 <div>
                   <h3 className="text-xl font-bold font-headline">ScriptScribbler</h3>
@@ -65,15 +65,15 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
 
             <Separator />
 
-            {/* StoryScribbler Section */}
+            {/* StoryScribbler Section - Using transparent PNG logo */}
             <div className="space-y-3">
               <div className="flex items-center gap-4">
                 <Image 
                   src="/images/storyscribbler.png" 
                   alt="StoryScribbler" 
-                  width={300} 
-                  height={300} 
-                  className="object-contain"
+                  width={80} 
+                  height={80} 
+                  className="object-contain flex-shrink-0"
                 />
                 <div>
                   <h3 className="text-xl font-bold font-headline">StoryScribbler</h3>

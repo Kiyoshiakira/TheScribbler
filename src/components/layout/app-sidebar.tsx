@@ -33,6 +33,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 
+/**
+ * Logo component that displays the appropriate transparent PNG logo based on the current tool.
+ * Uses transparent background RGBA PNG images from /public/images/
+ * - ScriptScribbler: scriptscribbler.png
+ * - StoryScribbler: storyscribbler.png
+ * - Default: logo.png
+ */
 export const Logo = ({ variant = 'default' }: { variant?: 'default' | ToolType }) => {
   const logoSrc = 
     variant === 'ScriptScribbler' ? '/images/scriptscribbler.png' :
@@ -43,9 +50,9 @@ export const Logo = ({ variant = 'default' }: { variant?: 'default' | ToolType }
     <Image 
       src={logoSrc} 
       alt="The Scribbler Logo" 
-      width={96} 
-      height={96} 
-      className="object-contain"
+      width={120} 
+      height={120} 
+      className="object-contain w-full h-auto max-w-[120px]"
     />
   );
 };
