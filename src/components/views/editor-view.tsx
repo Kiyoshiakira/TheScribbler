@@ -22,6 +22,7 @@ import { useCurrentScript } from '@/context/current-script-context';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { useFullscreen } from '@/hooks/use-fullscreen';
 import { cn } from '@/lib/utils';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 function EditorViewContent() {
   const [isFindOpen, setIsFindOpen] = useState(false);
@@ -80,16 +81,17 @@ function EditorViewContent() {
       
       if (scene?.id) {
         const sceneDocRef = doc(scenesCollection, scene.id);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        await setDoc(sceneDocRef, {
+        const sceneData = sanitizeFirestorePayload({
           setting: sceneSettings.setting,
           description: sceneSettings.description,
           time: sceneSettings.time,
-        }, { merge: true }).catch((serverError) => {
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        await setDoc(sceneDocRef, sceneData, { merge: true }).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
             path: sceneDocRef.path,
             operation: 'update',
-            requestResourceData: sceneSettings,
+            requestResourceData: sceneData,
           });
           errorEmitter.emit('permission-error', permissionError);
           throw permissionError;
