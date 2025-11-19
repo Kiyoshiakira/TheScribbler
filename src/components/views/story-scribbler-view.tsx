@@ -18,7 +18,7 @@ import TimelineTab from './story-tabs/timeline-tab';
 import StoryNotesTab from './story-tabs/story-notes-tab';
 import type { View } from '../layout/AppLayout';
 
-type StoryTab = 'outline' | 'chapters' | 'characters' | 'world' | 'timeline' | 'story-notes';
+type StoryTab = 'outline' | 'chapters' | 'characters' | 'world' | 'timeline' | 'notes';
 
 interface StoryScribblerViewProps {
   activeView: View;
@@ -26,7 +26,7 @@ interface StoryScribblerViewProps {
 }
 
 export default function StoryScribblerView({ activeView, setView }: StoryScribblerViewProps) {
-  // Map view names to tab values
+  // Map view names to tab values (internal tab component uses 'notes', view uses 'story-notes')
   const viewToTab = (view: View): StoryTab => {
     switch (view) {
       case 'outline': return 'outline';
@@ -34,12 +34,12 @@ export default function StoryScribblerView({ activeView, setView }: StoryScribbl
       case 'characters': return 'characters';
       case 'world': return 'world';
       case 'timeline': return 'timeline';
-      case 'story-notes': return 'story-notes';
+      case 'story-notes': return 'notes'; // Map story-notes view to notes tab
       default: return 'outline'; // Default to outline for Story Scribbler
     }
   };
 
-  // Map tab values to view names
+  // Map tab values to view names (internal tab uses 'notes', view uses 'story-notes')
   const tabToView = (tab: string): View => {
     switch (tab) {
       case 'outline': return 'outline';
@@ -47,7 +47,7 @@ export default function StoryScribblerView({ activeView, setView }: StoryScribbl
       case 'characters': return 'characters';
       case 'world': return 'world';
       case 'timeline': return 'timeline';
-      case 'notes': return 'story-notes';
+      case 'notes': return 'story-notes'; // Map notes tab to story-notes view
       default: return 'outline';
     }
   };
