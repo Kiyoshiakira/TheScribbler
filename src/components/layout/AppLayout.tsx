@@ -89,13 +89,16 @@ function AppLayoutInternal() {
     } else if (newView === 'profile-edit') {
       setProfileOpen(true);
     } else {
-       // Profile is always accessible (from top-right menu)
-       // Dashboard is always accessible
-       // Other views require a script to be loaded
-      if (newView === 'dashboard' || newView === 'profile') {
+       // Profile and Dashboard are always accessible
+       // Story Scribbler views are always accessible
+       // Script Scribbler views (except dashboard/profile) require a script to be loaded
+      const storyScribblerViews: View[] = ['outline', 'chapters', 'characters', 'world', 'timeline', 'story-notes'];
+      const alwaysAccessibleViews = ['dashboard', 'profile'];
+      
+      if (alwaysAccessibleViews.includes(newView) || storyScribblerViews.includes(newView)) {
         setView(newView);
       } else if (currentScriptId) {
-        // Only allow navigation to other views if a script is loaded.
+        // Only allow navigation to Script Scribbler views if a script is loaded.
         setView(newView);
       }
       // If no script is loaded and trying to access a script-specific view, do nothing
