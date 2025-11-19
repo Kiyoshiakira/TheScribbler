@@ -98,20 +98,36 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
                 toast({ title: "Importing Document", description: `Fetching '${doc.name}' from Google Drive...`});
                 
                 try {
-                    await window.gapi.client.load('https://docs.googleapis.com/$discovery/rest?version=v1');
-                    const response = await (window.gapi.client as any).docs.documents.get({
-                        documentId: doc.id
+                    // Use server-side API to avoid CORS issues
+                    const response = await fetch('/api/google-docs/get', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            documentId: doc.id,
+                            accessToken: oauthToken,
+                        }),
                     });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch document from server');
+                    }
+
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to fetch document');
+                    }
                     
                     // Use the new import functionality to preserve formatting
                     try {
-                        const scriptDoc = importFromGoogleDocs(response.result);
+                        const scriptDoc = importFromGoogleDocs(data.document);
                         const formattedText = scriptDocumentToText(scriptDoc);
                         onFilePicked(doc.name, formattedText);
                     } catch (importError) {
                         // Fallback to plain text extraction if structured import fails
                         console.warn('Structured import failed, falling back to plain text:', importError);
-                        const content = response.result.body.content;
+                        const content = data.document.body.content;
                         let text = '';
                         if(content){
                             content.forEach((p: { paragraph?: { elements?: Array<{ textRun?: { content?: string } }> } }) => {
@@ -128,7 +144,7 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
                     }
                 } catch (error: any) {
                     console.error("Error fetching document content:", error);
-                    const errorMessage = error.result?.error?.message || 'Could not fetch document content. This may be due to incorrect API permissions in your Google Cloud project.';
+                    const errorMessage = error.message || 'Could not fetch document content. This may be due to incorrect API permissions in your Google Cloud project.';
                     toast({
                         variant: 'destructive',
                         title: 'Import Failed',
