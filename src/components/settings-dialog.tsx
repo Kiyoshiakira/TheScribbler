@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useSettings } from '@/context/settings-context';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
@@ -29,7 +30,7 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { isSettingsLoading } = useSettings();
+  const { settings, isSettingsLoading, setProjectLinkingMode } = useSettings();
   const [isExporting, setIsExporting] = useState(false);
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
@@ -163,6 +164,43 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </DialogHeader>
         <ScrollArea className="flex-1 -mx-6 px-6">
           <div className="py-4 space-y-6">
+            <div className="space-y-3">
+              <Label>Project Linking Mode</Label>
+              <p className="text-sm text-muted-foreground">
+                Choose whether to work on the same project in both ScriptScribbler and StoryScribbler, or maintain separate projects for each.
+              </p>
+              <RadioGroup 
+                value={settings.projectLinkingMode || 'shared'} 
+                onValueChange={(value) => setProjectLinkingMode(value as 'shared' | 'separate')}
+                className="space-y-3"
+              >
+                <div className="flex items-start space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="shared" id="shared-mode" className="mt-0.5" />
+                  <div className="flex-1">
+                    <Label htmlFor="shared-mode" className="font-medium cursor-pointer">
+                      Single Shared Project
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Work on the same project across both ScriptScribbler and StoryScribbler. When you switch tools, you'll continue working on the same script/story.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="separate" id="separate-mode" className="mt-0.5" />
+                  <div className="flex-1">
+                    <Label htmlFor="separate-mode" className="font-medium cursor-pointer">
+                      Separate Projects
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Maintain different projects for ScriptScribbler and StoryScribbler. Each tool will remember its own active project independently.
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <Separator />
+
             <div className="space-y-2">
               <Label>AI Model</Label>
               <div className='p-3 border rounded-md bg-muted/50 text-sm text-muted-foreground'>

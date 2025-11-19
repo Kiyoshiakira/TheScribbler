@@ -9,12 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
-import { Users, StickyNote, Clapperboard, BookOpen, NotebookPen, Plus, Sparkles, ListTree, FileText, MapPin, Clock } from 'lucide-react';
+import { Users, StickyNote, Clapperboard, BookOpen, NotebookPen, Plus, Sparkles, ListTree, FileText, MapPin, Clock, Link2, Unlink } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import type { View } from "../layout/AppLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useTool } from "@/context/tool-context";
+import { useSettings } from "@/context/settings-context";
 
 
 function StatCard({ title, value, icon, isLoading }: { title: string, value: number, icon: React.ReactNode, isLoading: boolean }) {
@@ -86,6 +87,9 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
     const { currentScriptId, setCurrentScriptId } = useCurrentScript();
     const { toast } = useToast();
     const { currentTool } = useTool();
+    const { settings } = useSettings();
+
+    const projectLinkingMode = settings.projectLinkingMode || 'shared';
 
     const areCharactersLoading = isScriptLoading;
     const areNotesLoading = isScriptLoading;
@@ -207,14 +211,31 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
         <div className="max-w-4xl mx-auto space-y-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline text-2xl">
-                        {currentTool === 'StoryScribbler' ? 'Start a New Story' : 'Start a New Script'}
-                    </CardTitle>
-                    <CardDescription>
-                        {currentTool === 'StoryScribbler' 
-                            ? 'Begin crafting your next story with outline, chapters, and world-building tools.'
-                            : 'Begin your next masterpiece from scratch or let our AI give you a starting point.'}
-                    </CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                            <CardTitle className="font-headline text-2xl">
+                                {currentTool === 'StoryScribbler' ? 'Start a New Story' : 'Start a New Script'}
+                            </CardTitle>
+                            <CardDescription>
+                                {currentTool === 'StoryScribbler' 
+                                    ? 'Begin crafting your next story with outline, chapters, and world-building tools.'
+                                    : 'Begin your next masterpiece from scratch or let our AI give you a starting point.'}
+                            </CardDescription>
+                        </div>
+                        <Badge variant={projectLinkingMode === 'shared' ? 'default' : 'secondary'} className="flex items-center gap-1.5 shrink-0">
+                            {projectLinkingMode === 'shared' ? (
+                                <>
+                                    <Link2 className="h-3 w-3" />
+                                    <span>Shared Project</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Unlink className="h-3 w-3" />
+                                    <span>Separate Projects</span>
+                                </>
+                            )}
+                        </Badge>
+                    </div>
                 </CardHeader>
                 <CardContent className="flex flex-col sm:flex-row gap-4">
                     <Button size="lg" className="w-full" onClick={handleCreateNewScript}>

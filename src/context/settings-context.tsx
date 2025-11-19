@@ -4,16 +4,22 @@ import React, { createContext, useState, useEffect, ReactNode, useContext } from
 
 const SETTINGS_STORAGE_KEY = 'scriptscribbler-settings';
 
-interface Settings {}
+export type ProjectLinkingMode = 'shared' | 'separate';
+
+interface Settings {
+  projectLinkingMode?: ProjectLinkingMode;
+}
 
 interface SettingsContextType {
   settings: Settings;
   isSettingsLoading: boolean;
+  setProjectLinkingMode: (mode: ProjectLinkingMode) => void;
 }
 
 export const SettingsContext = createContext<SettingsContextType>({
   settings: {},
   isSettingsLoading: true,
+  setProjectLinkingMode: () => {},
 });
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
@@ -33,9 +39,20 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const setProjectLinkingMode = (mode: ProjectLinkingMode) => {
+    try {
+      const newSettings = { ...settings, projectLinkingMode: mode };
+      setSettings(newSettings);
+      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
+    } catch (error) {
+      console.warn(`Error saving settings to localStorage:`, error);
+    }
+  };
+
   const value = {
     settings,
     isSettingsLoading,
+    setProjectLinkingMode,
   };
 
   return (
