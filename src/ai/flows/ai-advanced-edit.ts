@@ -10,14 +10,10 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { enrichDocumentWithSemantics, semanticToStandardDocument } from '@/lib/semantic-document-model';
-import { getRelevantContext } from '@/lib/rag-service';
 import { ScriptDocument } from '@/lib/editor-types';
 import {
   applyStyleRule,
-  ApplyStyleRuleInputSchema,
   generateStructureTemplate,
-  GenerateStructureInputSchema,
-  SearchAndInsertInputSchema,
 } from '@/lib/ai-tools';
 
 const ScriptBlockSchema = z.object({
@@ -125,21 +121,9 @@ const aiAdvancedEditFlow = ai.defineFlow(
     // Convert to semantic document
     const semanticDoc = enrichDocumentWithSemantics(input.document as ScriptDocument);
     
-    // TODO: Use RAG context for better AI responses
-    // Currently the RAG context is calculated but not yet integrated into the LLM prompt
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let contextToUse: string;
-    if (input.useRAG && semanticDoc.blocks.length > 50) {
-      const ragResult = getRelevantContext(
-        semanticDoc,
-        input.instruction,
-        input.targetBlockId,
-        2000
-      );
-      contextToUse = ragResult.combinedText;
-    } else {
-      contextToUse = semanticDoc.blocks.map(b => b.text).join('\n\n');
-    }
+    // Note: This flow uses rule-based pattern matching rather than LLM calls,
+    // so RAG context retrieval is not needed. For LLM-based editing, use the
+    // standard AI edit flows which incorporate semantic understanding.
     
     // Determine which action to take based on the instruction
     const instruction = input.instruction.toLowerCase();

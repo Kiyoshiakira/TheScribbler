@@ -6,6 +6,7 @@ import 'quill/dist/quill.snow.css';
 import { useFullscreen } from '@/hooks/use-fullscreen';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * RichTextEditor
@@ -68,6 +69,7 @@ export default function RichTextEditor({
   largeContentThreshold = 500_000,
   debounceMs = 400,
 }: Props) {
+  const { toast } = useToast();
   // If content is extremely large, use a plain textarea fallback to keep editing snappy.
   const isHuge = (value?.length || 0) > largeContentThreshold;
   const [usePlain, setUsePlain] = useState<boolean>(isHuge);
@@ -184,6 +186,11 @@ export default function RichTextEditor({
             }
           } catch (err) {
             console.error('Image upload/insert failed', err);
+            toast({
+              variant: 'destructive',
+              title: 'Image Upload Failed',
+              description: 'Failed to insert the image. Please try again or use a smaller image.',
+            });
           }
         };
       });
