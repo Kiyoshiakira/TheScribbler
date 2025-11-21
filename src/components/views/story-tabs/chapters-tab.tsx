@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 import MarkdownEditor from '@/components/Editor/MarkdownEditor';
+import DraftRecoveryDialog from '@/components/DraftRecoveryDialog';
 
 interface Chapter {
   id?: string;
@@ -270,13 +271,21 @@ function ChapterDialog({
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showDraftRecovery, setShowDraftRecovery] = useState(false);
   const { toast } = useToast();
+
+  // Generate a unique draft ID for autosave
+  const draftId = `chapter-draft-${chapter?.id || 'new'}`;
 
   useEffect(() => {
     if (open) {
       setTitle(chapter?.title || '');
       setSummary(chapter?.summary || '');
       setContent(chapter?.content || '');
+      // Show draft recovery dialog when opening
+      setShowDraftRecovery(true);
+    } else {
+      setShowDraftRecovery(false);
     }
   }, [open, chapter]);
 
@@ -330,13 +339,45 @@ function ChapterDialog({
       content,
       order: chapter?.order || 0,
     });
+    
+    // Clean up autosave draft after successful save
+    try {
+      const { saveManager } = await import('@/utils/saveManager');
+      await saveManager.deleteDraft(draftId);
+    } catch (error) {
+      console.error('Error cleaning up draft:', error);
+    }
+    
     setIsSaving(false);
   };
 
   const wordCount = content.trim().split(/\s+/).filter(word => word.length > 0).length;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      {/* Draft Recovery Dialog */}
+      {showDraftRecovery && (
+        <DraftRecoveryDialog
+          draftId={draftId}
+          onRecover={(recoveredContent, metadata) => {
+            setContent(recoveredContent);
+            if (metadata?.title) setTitle(metadata.title as string);
+            if (metadata?.summary) setSummary(metadata.summary as string);
+            toast({
+              title: 'Draft Recovered',
+              description: 'Your unsaved changes have been restored.',
+            });
+          }}
+          onDiscard={() => {
+            toast({
+              title: 'Draft Discarded',
+              description: 'Starting with a fresh chapter.',
+            });
+          }}
+        />
+      )}
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[90vw] max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-headline">{chapter?.id ? 'Edit Chapter' : 'Add Chapter'}</DialogTitle>
@@ -386,6 +427,14 @@ function ChapterDialog({
               onChange={setContent}
               placeholder="Write your chapter content here using Markdown..."
               minHeight={500}
+              autosaveEnabled={true}
+              autosaveId={draftId}
+              autosaveDebounce={2000}
+              autosaveMetadata={{
+                title,
+                summary,
+                type: 'chapter',
+              }}
             />
           </div>
         </div>
@@ -397,5 +446,6 @@ function ChapterDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
