@@ -264,16 +264,25 @@ export function extractPlainTextFromGoogleDocs(content: unknown): string {
     return text;
   }
   
-  // Use the existing GoogleDocsStructuralElement interface for type safety
-  content.forEach((element: GoogleDocsStructuralElement) => {
-    const elements = element?.paragraph?.elements || [];
-    if (Array.isArray(elements)) {
-      elements.forEach((elem: GoogleDocsParagraphElement) => {
-        if (elem?.textRun?.content) {
-          text += elem.textRun.content;
-        }
-      });
+  // Iterate through content with runtime validation
+  content.forEach((item: unknown) => {
+    // Validate that item is an object with the expected structure
+    if (typeof item !== 'object' || item === null) {
+      return;
     }
+    
+    const element = item as GoogleDocsStructuralElement;
+    const elements = element?.paragraph?.elements || [];
+    
+    if (!Array.isArray(elements)) {
+      return;
+    }
+    
+    elements.forEach((elem: GoogleDocsParagraphElement) => {
+      if (elem?.textRun?.content && typeof elem.textRun.content === 'string') {
+        text += elem.textRun.content;
+      }
+    });
   });
   
   return text;
