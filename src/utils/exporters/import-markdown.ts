@@ -23,7 +23,7 @@ export interface ParsedMarkdown {
 export function parseMarkdown(markdownContent: string): ParsedMarkdown {
   const lines = markdownContent.split('\n');
   
-  let title = 'Untitled Story';
+  let title: string | null = null;
   let logline: string | undefined;
   const chapters: Chapter[] = [];
   
@@ -106,7 +106,7 @@ export function parseMarkdown(markdownContent: string): ParsedMarkdown {
   }
 
   return {
-    title,
+    title: title || 'Untitled Story',
     logline,
     chapters,
   };
