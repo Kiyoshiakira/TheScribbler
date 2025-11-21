@@ -54,6 +54,13 @@ import { useTool } from '@/context/tool-context';
 import { AboutDialog } from '@/components/about-dialog';
 import { VersionHistory } from '@/components/VersionHistory/VersionHistory';
 import { useState } from 'react';
+import { exportToMarkdown, type StoryData } from '@/utils/exporters/export-markdown';
+import { createDocxDocument } from '@/utils/exporters/export-docx';
+import { Packer } from 'docx';
+import { generateEpub } from '@/utils/exporters/export-epub';
+import { exportStoryToPDF } from '@/utils/exporters/export-story-pdf';
+import { importMarkdownFile } from '@/utils/exporters/import-markdown';
+import { importDocxFile } from '@/utils/exporters/import-docx';
 
 // Story Scribbler interfaces
 interface OutlineItem {
@@ -323,11 +330,15 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       handleScribblerImport(file);
     } else if (file.name.endsWith('.story')) {
       handleStoryImport(file);
+    } else if (file.name.endsWith('.md')) {
+      handleMarkdownImport(file);
+    } else if (file.name.endsWith('.docx')) {
+      handleDocxImport(file);
     } else {
       toast({
         variant: 'destructive',
         title: 'Unsupported File Type',
-        description: 'Please select a .scrite, .scribbler, or .story file.',
+        description: 'Please select a .scrite, .scribbler, .story, .md, or .docx file.',
       });
     }
 
@@ -536,6 +547,149 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   }
 
 
+  const handleMarkdownImport = async (file: File) => {
+    if (!firestore || !user) return;
+
+    const { dismiss, update } = toast({
+      title: 'Importing Markdown File...',
+      description: 'Parsing file...',
+    });
+
+    try {
+      const parsedData = await importMarkdownFile(file);
+      
+      update({ title: 'Saving to Database...', description: 'Creating story and chapters...' });
+
+      const batch = writeBatch(firestore);
+      const newStoryRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
+
+      // Create the story document
+      const storyData = sanitizeFirestorePayload({
+        title: parsedData.title,
+        logline: parsedData.logline || '',
+        content: '',
+        authorId: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      batch.set(newStoryRef, storyData);
+
+      // Add chapters
+      if (parsedData.chapters && parsedData.chapters.length > 0) {
+        const chaptersCol = collection(newStoryRef, 'chapters');
+        parsedData.chapters.forEach((chapter) => {
+          const chapterData = sanitizeFirestorePayload({
+            ...chapter,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          batch.set(doc(chaptersCol), chapterData);
+        });
+      }
+
+      await batch.commit().catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: `users/${user.uid}/scripts`,
+          operation: 'write',
+          requestResourceData: { story: "Batch write for markdown import" },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
+
+      dismiss();
+      toast({
+        title: 'Import Successful',
+        description: `"${parsedData.title}" has been imported with ${parsedData.chapters.length} chapter(s).`,
+      });
+      setCurrentScriptId(newStoryRef.id);
+      setView('chapters');
+
+    } catch (error) {
+      console.error('Markdown import failed:', error);
+      dismiss();
+      if (!(error instanceof FirestorePermissionError)) {
+        toast({
+          variant: 'destructive',
+          title: 'Import Failed',
+          description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+        });
+      }
+    }
+  };
+
+  const handleDocxImport = async (file: File) => {
+    if (!firestore || !user) return;
+
+    const { dismiss, update } = toast({
+      title: 'Importing DOCX File...',
+      description: 'Parsing file...',
+    });
+
+    try {
+      const parsedData = await importDocxFile(file);
+      
+      update({ title: 'Saving to Database...', description: 'Creating story and chapters...' });
+
+      const batch = writeBatch(firestore);
+      const newStoryRef = doc(collection(firestore, 'users', user.uid, 'scripts'));
+
+      // Create the story document
+      const storyData = sanitizeFirestorePayload({
+        title: parsedData.title,
+        logline: parsedData.logline || '',
+        content: '',
+        authorId: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      batch.set(newStoryRef, storyData);
+
+      // Add chapters
+      if (parsedData.chapters && parsedData.chapters.length > 0) {
+        const chaptersCol = collection(newStoryRef, 'chapters');
+        parsedData.chapters.forEach((chapter) => {
+          const chapterData = sanitizeFirestorePayload({
+            ...chapter,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          batch.set(doc(chaptersCol), chapterData);
+        });
+      }
+
+      await batch.commit().catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: `users/${user.uid}/scripts`,
+          operation: 'write',
+          requestResourceData: { story: "Batch write for DOCX import" },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw permissionError;
+      });
+
+      dismiss();
+      toast({
+        title: 'Import Successful',
+        description: `"${parsedData.title}" has been imported with ${parsedData.chapters.length} chapter(s).`,
+      });
+      setCurrentScriptId(newStoryRef.id);
+      setView('chapters');
+
+    } catch (error) {
+      console.error('DOCX import failed:', error);
+      dismiss();
+      if (!(error instanceof FirestorePermissionError)) {
+        toast({
+          variant: 'destructive',
+          title: 'Import Failed',
+          description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+        });
+      }
+    }
+  };
+
+
   const handleScriteImport = async (file: File) => {
     if (!user) return;
     const { dismiss, update } = toast({ title: 'Importing Scrite File...', description: 'Parsing file...' });
@@ -690,6 +844,143 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     } catch (error) {
       console.error("Error generating zip file:", error);
       toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the story file.' });
+    }
+  };
+
+
+  // Helper to filter out Firestore metadata from chapters
+  const cleanChapter = (chapter: Chapter & { createdAt?: unknown; updatedAt?: unknown }): Chapter => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, ...cleanedChapter } = chapter as any;
+    return cleanedChapter;
+  };
+
+  // Story Scribbler export handlers
+  const handleStoryExportMarkdown = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active story to export.' });
+      return;
+    }
+
+    try {
+      const storyData: StoryData = {
+        title: script.title,
+        logline: script.logline,
+        chapters: chapters?.map(cleanChapter),
+        outline: outlineItems?.map(({ id, ...rest }) => rest),
+        characters: storyCharacters?.map(({ id, ...rest }) => rest),
+        worldElements: worldElements?.map(({ id, ...rest }) => rest),
+        timeline: timelineEvents?.map(({ id, ...rest }) => rest),
+        notes: storyNotes?.map(({ id, ...rest }) => rest),
+      };
+
+      const markdown = exportToMarkdown(storyData, true);
+      const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'Markdown file has been downloaded.' });
+    } catch (error) {
+      console.error('Error exporting to Markdown:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the Markdown file.' });
+    }
+  };
+
+  const handleStoryExportDocx = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active story to export.' });
+      return;
+    }
+
+    try {
+      const storyData: StoryData = {
+        title: script.title,
+        logline: script.logline,
+        chapters: chapters?.map(cleanChapter),
+        outline: outlineItems?.map(({ id, ...rest }) => rest),
+        characters: storyCharacters?.map(({ id, ...rest }) => rest),
+        worldElements: worldElements?.map(({ id, ...rest }) => rest),
+        timeline: timelineEvents?.map(({ id, ...rest }) => rest),
+        notes: storyNotes?.map(({ id, ...rest }) => rest),
+      };
+
+      const doc = createDocxDocument(storyData, true);
+      const blob = await Packer.toBlob(doc);
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'DOCX file has been downloaded.' });
+    } catch (error) {
+      console.error('Error exporting to DOCX:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the DOCX file.' });
+    }
+  };
+
+  const handleStoryExportEpub = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active story to export.' });
+      return;
+    }
+
+    try {
+      const storyData: StoryData = {
+        title: script.title,
+        logline: script.logline,
+        chapters: chapters?.map(cleanChapter),
+      };
+
+      const epubResult = await generateEpub(storyData, user?.displayName || 'Unknown Author');
+      // In browser, epub-gen-memory returns a Blob directly
+      const blob = epubResult instanceof Blob ? epubResult : new Blob([epubResult], { type: 'application/epub+zip' });
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      toast({ title: 'Export Successful', description: 'EPUB file has been downloaded.' });
+    } catch (error) {
+      console.error('Error exporting to EPUB:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the EPUB file.' });
+    }
+  };
+
+  const handleStoryExportPDF = async () => {
+    if (!script) {
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'No active story to export.' });
+      return;
+    }
+
+    try {
+      const storyData: StoryData = {
+        title: script.title,
+        logline: script.logline,
+        chapters: chapters?.map(cleanChapter),
+      };
+
+      await exportStoryToPDF(storyData);
+      
+      toast({ 
+        title: 'PDF Export', 
+        description: 'Print dialog opened. Choose "Save as PDF" as your destination.' 
+      });
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate the PDF.' });
     }
   };
 
@@ -954,7 +1245,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
-            accept=".scrite,.scribbler,.story"
+            accept=".scrite,.scribbler,.story,.md,.docx"
         />
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -967,7 +1258,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
                 <DropdownMenuItem onClick={triggerFileSelect}>
                     <FileJson className="h-4 w-4 mr-2" />
                     {currentTool === 'StoryScribbler' 
-                      ? 'Import .story file'
+                      ? 'Import .story, .md, or .docx file'
                       : 'Import .scrite or .scribbler file'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -988,9 +1279,28 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
           <DropdownMenuContent align="end">
             {currentTool === 'StoryScribbler' ? (
               <>
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Quick Export</DropdownMenuLabel>
                 <DropdownMenuItem onClick={handleStoryExport}>
                   <FileJson className="h-4 w-4 mr-2" />
                   Export as .story (Default)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">All Formats</DropdownMenuLabel>
+                <DropdownMenuItem onClick={handleStoryExportMarkdown}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Markdown (.md)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleStoryExportDocx}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Word Document (.docx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleStoryExportPDF}>
+                  <Download className="h-4 w-4 mr-2" />
+                  PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleStoryExportEpub}>
+                  <Download className="h-4 w-4 mr-2" />
+                  EPUB (.epub)
                 </DropdownMenuItem>
               </>
             ) : (
