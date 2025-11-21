@@ -67,8 +67,12 @@ interface GoogleDocsParagraphElement {
  * @returns A ScriptDocument with structured screenplay blocks
  */
 export function importFromGoogleDocs(googleDoc: GoogleDocsDocument): ScriptDocument {
-  if (!googleDoc?.body?.content || !Array.isArray(googleDoc.body.content)) {
-    throw new Error('Invalid Google Docs document structure: missing or invalid body.content');
+  if (!googleDoc?.body?.content) {
+    throw new Error('Invalid Google Docs document structure: missing body.content property');
+  }
+  
+  if (!Array.isArray(googleDoc.body.content)) {
+    throw new Error('Invalid Google Docs document structure: body.content must be an array');
   }
 
   const blocks: ScriptBlock[] = [];
@@ -247,4 +251,29 @@ export function scriptDocumentToText(doc: ScriptDocument): string {
   }
   
   return output;
+}
+
+/**
+ * Extracts plain text from Google Docs content structure
+ * Used as a fallback when structured import fails
+ */
+export function extractPlainTextFromGoogleDocs(content: unknown): string {
+  let text = '';
+  
+  if (!Array.isArray(content)) {
+    return text;
+  }
+  
+  content.forEach((p: { paragraph?: { elements?: Array<{ textRun?: { content?: string } }> } }) => {
+    const elements = p?.paragraph?.elements || [];
+    if (Array.isArray(elements)) {
+      elements.forEach((elem: { textRun?: { content?: string } }) => {
+        if (elem?.textRun?.content) {
+          text += elem.textRun.content;
+        }
+      });
+    }
+  });
+  
+  return text;
 }

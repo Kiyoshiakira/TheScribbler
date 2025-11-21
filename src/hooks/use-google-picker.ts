@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/firebase';
 import { useToast } from './use-toast';
 import { getAuth, onIdTokenChanged } from 'firebase/auth';
-import { importFromGoogleDocs, scriptDocumentToText } from '@/lib/import-google-docs';
+import { importFromGoogleDocs, scriptDocumentToText, extractPlainTextFromGoogleDocs } from '@/lib/import-google-docs';
 
 // Extend window type for Google API
 declare global {
@@ -74,11 +74,7 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
     if (gapiLoaded && window.gapi) {
       try {
         window.gapi.load('picker', { 
-          'callback': () => setPickerApiLoaded(true),
-          'onerror': () => {
-            console.error('Failed to load Google Picker API');
-            setPickerApiLoaded(false);
-          }
+          'callback': () => setPickerApiLoaded(true)
         });
       } catch (error) {
         console.error('Error loading Google Picker API:', error);
@@ -172,20 +168,7 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
                     } catch (importError) {
                         // Fallback to plain text extraction if structured import fails
                         console.warn('Structured import failed, falling back to plain text:', importError);
-                        const content = data.document?.body?.content || [];
-                        let text = '';
-                        if(Array.isArray(content)){
-                            content.forEach((p: { paragraph?: { elements?: Array<{ textRun?: { content?: string } }> } }) => {
-                                const elements = p?.paragraph?.elements || [];
-                                if(Array.isArray(elements)){
-                                    elements.forEach((elem: { textRun?: { content?: string } }) => {
-                                        if(elem?.textRun?.content){
-                                            text += elem.textRun.content;
-                                        }
-                                    })
-                                }
-                            })
-                        }
+                        const text = extractPlainTextFromGoogleDocs(data.document?.body?.content);
                         onFilePicked(doc.name, text);
                     }
                 } catch (error: any) {
