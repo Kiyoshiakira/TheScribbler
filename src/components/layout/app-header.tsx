@@ -941,8 +941,9 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
         }),
       };
 
-      const epubBuffer = await generateEpub(storyData, user?.displayName || 'Unknown Author');
-      const blob = new Blob([epubBuffer], { type: 'application/epub+zip' });
+      const epubResult = await generateEpub(storyData, user?.displayName || 'Unknown Author');
+      // In browser, epub-gen-memory returns a Blob directly
+      const blob = epubResult instanceof Blob ? epubResult : new Blob([epubResult], { type: 'application/epub+zip' });
       
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);

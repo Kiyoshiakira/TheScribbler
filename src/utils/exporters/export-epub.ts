@@ -87,11 +87,11 @@ function escapeHtml(text: string): string {
  * Generates EPUB content using epub-gen-memory
  * @param data Story data
  * @param author Author name
- * @returns Promise that resolves to EPUB buffer
+ * @returns Promise that resolves to EPUB buffer (Blob in browser)
  */
-export async function generateEpub(data: StoryData, author: string = 'Unknown Author'): Promise<Buffer> {
-  // Dynamic import to avoid issues with server-side rendering
-  const epubGen = (await import('epub-gen-memory')).default as any;
+export async function generateEpub(data: StoryData, author: string = 'Unknown Author'): Promise<any> {
+  // Use the browser bundle of epub-gen-memory which avoids Node.js dependencies
+  const epubGen = (await import('epub-gen-memory/bundle')).default as any;
   
   const options = createEpubOptions(data, author);
   
