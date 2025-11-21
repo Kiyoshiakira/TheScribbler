@@ -79,9 +79,8 @@ export default function CollaborativeEditor({
       if (presenceManager) {
         const unsubscribePresence = presenceManager.onPresenceUpdate(setActiveUsers);
         
-        // Store unsubscribe in provider for cleanup
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (collaborationProvider as any)._unsubscribePresence = unsubscribePresence;
+        // Register cleanup with provider
+        collaborationProvider.registerCleanup(unsubscribePresence);
       }
     });
 
@@ -91,11 +90,6 @@ export default function CollaborativeEditor({
     // Cleanup
     return () => {
       unsubscribeDoc();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((collaborationProvider as any)._unsubscribePresence) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (collaborationProvider as any)._unsubscribePresence();
-      }
       collaborationProvider.destroy();
       providerRef.current = null;
     };

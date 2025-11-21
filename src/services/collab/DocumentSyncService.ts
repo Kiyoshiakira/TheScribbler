@@ -3,11 +3,11 @@
  */
 
 import * as Y from 'yjs';
-import { ScriptDocument, ScriptBlock } from '@/lib/editor-types';
+import { ScriptDocument, ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
 
 export class DocumentSyncService {
   private ydoc: Y.Doc;
-  private yblocks: Y.Array<Y.Map<any>>;
+  private yblocks: Y.Array<Y.Map<unknown>>;
   private updateCallbacks: ((doc: ScriptDocument) => void)[] = [];
   private isLocalUpdate = false;
 
@@ -60,9 +60,9 @@ export class DocumentSyncService {
     
     this.yblocks.forEach(yblock => {
       blocks.push({
-        id: yblock.get('id'),
-        type: yblock.get('type'),
-        text: yblock.get('text'),
+        id: yblock.get('id') as string,
+        type: yblock.get('type') as ScriptBlockType,
+        text: yblock.get('text') as string,
       });
     });
     

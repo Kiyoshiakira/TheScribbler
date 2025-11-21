@@ -17,6 +17,10 @@ export interface CollaborationProviderConfig {
   onError?: (error: Error) => void;
 }
 
+interface ProviderCleanup {
+  unsubscribePresence?: () => void;
+}
+
 export class CollaborationProvider {
   private ydoc: Y.Doc;
   private provider: WebsocketProvider | null = null;
@@ -25,6 +29,7 @@ export class CollaborationProvider {
   private config: CollaborationProviderConfig;
   private connectionStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED;
   private useFallback = false;
+  private cleanup: ProviderCleanup = {};
 
   constructor(config: CollaborationProviderConfig) {
     this.config = config;
@@ -93,13 +98,19 @@ export class CollaborationProvider {
    */
   private getDefaultWebSocketUrl(): string {
     // In production, you would configure this to point to your WebSocket server
-    // For now, we'll use a public Yjs demo server for testing
+    // WARNING: Using public demo server - not suitable for production!
+    // Data on public servers may be visible to other users.
     if (typeof window !== 'undefined') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       // Try to connect to a local WebSocket server first
       return `${protocol}//${host}/collab`;
     }
+    
+    console.warn(
+      'Using public Yjs demo server as fallback. This is NOT recommended for production use. ' +
+      'Please deploy your own WebSocket server or configure websocketUrl.'
+    );
     return 'wss://demos.yjs.dev'; // Fallback to public demo server
   }
 
@@ -207,9 +218,21 @@ export class CollaborationProvider {
   }
 
   /**
+   * Register cleanup callback
+   */
+  registerCleanup(cleanup: () => void) {
+    this.cleanup.unsubscribePresence = cleanup;
+  }
+
+  /**
    * Disconnect from collaborative session
    */
   disconnect() {
+    if (this.cleanup.unsubscribePresence) {
+      this.cleanup.unsubscribePresence();
+      this.cleanup.unsubscribePresence = undefined;
+    }
+
     if (this.provider) {
       this.provider.disconnect();
       this.provider.destroy();

@@ -191,10 +191,10 @@ The implementation includes fallback mechanisms for poor connectivity:
 
 ## Dependencies
 
-- `yjs`: ^13.x - CRDT library
-- `y-websocket`: ^1.x - WebSocket provider for Yjs
-- `y-protocols`: ^1.x - Awareness and sync protocols
-- `lib0`: ^0.x - Utility library for Yjs
+- `yjs`: ^13.6.27 - CRDT library
+- `y-websocket`: ^3.0.0 - WebSocket provider for Yjs
+- `y-protocols`: ^1.0.6 - Awareness and sync protocols
+- `lib0`: ^0.2.101 - Utility library for Yjs
 
 ## Troubleshooting
 

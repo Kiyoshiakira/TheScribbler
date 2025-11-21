@@ -13,6 +13,7 @@ import {
   getDocs,
   Timestamp,
   serverTimestamp,
+  Firestore,
 } from 'firebase/firestore';
 import { CollaborativeSession } from './types';
 
@@ -30,10 +31,10 @@ export interface SessionData {
 }
 
 export class SessionPersistenceService {
-  private firestore: any;
+  private firestore: Firestore;
   private userId: string;
 
-  constructor(firestore: any, userId: string) {
+  constructor(firestore: Firestore, userId: string) {
     this.firestore = firestore;
     this.userId = userId;
   }

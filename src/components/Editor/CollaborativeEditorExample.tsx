@@ -172,8 +172,8 @@ export function AdvancedCollaborativeEditor({
  * function MyApp() {
  *   const initialDocument = {
  *     blocks: [
- *       { id: '1', type: ScriptBlockType.SCENE_HEADING, text: 'INT. OFFICE - DAY' },
- *       { id: '2', type: ScriptBlockType.ACTION, text: 'John enters the room.' },
+ *       { id: '1', type: 'scene-heading', text: 'INT. OFFICE - DAY' },
+ *       { id: '2', type: 'action', text: 'John enters the room.' },
  *     ],
  *   };
  * 
