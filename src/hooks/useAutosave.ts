@@ -176,16 +176,27 @@ export function useAutosave({
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasChangedRef.current && !isSaving) {
-        // Synchronous save attempt
+        // Show browser warning if there are unsaved changes
+        // Note: The browser may or may not show this message
+        e.preventDefault();
+        e.returnValue = '';
+        
+        // Attempt to save using sendBeacon for better reliability
+        // This is a best-effort save before unload
         try {
-          saveManager.saveDraft(id, content, metadata);
+          const draft = {
+            id,
+            content,
+            timestamp: Date.now(),
+            synced: saveManager.isOnline(),
+            metadata,
+          };
+          
+          // Use sessionStorage as fallback since we can't use async storage during unload
+          sessionStorage.setItem(`draft-backup-${id}`, JSON.stringify(draft));
         } catch (error) {
           console.error('[useAutosave] Error saving before unload:', error);
         }
-        
-        // Show browser warning if there are unsaved changes
-        e.preventDefault();
-        e.returnValue = '';
       }
     };
 

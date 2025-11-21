@@ -61,7 +61,8 @@ export function DraftRecoveryDialog({
       try {
         const savedDraft = await saveManager.getDraft(draftId);
         
-        if (savedDraft && savedDraft.content) {
+        // Check if draft exists (content can be empty string)
+        if (savedDraft && savedDraft.content !== undefined) {
           setDraft(savedDraft);
           setOpen(true);
         }

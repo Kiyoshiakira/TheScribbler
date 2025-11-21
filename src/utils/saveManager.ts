@@ -44,8 +44,8 @@ class SaveManager {
           options.onOnline();
         }
         this.notifyListeners();
-        // Trigger sync when coming online
-        this.syncPendingDrafts();
+        // Notify about unsynced drafts when coming online
+        this.notifyUnsyncedDrafts();
       });
 
       window.addEventListener('offline', () => {
@@ -173,10 +173,10 @@ class SaveManager {
   }
 
   /**
-   * Sync pending drafts (to be called when coming online)
-   * This is a placeholder - actual sync logic should be implemented by the consumer
+   * Notify about pending drafts (to be called when coming online)
+   * Consumers should implement actual sync logic based on their needs
    */
-  private async syncPendingDrafts(): Promise<void> {
+  private async notifyUnsyncedDrafts(): Promise<void> {
     const unsyncedDrafts = await this.getUnsyncedDrafts();
     
     if (unsyncedDrafts.length > 0) {
