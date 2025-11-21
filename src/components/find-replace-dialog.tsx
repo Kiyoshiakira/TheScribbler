@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from './ui/button';
@@ -61,6 +62,9 @@ export function FindReplaceDialog({ open, onOpenChange }: FindReplaceDialogProps
       <DialogContent className="sm:max-w-sm" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className='pr-8'>
           <DialogTitle className="font-headline">Find & Replace</DialogTitle>
+          <DialogDescription>
+            Search for text in your document and optionally replace it with different text.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
             <div className="space-y-2">
