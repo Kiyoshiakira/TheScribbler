@@ -38,6 +38,10 @@ export default function MarkdownEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggleFullscreen } = useFullscreen(containerRef);
 
+  // Constants
+  const HEADING_REGEX = /^(#{1,6})\s/;
+  const HELP_TEXT = 'Supports GitHub Flavored Markdown. Use Cmd/Ctrl+B for bold, Cmd/Ctrl+I for italic, Cmd/Ctrl+H for headings, Cmd/Ctrl+Shift+C for code blocks, Cmd/Ctrl+P to toggle preview.';
+
   // Sync scroll positions between editor and preview
   const handleEditorScroll = () => {
     if (!editorRef.current || !previewRef.current || !showPreview) return;
@@ -118,7 +122,7 @@ export default function MarkdownEditor({
       const actualLineEnd = lineEnd === -1 ? value.length : lineEnd;
       
       const currentLine = value.substring(lineStart, actualLineEnd);
-      const headingMatch = currentLine.match(/^(#{1,6})\s/);
+      const headingMatch = currentLine.match(HEADING_REGEX);
       
       let newLine;
       if (headingMatch) {
@@ -127,7 +131,8 @@ export default function MarkdownEditor({
         if (level < 6) {
           newLine = '#' + currentLine;
         } else {
-          newLine = currentLine.substring(7); // Remove "###### "
+          // Remove the heading prefix (e.g., "###### ")
+          newLine = currentLine.substring(headingMatch[0].length);
         }
       } else {
         newLine = '# ' + currentLine;
@@ -175,7 +180,7 @@ export default function MarkdownEditor({
         const actualLineEnd = lineEnd === -1 ? value.length : lineEnd;
         
         const currentLine = value.substring(lineStart, actualLineEnd);
-        const headingMatch = currentLine.match(/^(#{1,6})\s/);
+        const headingMatch = currentLine.match(HEADING_REGEX);
         
         let newLine;
         if (headingMatch) {
@@ -184,7 +189,8 @@ export default function MarkdownEditor({
           if (level < 6) {
             newLine = '#' + currentLine;
           } else {
-            newLine = currentLine.substring(7); // Remove "###### "
+            // Remove the heading prefix (e.g., "###### ")
+            newLine = currentLine.substring(headingMatch[0].length);
           }
         } else {
           newLine = '# ' + currentLine;
@@ -200,7 +206,7 @@ export default function MarkdownEditor({
         // Set cursor at end of heading prefix
         setTimeout(() => {
           textarea.focus();
-          const newHeadingMatch = newLine.match(/^(#{1,6})\s/);
+          const newHeadingMatch = newLine.match(HEADING_REGEX);
           const cursorPos = lineStart + (newHeadingMatch ? newHeadingMatch[0].length : 0);
           textarea.setSelectionRange(cursorPos, cursorPos);
         }, 0);
@@ -313,8 +319,7 @@ export default function MarkdownEditor({
 
       {/* Helper text */}
       <div className="text-xs text-muted-foreground">
-        Supports GitHub Flavored Markdown. Use Cmd/Ctrl+B for bold, Cmd/Ctrl+I for italic, 
-        Cmd/Ctrl+H for headings, Cmd/Ctrl+Shift+C for code blocks, Cmd/Ctrl+P to toggle preview.
+        {HELP_TEXT}
       </div>
     </div>
   );
