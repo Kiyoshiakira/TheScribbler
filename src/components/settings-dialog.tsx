@@ -13,6 +13,7 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useSettings } from '@/context/settings-context';
+import type { ThemeMode, FontSize, LineHeight } from '@/context/settings-context';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -255,7 +256,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </p>
                 <RadioGroup 
                   value={settings.theme || 'system'} 
-                  onValueChange={(value) => setTheme(value as any)}
+                  onValueChange={(value) => setTheme(value as ThemeMode)}
                   className="space-y-3"
                 >
                   <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
@@ -299,7 +300,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </p>
                 <Select 
                   value={settings.fontSize || 'base'} 
-                  onValueChange={(value) => setFontSize(value as any)}
+                  onValueChange={(value) => setFontSize(value as FontSize)}
                 >
                   <SelectTrigger id="font-size">
                     <SelectValue placeholder="Select font size" />
@@ -323,7 +324,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </p>
                 <Select 
                   value={settings.lineHeight || 'normal'} 
-                  onValueChange={(value) => setLineHeight(value as any)}
+                  onValueChange={(value) => setLineHeight(value as LineHeight)}
                 >
                   <SelectTrigger id="line-height">
                     <SelectValue placeholder="Select line height" />
