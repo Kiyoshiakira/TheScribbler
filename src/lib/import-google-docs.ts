@@ -264,10 +264,11 @@ export function extractPlainTextFromGoogleDocs(content: unknown): string {
     return text;
   }
   
-  content.forEach((p: { paragraph?: { elements?: Array<{ textRun?: { content?: string } }> } }) => {
-    const elements = p?.paragraph?.elements || [];
+  // Use the existing GoogleDocsStructuralElement interface for type safety
+  content.forEach((element: GoogleDocsStructuralElement) => {
+    const elements = element?.paragraph?.elements || [];
     if (Array.isArray(elements)) {
-      elements.forEach((elem: { textRun?: { content?: string } }) => {
+      elements.forEach((elem: GoogleDocsParagraphElement) => {
         if (elem?.textRun?.content) {
           text += elem.textRun.content;
         }
