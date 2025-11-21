@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTool } from "@/context/tool-context";
 import { useSettings } from "@/context/settings-context";
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
-import { TemplatesPicker } from '@/components/Templates';
+import { TemplatesPicker, TemplateManager } from '@/components/Templates';
 
 
 function StatCard({ title, value, icon, isLoading }: { title: string, value: number, icon: React.ReactNode, isLoading: boolean }) {
@@ -92,6 +92,7 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
     const { currentTool } = useTool();
     const { settings } = useSettings();
     const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
+    const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
 
     const projectLinkingMode = settings.projectLinkingMode || 'shared';
 
@@ -302,6 +303,31 @@ export default function DashboardView({ setView }: { setView: (view: View) => vo
                 onTemplateSelect={handleTemplateSelect}
                 category={currentTool === 'StoryScribbler' ? 'story' : 'all'}
             />
+
+            <TemplateManager
+                open={isTemplateManagerOpen}
+                onOpenChange={setIsTemplateManagerOpen}
+            />
+
+            {/* Quick action for managing templates */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">Manage Your Content</CardTitle>
+                    <CardDescription>
+                        Create and organize custom templates and snippets for faster writing
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex gap-2">
+                    <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setIsTemplateManagerOpen(true)}
+                    >
+                        <FileText className="mr-2 h-4 w-4" />
+                        Manage Templates
+                    </Button>
+                </CardContent>
+            </Card>
 
             {currentScriptId && (
                 <>

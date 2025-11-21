@@ -12,7 +12,9 @@ The Templates and Snippets feature accelerates drafting by providing structured 
 
 Templates are pre-configured document structures for common formats like short stories, blog posts, chapter layouts, etc. They help writers get started quickly with a well-structured document.
 
-### Available Templates
+### Default Templates
+
+The Scribbler includes 6 built-in templates:
 
 1. **Short Story** - Basic short story template with title and author
 2. **Blog Post** - Blog post template with introduction, content, and conclusion sections
@@ -21,17 +23,58 @@ Templates are pre-configured document structures for common formats like short s
 5. **Character Profile** - Character development template
 6. **World Building Entry** - Template for creating world building elements
 
+### Custom Templates
+
+In addition to the default templates, you can create your own custom templates that suit your specific writing needs.
+
+### Managing Templates
+
+Access the Template Manager from the Dashboard by clicking the "Manage Templates" button.
+
+#### Creating a Custom Template
+
+1. Click "Manage Templates" on the Dashboard
+2. Click "New Template" in the Template Manager
+3. Enter a name and description
+4. Select a category (Script, Story, or General)
+5. Add your content (use `{{PlaceholderName}}` for dynamic parts)
+6. Click "Create"
+
+#### Editing a Template
+
+1. Open the Template Manager
+2. Click the edit icon on the custom template you want to modify
+3. Make your changes
+4. Click "Update"
+
+Note: Default templates cannot be edited. Create a custom template based on a default one if you need modifications.
+
+#### Deleting a Template
+
+1. Open the Template Manager
+2. Click the delete icon on the custom template
+3. Confirm the deletion
+
+Note: Default templates cannot be deleted.
+
 ### Using Templates
 
 1. Go to the Dashboard
 2. Click the "Start with Template" button
-3. Select a template from the picker dialog
+3. Select a template from the picker dialog (includes both default and custom templates)
 4. Fill in the placeholders (e.g., {{Title}}, {{Author}})
 5. Click "Apply Template" to create a new document
 
 ### Template Placeholders
 
 Templates use the `{{PlaceholderName}}` syntax for dynamic content. When you select a template, you'll be prompted to fill in values for each placeholder before the document is created.
+
+### Template Storage
+
+- **Default Templates**: Bundled with the application
+- **Custom Templates**:
+  - **Local Storage**: Available offline, stored in your browser
+  - **Cloud Storage** (Firestore): Synced across devices when logged in
 
 ## Snippets
 
@@ -104,26 +147,33 @@ src/
 ├── components/
 │   ├── Templates/
 │   │   ├── TemplatesPicker.tsx   # Template selection UI
+│   │   ├── TemplateManager.tsx   # Template management UI (CRUD)
 │   │   └── index.ts
 │   └── Snippets/
-│       ├── SnippetManager.tsx    # Snippet management UI
+│       ├── SnippetManager.tsx    # Snippet management UI (CRUD)
 │       └── index.ts
 ```
 
 ### Key Components
 
-- **TemplatesPicker**: Dialog component for selecting and customizing templates
+- **TemplatesPicker**: Dialog component for selecting and customizing templates (both default and custom)
+- **TemplateManager**: Dialog component for managing custom templates (CRUD operations)
 - **SnippetManager**: Dialog component for managing snippets (CRUD operations)
 
 ### Integration Points
 
-- **Dashboard**: Template picker integrated with "Start with Template" button
+- **Dashboard**: 
+  - Template picker integrated with "Start with Template" button
+  - Template manager accessible from "Manage Templates" button
 - **Editor**: Snippet manager accessible from toolbar
 
 ### Data Storage
 
-- Templates: Static data in `src/data/templates/defaultTemplates.ts`
-- Snippets: 
+- **Default Templates**: Static data in `src/data/templates/defaultTemplates.ts`
+- **Custom Templates**:
+  - Local: Browser localStorage (`scribbler-custom-templates` key)
+  - Cloud: Firestore collection at `users/{userId}/templates`
+- **Snippets**: 
   - Local: Browser localStorage (`scribbler-snippets` key)
   - Cloud: Firestore collection at `users/{userId}/snippets`
 
@@ -131,7 +181,7 @@ src/
 
 Potential improvements for future versions:
 
-1. Custom template creation by users
+1. ~~Custom template creation by users~~ ✅ **Implemented**
 2. Template sharing and community templates
 3. Template categories and tags
 4. Snippet organization with folders/tags

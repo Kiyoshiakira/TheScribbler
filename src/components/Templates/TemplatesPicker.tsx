@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { defaultTemplates, Template, PlaceholderValue } from '@/data/templates';
 import { FileText, BookOpen, FileCode } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { 
+  loadLocalTemplates, 
+  deduplicateTemplates 
+} from '@/lib/template-storage';
 
 interface TemplatesPickerProps {
   open: boolean;
@@ -45,11 +51,32 @@ export function TemplatesPicker({ open, onOpenChange, onTemplateSelect, category
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
   const [step, setStep] = useState<'select' | 'customize'>('select');
+  const [localTemplates, setLocalTemplates] = useState<Template[]>([]);
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  // Firestore collection for user templates (optional cloud storage)
+  const templatesCollection = useMemoFirebase(
+    () => (user && firestore ? collection(firestore, 'users', user.uid, 'templates') : null),
+    [firestore, user]
+  );
+
+  const { data: cloudTemplates } = useCollection<Template>(templatesCollection);
+
+  // Load local templates on mount
+  useEffect(() => {
+    setLocalTemplates(loadLocalTemplates());
+  }, []);
+
+  // Combine default templates with custom templates (local + cloud), with deduplication
+  const customTemplates = deduplicateTemplates([...localTemplates, ...(cloudTemplates || [])]);
+  const allTemplates = [...defaultTemplates, ...customTemplates];
 
   // Filter templates by category
   const filteredTemplates = category === 'all' 
-    ? defaultTemplates 
-    : defaultTemplates.filter(t => t.category === category);
+    ? allTemplates 
+    : allTemplates.filter(t => t.category === category);
 
   const handleTemplateSelect = (template: Template) => {
     setSelectedTemplate(template);
