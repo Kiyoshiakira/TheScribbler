@@ -16,6 +16,7 @@ import { useScript } from '@/context/script-context';
 import { DocumentVersion } from '@/lib/editor-types';
 import { generateDiff } from '@/utils/diff';
 import { formatDistanceToNow } from 'date-fns';
+import { serializeScript } from '@/lib/screenplay-parser';
 
 interface VersionHistoryProps {
   open: boolean;
@@ -23,7 +24,7 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ open, onOpenChange }: VersionHistoryProps) {
-  const { versions, script, restoreVersion } = useScript();
+  const { versions, document, restoreVersion } = useScript();
   const [selectedVersion, setSelectedVersion] = useState<DocumentVersion | null>(null);
   const [showDiff, setShowDiff] = useState(false);
 
@@ -56,9 +57,11 @@ export function VersionHistory({ open, onOpenChange }: VersionHistoryProps) {
   };
 
   const renderDiff = () => {
-    if (!selectedVersion || !script) return null;
+    if (!selectedVersion || !document) return null;
 
-    const diff = generateDiff(selectedVersion.content, script.content);
+    // Generate current content from the document structure to include unsaved changes
+    const currentContent = serializeScript(document);
+    const diff = generateDiff(selectedVersion.content, currentContent);
 
     return (
       <div className="space-y-4">
