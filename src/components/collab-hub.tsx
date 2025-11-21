@@ -35,6 +35,7 @@ const placeholderNotifications = [
 export default function CollabHub() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(placeholderMessages);
   const [chatInput, setChatInput] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [isManuallyTyping, setIsManuallyTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
