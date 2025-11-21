@@ -36,3 +36,15 @@ export interface ScriptBlock {
 export interface ScriptDocument {
   blocks: ScriptBlock[];
 }
+
+/**
+ * Represents a single version entry in the document's version history.
+ */
+export interface DocumentVersion {
+  id: string; // Firestore document ID
+  title: string;
+  logline: string;
+  content: string; // Serialized script content
+  timestamp: any; // Firestore timestamp
+  note?: string; // Optional user note about this version
+}

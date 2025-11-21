@@ -8,7 +8,7 @@ import { useDebounce } from 'use-debounce';
 import type { Character } from '@/components/views/characters-view';
 import type { Scene } from '@/components/views/scenes-view';
 import type { Note } from '@/components/views/notes-view';
-import { ScriptDocument, ScriptBlock, ScriptBlockType } from '@/lib/editor-types';
+import { ScriptDocument, ScriptBlock, ScriptBlockType, DocumentVersion } from '@/lib/editor-types';
 import { parseScreenplay, serializeScript } from '@/lib/screenplay-parser';
 import type { Match } from '@/hooks/use-find-replace.tsx';
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
@@ -53,6 +53,8 @@ interface ScriptContextType {
   scenes: Scene[] | null;
   notes: Note[] | null;
   comments: Comment[] | null;
+  versions: DocumentVersion[] | null;
+  restoreVersion: (versionId: string) => Promise<void>;
   saveStatus: SaveStatus;
   activeMatch: Match | null;
   setActiveMatch: React.Dispatch<React.SetStateAction<Match | null>>;
@@ -78,6 +80,8 @@ export const ScriptContext = createContext<ScriptContextType>({
   scenes: null,
   notes: null,
   comments: null,
+  versions: null,
+  restoreVersion: async () => {},
   saveStatus: 'idle',
   activeMatch: null,
   setActiveMatch: () => {},
@@ -144,6 +148,16 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     [commentsCollectionRef]
   );
   const { data: comments } = useCollection<Comment>(commentsQuery);
+
+  const versionsCollectionRef = useMemoFirebase(
+    () => (user && firestore && scriptId ? collection(firestore, 'users', user.uid, 'scripts', scriptId, 'versions') : null),
+    [firestore, user, scriptId]
+  );
+  const versionsQuery = useMemoFirebase(
+    () => (versionsCollectionRef ? query(versionsCollectionRef, orderBy('timestamp', 'desc')) : null),
+    [versionsCollectionRef]
+  );
+  const { data: versions } = useCollection<DocumentVersion>(versionsQuery);
 
  const updateFirestore = useCallback(async () => {
     if (isInitialLoad || !scriptDocRef || !localScript || !localDocument) return;
@@ -587,6 +601,30 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
       });
 
   }, [commentsCollectionRef, user]);
+
+  const restoreVersion = useCallback(async (versionId: string) => {
+    if (!versions || !scriptDocRef) return;
+    
+    const version = versions.find(v => v.id === versionId);
+    if (!version) return;
+    
+    try {
+      // Parse the version content and restore it
+      const restoredDocument = parseScreenplay(version.content);
+      
+      // Update local state immediately
+      setLocalScript(prev => prev ? {
+        ...prev,
+        title: version.title,
+        logline: version.logline,
+      } : null);
+      setLocalDocument(restoredDocument);
+      
+      // The debounced save will handle persisting to Firestore
+    } catch (error) {
+      console.error("Error restoring version:", error);
+    }
+  }, [versions, scriptDocRef]);
   
   const isScriptLoading = isInitialLoad || (!!scriptId && isDocLoading);
 
@@ -608,6 +646,8 @@ export const ScriptProvider = ({ children, scriptId }: { children: ReactNode, sc
     scenes,
     notes,
     comments,
+    versions,
+    restoreVersion,
     saveStatus,
     activeMatch,
     setActiveMatch,
