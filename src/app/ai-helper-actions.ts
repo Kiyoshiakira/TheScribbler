@@ -40,7 +40,7 @@ export async function getAiProviderStatus(): Promise<AiProviderStatus> {
     isConfigured: true,
     providerName: provider.getName(),
     usageCount: provider.getUsageCount(),
-    usageLimit: provider.getUsageCount() + provider.getRemainingUsage(),
+    usageLimit: provider.getUsageLimit(),
     remainingUsage: provider.getRemainingUsage(),
   };
 }

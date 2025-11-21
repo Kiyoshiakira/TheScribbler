@@ -129,6 +129,13 @@ export abstract class AiProvider {
   }
 
   /**
+   * Get usage limit for this provider
+   */
+  getUsageLimit(): number {
+    return this.usageLimit;
+  }
+
+  /**
    * Get current usage count
    */
   getUsageCount(): number {
@@ -215,7 +222,7 @@ export class AiProviderError extends Error {
   code: string;
   retryable: boolean;
 
-  constructor(message: string, code: string = 'UNKNOWN_ERROR', retryable: boolean = false) {
+  constructor(message: string, code: string = 'UNKNOWN_ERROR', retryable: boolean = true) {
     super(message);
     this.name = 'AiProviderError';
     this.code = code;

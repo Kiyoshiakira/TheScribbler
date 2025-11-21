@@ -320,7 +320,7 @@ Provide only the expanded text without explanations.`;
       );
     }
 
-    // Default to retryable error
+    // Default to retryable error (changed from non-retryable for better resilience)
     return new AiProviderError(message, 'PROVIDER_ERROR', true);
   }
 }
