@@ -12,6 +12,7 @@ import {
   Loader2,
   CheckCircle,
   Info,
+  History,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ import { exportToGoogleDocs, getGoogleDocsUrl } from '@/lib/export-google-docs';
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 import { useTool } from '@/context/tool-context';
 import { AboutDialog } from '@/components/about-dialog';
+import { VersionHistory } from '@/components/VersionHistory/VersionHistory';
 import { useState } from 'react';
 
 // Story Scribbler interfaces
@@ -118,6 +120,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
   const { currentTool } = useTool();
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => {
     if (user && firestore) {
@@ -1046,10 +1049,21 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        {currentTool === 'ScriptScribbler' && currentScriptId && (
+          <Button
+            variant="outline"
+            onClick={() => setVersionHistoryOpen(true)}
+            className="hidden sm:flex"
+          >
+            <History className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">History</span>
+          </Button>
+        )}
         <UserMenu />
       </div>
     </header>
     <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+    <VersionHistory open={versionHistoryOpen} onOpenChange={setVersionHistoryOpen} />
     </>
   );
 }
