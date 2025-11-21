@@ -847,6 +847,14 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
     }
   };
 
+
+  // Helper to filter out Firestore metadata from chapters
+  const cleanChapter = (chapter: Chapter & { createdAt?: unknown; updatedAt?: unknown }): Chapter => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, ...cleanedChapter } = chapter as any;
+    return cleanedChapter;
+  };
+
   // Story Scribbler export handlers
   const handleStoryExportMarkdown = async () => {
     if (!script) {
@@ -858,10 +866,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       const storyData: StoryData = {
         title: script.title,
         logline: script.logline,
-        chapters: chapters?.map(({ id, ...rest }: any) => {
-          const { createdAt, updatedAt, ...chapter } = rest;
-          return chapter;
-        }),
+        chapters: chapters?.map(cleanChapter),
         outline: outlineItems?.map(({ id, ...rest }) => rest),
         characters: storyCharacters?.map(({ id, ...rest }) => rest),
         worldElements: worldElements?.map(({ id, ...rest }) => rest),
@@ -896,10 +901,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       const storyData: StoryData = {
         title: script.title,
         logline: script.logline,
-        chapters: chapters?.map(({ id, ...rest }: any) => {
-          const { createdAt, updatedAt, ...chapter } = rest;
-          return chapter;
-        }),
+        chapters: chapters?.map(cleanChapter),
         outline: outlineItems?.map(({ id, ...rest }) => rest),
         characters: storyCharacters?.map(({ id, ...rest }) => rest),
         worldElements: worldElements?.map(({ id, ...rest }) => rest),
@@ -935,10 +937,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       const storyData: StoryData = {
         title: script.title,
         logline: script.logline,
-        chapters: chapters?.map(({ id, ...rest }: any) => {
-          const { createdAt, updatedAt, ...chapter } = rest;
-          return chapter;
-        }),
+        chapters: chapters?.map(cleanChapter),
       };
 
       const epubResult = await generateEpub(storyData, user?.displayName || 'Unknown Author');
@@ -970,10 +969,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
       const storyData: StoryData = {
         title: script.title,
         logline: script.logline,
-        chapters: chapters?.map(({ id, ...rest }: any) => {
-          const { createdAt, updatedAt, ...chapter } = rest;
-          return chapter;
-        }),
+        chapters: chapters?.map(cleanChapter),
       };
 
       await exportStoryToPDF(storyData);

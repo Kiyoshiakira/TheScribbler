@@ -73,8 +73,6 @@ function parseHtmlToStory(htmlContent: string): ParsedDocx {
             content: '',
           };
         }
-        // Skip children since we got the text
-        walker.nextSibling();
         continue;
       }
 
@@ -95,7 +93,6 @@ function parseHtmlToStory(htmlContent: string): ParsedDocx {
           content: '',
         };
         
-        walker.nextSibling();
         continue;
       }
 
@@ -108,7 +105,6 @@ function parseHtmlToStory(htmlContent: string): ParsedDocx {
           currentContent.push(text);
         }
         
-        walker.nextSibling();
         continue;
       }
     }

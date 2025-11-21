@@ -45,21 +45,33 @@ export async function exportStoryToPDF(data: StoryData): Promise<void> {
   iframeDoc.close();
 
   // Use the browser's print API to generate PDF
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
+    let cleaned = false;
+    
+    const cleanup = () => {
+      if (!cleaned && document.body.contains(iframe)) {
+        cleaned = true;
+        document.body.removeChild(iframe);
+      }
+    };
+
     try {
       // Wait for content to load
       setTimeout(() => {
-        iframe.contentWindow?.print();
-        
-        // Clean up after a delay
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-        
-        resolve();
+        try {
+          iframe.contentWindow?.print();
+          
+          // Clean up after a delay
+          setTimeout(cleanup, 1000);
+          
+          resolve();
+        } catch (printError) {
+          cleanup();
+          reject(printError);
+        }
       }, 100);
     } catch (error) {
-      document.body.removeChild(iframe);
+      cleanup();
       reject(error);
     }
   });
