@@ -38,6 +38,11 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
     script.onerror = () => {
       console.error('Failed to load Google API script');
       setGapiLoaded(false);
+      toast({
+        variant: 'destructive',
+        title: 'Google API Error',
+        description: 'Failed to load Google Drive integration. Please check your internet connection and try again.',
+      });
     };
     document.body.appendChild(script);
 
@@ -47,7 +52,7 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
         document.body.removeChild(script);
       }
     };
-  }, []);
+  }, [toast]);
 
   // 2. Get the OAuth token from the currently signed-in user
   useEffect(() => {
@@ -79,9 +84,14 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
       } catch (error) {
         console.error('Error loading Google Picker API:', error);
         setPickerApiLoaded(false);
+        toast({
+          variant: 'destructive',
+          title: 'Google Picker Error',
+          description: 'Failed to initialize Google Drive picker. Please refresh the page and try again.',
+        });
       }
     }
-  }, [gapiLoaded]);
+  }, [gapiLoaded, toast]);
 
   // The main function to open the picker
   const openPicker = useCallback(() => {
