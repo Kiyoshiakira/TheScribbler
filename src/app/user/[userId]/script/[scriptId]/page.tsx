@@ -247,6 +247,7 @@ export default function PublicScriptView() {
                                             <CardTitle>{note.title}</CardTitle>
                                         </CardHeader>
                                         <CardContent>
+                                            {/* Security: Content is sanitized with DOMPurify before rendering */}
                                             <div 
                                                 className="prose prose-sm max-w-none dark:prose-invert"
                                                 dangerouslySetInnerHTML={{ 
