@@ -151,11 +151,14 @@ function AppLayoutInternal() {
 
   return (
     <>
+      <a href="#main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       <div className="flex h-screen bg-background">
         <AppSidebar activeView={view} setView={handleSetView} />
         <div className="flex flex-1 flex-col overflow-hidden">
           <AppHeader activeView={view} setView={handleSetView} />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <main id="main-content" className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8" role="main" aria-label="Main content">
             {renderView()}
           </main>
         </div>

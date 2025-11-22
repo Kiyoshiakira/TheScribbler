@@ -5,19 +5,25 @@ import React, { createContext, useState, useEffect, ReactNode, useContext } from
 const SETTINGS_STORAGE_KEY = 'scriptscribbler-settings';
 
 export type ProjectLinkingMode = 'shared' | 'separate';
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'system' | 'high-contrast';
 export type ExportFormat = 'pdf' | 'fountain' | 'finalDraft' | 'plainText' | 'scribbler' | 'googleDocs';
 export type Language = 'en' | 'es' | 'fr' | 'de' | 'ja' | 'zh';
 export type AiProviderType = 'google-ai' | 'openai' | 'local';
+export type FontSize = 'sm' | 'base' | 'lg' | 'xl';
+export type LineHeight = 'tight' | 'normal' | 'relaxed' | 'loose';
 
 interface Settings {
   projectLinkingMode?: ProjectLinkingMode;
-  // Theme selection: Light, Dark, or System/Auto
+  // Theme selection: Light, Dark, System/Auto, or High Contrast
   theme?: ThemeMode;
   // Default export format for scripts
   exportFormat?: ExportFormat;
   // Editor font size in pixels (12-24)
   editorFontSize?: number;
+  // Global UI font size
+  fontSize?: FontSize;
+  // Global line height
+  lineHeight?: LineHeight;
   // Toggle to show/hide AI features in the editor
   aiFeatureEnabled?: boolean;
   // Privacy: make profile public or private
@@ -39,6 +45,8 @@ interface SettingsContextType {
   setTheme: (theme: ThemeMode) => void;
   setExportFormat: (format: ExportFormat) => void;
   setEditorFontSize: (size: number) => void;
+  setFontSize: (size: FontSize) => void;
+  setLineHeight: (height: LineHeight) => void;
   setAiFeatureEnabled: (enabled: boolean) => void;
   setProfilePublic: (isPublic: boolean) => void;
   setScriptSharingDefault: (mode: 'public' | 'private') => void;
@@ -54,6 +62,8 @@ export const SettingsContext = createContext<SettingsContextType>({
   setTheme: () => {},
   setExportFormat: () => {},
   setEditorFontSize: () => {},
+  setFontSize: () => {},
+  setLineHeight: () => {},
   setAiFeatureEnabled: () => {},
   setProfilePublic: () => {},
   setScriptSharingDefault: () => {},
@@ -138,6 +148,16 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     updateSettings({ ...settings, aiUsageLimit: limit });
   };
 
+  // Font size: Set global UI font size
+  const setFontSize = (size: FontSize) => {
+    updateSettings({ ...settings, fontSize: size });
+  };
+
+  // Line height: Set global line height
+  const setLineHeight = (height: LineHeight) => {
+    updateSettings({ ...settings, lineHeight: height });
+  };
+
   const value = {
     settings,
     isSettingsLoading,
@@ -145,6 +165,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     setTheme,
     setExportFormat,
     setEditorFontSize,
+    setFontSize,
+    setLineHeight,
     setAiFeatureEnabled,
     setProfilePublic,
     setScriptSharingDefault,

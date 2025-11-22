@@ -100,11 +100,11 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
     <Sidebar collapsible="icon" side="left">
       <SidebarHeader>
         <div className="flex flex-col items-center justify-center gap-1 p-2 w-full">
-          <button onClick={() => handleViewChange('dashboard')}>
+          <button onClick={() => handleViewChange('dashboard')} aria-label="Go to dashboard">
             <Logo variant={currentTool} />
           </button>
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded hover:bg-accent transition-colors">
+            <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded hover:bg-accent transition-colors" aria-label="Switch between ScriptScribbler and StoryScribbler">
               <ChevronDown className="h-4 w-4 opacity-50" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center">

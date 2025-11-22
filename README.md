@@ -12,6 +12,7 @@ The Scribbler is a modern, collaborative writing application built with Next.js,
 - **🎬 ScriptScribbler** - Professional screenplay editor with Fountain syntax support
 - **📚 StoryScribbler** - Comprehensive story development tool with outline, chapters, and world-building
 - **🤖 AI-Powered Features** - Intelligent writing assistance powered by Google's Gemini
+- **♿ Accessibility First** - WCAG 2.1 AA compliant with high-contrast mode, customizable font sizes, and full keyboard navigation
 - **⚙️ Comprehensive Settings** - Theme selection, export formats, editor customization, and privacy controls
 - **👥 Character Management** - Scrite-inspired character tracking and profiles
 - **🎭 Scene Organization** - Visual scene blocks with metadata and collapsible sections
@@ -320,6 +321,7 @@ Customize your writing experience with extensive preferences:
 - **[Character Management](docs/CHARACTER_MANAGEMENT.md)** - How the Scrite-inspired character system works
 - **[AI Editor Features](docs/AI_EDITOR_FEATURES.md)** - Comprehensive guide to AI-powered tools
 - **[Export Functionality](docs/EXPORT_FUNCTIONALITY.md)** - Export formats and usage
+- **[Accessibility Features](docs/ACCESSIBILITY.md)** - WCAG compliance and accessibility options
 - **[Troubleshooting 403 Errors](docs/TROUBLESHOOTING_403_ERRORS.md)** - Detailed troubleshooting guide
 
 ### Developer Documentation

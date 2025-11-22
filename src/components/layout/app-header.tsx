@@ -1215,7 +1215,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
 
   return (
     <>
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b-2 bg-background/95 px-4 backdrop-blur-md shadow-sm sm:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b-2 bg-background/95 px-4 backdrop-blur-md shadow-sm sm:px-6" role="banner" aria-label="Application header">
       <SidebarTrigger className="flex md:hidden" aria-label="Toggle sidebar" />
       <div className="flex flex-1 items-center gap-2 min-w-0">
         {isProfileOrDashboard ? (

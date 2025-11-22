@@ -13,6 +13,7 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useSettings } from '@/context/settings-context';
+import type { ThemeMode, FontSize, LineHeight } from '@/context/settings-context';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
@@ -20,7 +21,7 @@ import { useCurrentScript } from '@/context/current-script-context';
 import { useScript } from '@/context/script-context';
 import { runAiDiagnoseAppHealth } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Moon, Sun, Monitor } from 'lucide-react';
+import { Loader2, Moon, Sun, Monitor, Eye } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
@@ -41,6 +42,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     setTheme,
     setExportFormat,
     setEditorFontSize,
+    setFontSize,
+    setLineHeight,
     setAiFeatureEnabled,
     setProfilePublic,
     setScriptSharingDefault,
@@ -180,8 +183,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="general" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="editor">Editor</TabsTrigger>
             <TabsTrigger value="privacy">Privacy</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
@@ -190,43 +194,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           <ScrollArea className="flex-1 -mx-6 px-6 mt-4">
             {/* General Settings Tab */}
             <TabsContent value="general" className="space-y-6 mt-0">
-              {/* Theme Selection */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Theme</Label>
-                <p className="text-sm text-muted-foreground">
-                  Choose your preferred color theme for the application.
-                </p>
-                <RadioGroup 
-                  value={settings.theme || 'system'} 
-                  onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                    <RadioGroupItem value="light" id="theme-light" />
-                    <Sun className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="theme-light" className="flex-1 cursor-pointer font-normal">
-                      Light
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                    <RadioGroupItem value="dark" id="theme-dark" />
-                    <Moon className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="theme-dark" className="flex-1 cursor-pointer font-normal">
-                      Dark
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
-                    <RadioGroupItem value="system" id="theme-system" />
-                    <Monitor className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="theme-system" className="flex-1 cursor-pointer font-normal">
-                      System/Auto
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <Separator />
-
               {/* Export Format Selection */}
               <div className="space-y-3">
                 <Label htmlFor="export-format" className="text-base font-semibold">Default Export Format</Label>
@@ -276,6 +243,112 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     <SelectItem value="zh">中文</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </TabsContent>
+
+            {/* Appearance Settings Tab */}
+            <TabsContent value="appearance" className="space-y-6 mt-0">
+              {/* Theme Selection */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Theme</Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose your preferred color theme for the application.
+                </p>
+                <RadioGroup 
+                  value={settings.theme || 'system'} 
+                  onValueChange={(value) => setTheme(value as ThemeMode)}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="light" id="theme-light" />
+                    <Sun className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-light" className="flex-1 cursor-pointer font-normal">
+                      Light
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="dark" id="theme-dark" />
+                    <Moon className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-dark" className="flex-1 cursor-pointer font-normal">
+                      Dark
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="high-contrast" id="theme-high-contrast" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-high-contrast" className="flex-1 cursor-pointer font-normal">
+                      High Contrast
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-md hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="system" id="theme-system" />
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
+                    <Label htmlFor="theme-system" className="flex-1 cursor-pointer font-normal">
+                      System/Auto
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Separator />
+
+              {/* Font Size Selection */}
+              <div className="space-y-3">
+                <Label htmlFor="font-size" className="text-base font-semibold">UI Font Size</Label>
+                <p className="text-sm text-muted-foreground">
+                  Adjust the text size across the application interface.
+                </p>
+                <Select 
+                  value={settings.fontSize || 'base'} 
+                  onValueChange={(value) => setFontSize(value as FontSize)}
+                >
+                  <SelectTrigger id="font-size">
+                    <SelectValue placeholder="Select font size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sm">Small (14px)</SelectItem>
+                    <SelectItem value="base">Medium (16px)</SelectItem>
+                    <SelectItem value="lg">Large (18px)</SelectItem>
+                    <SelectItem value="xl">Extra Large (20px)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              {/* Line Height Selection */}
+              <div className="space-y-3">
+                <Label htmlFor="line-height" className="text-base font-semibold">Line Height</Label>
+                <p className="text-sm text-muted-foreground">
+                  Adjust the spacing between lines of text for better readability.
+                </p>
+                <Select 
+                  value={settings.lineHeight || 'normal'} 
+                  onValueChange={(value) => setLineHeight(value as LineHeight)}
+                >
+                  <SelectTrigger id="line-height">
+                    <SelectValue placeholder="Select line height" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tight">Tight (1.4)</SelectItem>
+                    <SelectItem value="normal">Normal (1.6)</SelectItem>
+                    <SelectItem value="relaxed">Relaxed (1.8)</SelectItem>
+                    <SelectItem value="loose">Loose (2.0)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="p-3 border rounded-md bg-muted/50 space-y-2">
+                <p className="text-sm font-semibold">Accessibility Features</p>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>High contrast mode for better visibility</li>
+                  <li>Keyboard navigation support throughout the app</li>
+                  <li>Focus indicators on all interactive elements</li>
+                  <li>Screen reader compatible with ARIA labels</li>
+                  <li>Responsive design for all devices</li>
+                </ul>
               </div>
             </TabsContent>
 
