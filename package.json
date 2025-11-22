@@ -9,7 +9,13 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run lint && npm run typecheck && npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
@@ -76,9 +82,14 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/diff": "^7.0.2",
     "@types/gapi": "^0.0.47",
     "@types/google.picker": "^0.0.41",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/quill": "^1.3.10",
     "@types/react": "^18",
@@ -86,8 +97,11 @@
     "@types/react-speech-recognition": "^3.9.5",
     "eslint-config-next": "^14.2.5",
     "genkit-cli": "^1.20.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
