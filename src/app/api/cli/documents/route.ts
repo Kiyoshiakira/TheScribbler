@@ -42,8 +42,22 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     
+    // Define Firestore document type
+    interface FirestoreDocument {
+      name: string;
+      fields?: {
+        title?: { stringValue?: string };
+        content?: { stringValue?: string };
+        logline?: { stringValue?: string };
+        authorId?: { stringValue?: string };
+        createdAt?: { timestampValue?: string };
+        lastModified?: { timestampValue?: string };
+        updatedAt?: { timestampValue?: string };
+      };
+    }
+    
     // Transform Firestore REST API response to our format
-    const documents = (data.documents || []).map((doc: any) => {
+    const documents = (data.documents || []).map((doc: FirestoreDocument) => {
       const id = doc.name.split('/').pop();
       const fields = doc.fields || {};
       

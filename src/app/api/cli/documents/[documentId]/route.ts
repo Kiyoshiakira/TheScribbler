@@ -93,7 +93,11 @@ export async function PATCH(
     const token = authHeader?.replace('Bearer ', '');
 
     // Build the update mask and fields
-    const updateFields: any = {};
+    interface FirestoreField {
+      stringValue?: string;
+      timestampValue?: string;
+    }
+    const updateFields: Record<string, FirestoreField> = {};
     const fieldMask: string[] = [];
 
     if (body.title !== undefined) {
