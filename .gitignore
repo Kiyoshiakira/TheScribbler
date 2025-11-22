@@ -50,3 +50,7 @@ src/test-exports.ts
 # Test files
 src/test-exports.ts
 src/comprehensive-test.ts
+
+# CLI build artifacts
+packages/cli/dist
+packages/cli/node_modules
