@@ -135,7 +135,13 @@ class SaveManager {
   async getAllDrafts(): Promise<Draft[]> {
     try {
       const allEntries = await entries<string, Draft>(draftStore);
-      return allEntries.map(([, draft]) => draft);
+      // Defensive: handle undefined or non-array iterables
+      if (!allEntries) return [];
+      // Convert to array if it's an iterable but not already an array
+      const entriesArray: Array<[string, Draft]> = Array.isArray(allEntries) 
+        ? allEntries 
+        : Array.from(allEntries) as Array<[string, Draft]>;
+      return entriesArray.map(([, draft]) => draft);
     } catch (error) {
       console.error('[SaveManager] Error getting all drafts:', error);
       return [];
