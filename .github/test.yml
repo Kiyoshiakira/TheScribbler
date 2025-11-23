@@ -1,0 +1,50 @@
+# Proposed CI workflow: installs node, caches npm deps and Playwright browsers,
+# runs playwright browser install with --with-deps, then runs tests.
+name: CI
+
+on:
+  push:
+    branches: [ main, copilot/improve-test-coverage-ci-pipeline ]
+  pull_request:
+    branches: [ main, copilot/improve-test-coverage-ci-pipeline ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-browsers-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-browsers-
+
+      - name: Install Playwright browsers
+        # --with-deps ensures required system deps are installed on linux runners
+        run: npx playwright install --with-deps
+
+      - name: Run tests
+        env:
+          CI: true
+        run: npm test
