@@ -131,11 +131,17 @@ class SaveManager {
 
   /**
    * Get all drafts from IndexedDB
+   *
+   * idb-keyval.entries returns an async iterable. Consume it with 'for await'
+   * to build a proper array rather than trying to .map() an async iterable.
    */
   async getAllDrafts(): Promise<Draft[]> {
     try {
-      const allEntries = await entries<string, Draft>(draftStore);
-      return allEntries.map(([, draft]) => draft);
+      const drafts: Draft[] = [];
+      for await (const [, draft] of entries<string, Draft>(draftStore)) {
+        drafts.push(draft);
+      }
+      return drafts;
     } catch (error) {
       console.error('[SaveManager] Error getting all drafts:', error);
       return [];
