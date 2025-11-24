@@ -27,6 +27,15 @@ export interface SaveManagerOptions {
   onOffline?: () => void;
 }
 
+// Defensive fix: coerce entries to an array before calling .map to avoid
+// "Cannot read properties of undefined (reading 'map')" in test environments.
+export function getAllDrafts<T extends Record<string, any>>(entries?: Iterable<[string, T]> | null) {
+  // if entries is falsy -> use empty array
+  // if entries is an iterable (Map.entries(), etc.) -> convert to array
+  const list = entries ? Array.from(entries as Iterable<[string, T]>) : [];
+  return list.map(([id, draft]) => ({ id, ...draft }));
+}
+
 class SaveManager {
   private online: boolean = typeof navigator !== 'undefined' ? navigator.onLine : true;
   private syncQueue: Set<string> = new Set();
