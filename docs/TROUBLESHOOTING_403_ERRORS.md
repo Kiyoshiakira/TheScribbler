@@ -307,12 +307,17 @@ If you're still experiencing 403 errors after following this guide:
    - Try incognito/private mode
    - Disable browser extensions
 
-5. **Check Network Issues:**
+5. **Check for Browser Extension Conflicts:**
+   - Ad blockers, Dark Reader, and other extensions can interfere with Google Sign-In
+   - See [EXTENSION_COMPATIBILITY.md](./EXTENSION_COMPATIBILITY.md) for detailed guidance
+   - Try the "Popup Sign-In" option on the login page as a workaround
+
+6. **Check Network Issues:**
    - Verify internet connection
    - Check firewall settings
    - Ensure Google APIs are accessible
 
-6. **Review Full Error Message:**
+7. **Review Full Error Message:**
    - Copy the complete error from console
    - Search for the specific error code
    - Check Firebase documentation for that error
@@ -323,8 +328,9 @@ If you're still experiencing 403 errors after following this guide:
 - [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
 - [Firebase Console](https://console.firebase.google.com/)
 - [Google Cloud Console](https://console.cloud.google.com/)
+- [Browser Extension Compatibility Guide](./EXTENSION_COMPATIBILITY.md)
+- [Firebase Auth Domains Guide](./firebase-auth-domains.md)
 - [ScriptScribbler Main README](../README.md)
-- [Wiki Troubleshooting Guide](../wiki/Troubleshooting.md)
 
 ## Quick Reference: Common Error Codes
 
@@ -337,8 +343,10 @@ If you're still experiencing 403 errors after following this guide:
 | `auth/wrong-password` | Incorrect password | Check password and try again |
 | `auth/too-many-requests` | Too many failed attempts | Wait and try again later |
 | `auth/network-request-failed` | Network issue | Check internet connection |
+| `auth/popup-blocked` | Browser blocked popup | Allow popups or use redirect sign-in |
 | `access_denied` (OAuth) | OAuth consent issue | Configure OAuth consent screen or add as test user |
+| CSP errors | Browser security policy | Disable extensions or see [extension guide](./EXTENSION_COMPATIBILITY.md) |
 
 ---
 
-**Last Updated:** 2025-11-18
+**Last Updated:** 2025-11-26

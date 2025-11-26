@@ -40,6 +40,14 @@ const nextConfig: NextConfig = {
     ],
   },
   // Security: Additional headers for production
+  // Note: CSP headers are intentionally NOT set here to avoid blocking Firebase Auth.
+  // Firebase's modular SDK (v9+) is CSP-compliant and doesn't require 'unsafe-eval'.
+  // However, some browser extensions may inject scripts that conflict with strict CSP.
+  // If you need to add CSP, ensure these domains are allowed:
+  // - *.firebaseapp.com (Firebase Auth)
+  // - *.googleapis.com (Google APIs)
+  // - accounts.google.com (Google Sign-In)
+  // See docs/EXTENSION_COMPATIBILITY.md for troubleshooting extension conflicts.
   async headers() {
     return [
       {
@@ -52,6 +60,14 @@ const nextConfig: NextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
           },
         ],
       },

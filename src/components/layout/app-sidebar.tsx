@@ -53,6 +53,7 @@ export const Logo = ({ variant = 'default' }: { variant?: 'default' | ToolType }
       width={120} 
       height={120} 
       className="object-contain w-full h-auto max-w-[120px]"
+      priority
     />
   );
 };

@@ -5,6 +5,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithRedirect,
+  signInWithPopup,
   GoogleAuthProvider,
   setPersistence,
   browserLocalPersistence,
@@ -26,7 +27,7 @@ import { useFirebase, useUser } from '@/firebase';
 import { Logo } from '@/components/layout/app-sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Chrome, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Chrome, Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react';
 import { useRedirectResult } from '@/firebase/auth/use-redirect-result';
 import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
@@ -68,51 +69,27 @@ function LoginCard() {
   // Process redirect result from Google Sign-In
   React.useEffect(() => {
     const processRedirectResult = async () => {
-      if (!redirectResult.isProcessing && redirectResult.userCredential && firestore) {
+      if (!redirectResult.isProcessing && redirectResult.userCredential) {
         const user = redirectResult.userCredential.user;
-        console.log('[LoginPage] Processing Google sign-in result for user:', user.uid);
-
-        try {
-          // Check if user profile exists in Firestore
-          const userDocRef = doc(firestore, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          if (userDoc.exists()) {
-            // Profile exists, redirect to home
-            console.log('[LoginPage] Profile exists, redirecting to home');
-            toast({
-              title: 'Welcome Back!',
-              description: 'Successfully signed in with Google.',
-            });
-            router.push('/');
-          } else {
-            // Profile doesn't exist, redirect to onboarding
-            console.log('[LoginPage] Profile does not exist, redirecting to onboarding');
-            toast({
-              title: 'Welcome!',
-              description: 'Please complete your profile setup.',
-            });
-            router.push('/onboarding');
-          }
-        } catch (error: any) {
-          console.error('[LoginPage] Error checking user profile:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Failed to verify your profile. Please try again.',
-          });
-        }
+        await processGoogleSignInSuccess(user);
       } else if (!redirectResult.isProcessing && redirectResult.error) {
-        console.error('[LoginPage] Error in Google redirect:', redirectResult.error);
+        const err = redirectResult.error as Error & { code?: string };
+        console.error('[LoginPage] Error in Google redirect:', err);
         
         // Provide helpful error messages based on the error type
         let errorTitle = 'Google Sign-In Error';
-        let errorDescription = redirectResult.error.message || 'Failed to sign in with Google.';
+        let errorDescription = err.message || 'Failed to sign in with Google.';
+        let showExtensionWarning = false;
         
-        const errorMessage = redirectResult.error.message || '';
-        const errorCode = (redirectResult.error as any).code || '';
+        const errorMessage = err.message || '';
+        const errorCode = err.code || '';
         
-        if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
+        // Check for CSP or extension-related errors
+        if (isCSPOrExtensionError(err)) {
+          errorTitle = 'Sign-In Blocked by Browser Policy';
+          errorDescription = 'The sign-in was blocked, possibly due to browser security settings or extensions. Try disabling ad blockers or other extensions, or use the popup sign-in option below.';
+          showExtensionWarning = true;
+        } else if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
           errorTitle = 'Domain Not Authorized';
           errorDescription = 'Your domain is not authorized for Google Sign-In. Go to Firebase Console > Authentication > Sign-in method > Authorized domains and add your current domain (check your browser\'s address bar).';
         } else if (errorCode === 'auth/operation-not-allowed') {
@@ -131,10 +108,22 @@ function LoginCard() {
           title: errorTitle,
           description: errorDescription,
         });
+
+        // Show additional warning about extensions if applicable
+        if (showExtensionWarning) {
+          setTimeout(() => {
+            toast({
+              title: 'Troubleshooting Tip',
+              description: 'Browser extensions like ad blockers, Dark Reader, or BetterTTV can interfere with Google Sign-In. Try the "Popup Sign-In" option below.',
+            });
+          }, 500);
+        }
       }
     };
 
     processRedirectResult();
+  // Note: firestore is accessed via processGoogleSignInSuccess closure, not directly
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [redirectResult, firestore, router, toast]);
 
   const validateInputs = (action: 'signIn' | 'signUp'): string | null => {
@@ -284,9 +273,73 @@ function LoginCard() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  // Helper function to detect if CSP or extension-related errors occurred
+  const isCSPOrExtensionError = (error: Error): boolean => {
+    const errorMessage = error.message?.toLowerCase() || '';
+    const errorName = error.name?.toLowerCase() || '';
+    return (
+      errorMessage.includes('csp') ||
+      errorMessage.includes('content security policy') ||
+      errorMessage.includes('unsafe-eval') ||
+      errorMessage.includes('script-src') ||
+      errorMessage.includes('blocked') ||
+      errorMessage.includes('content.js') ||
+      errorName.includes('evalerror') ||
+      // Extension-injected script patterns
+      errorMessage.includes('extension') ||
+      errorMessage.includes('chrome-extension')
+    );
+  };
+
+  // Helper function to process successful Google sign-in
+  const processGoogleSignInSuccess = async (user: import('firebase/auth').User) => {
+    console.log('[LoginPage] Processing Google sign-in result for user:', user.uid);
+
+    try {
+      if (!firestore) {
+        toast({
+          title: 'Welcome!',
+          description: 'Successfully signed in with Google.',
+        });
+        router.push('/');
+        return;
+      }
+
+      // Check if user profile exists in Firestore
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        // Profile exists, redirect to home
+        console.log('[LoginPage] Profile exists, redirecting to home');
+        toast({
+          title: 'Welcome Back!',
+          description: 'Successfully signed in with Google.',
+        });
+        router.push('/');
+      } else {
+        // Profile doesn't exist, redirect to onboarding
+        console.log('[LoginPage] Profile does not exist, redirecting to onboarding');
+        toast({
+          title: 'Welcome!',
+          description: 'Please complete your profile setup.',
+        });
+        router.push('/onboarding');
+      }
+    } catch (profileError) {
+      console.error('[LoginPage] Error checking user profile:', profileError);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to verify your profile. Please try again.',
+      });
+    }
+  };
+
+  const handleGoogleSignIn = async (usePopup = false) => {
     console.log('[LoginPage] Starting Google sign-in attempt', {
       authAvailable: !!auth,
+      method: usePopup ? 'popup' : 'redirect',
     });
 
     // Check if auth is available
@@ -312,29 +365,59 @@ function LoginCard() {
       // For troubleshooting, you can comment out these lines to sign in without Drive/Docs access.
       provider.addScope('https://www.googleapis.com/auth/drive.readonly');
       provider.addScope('https://www.googleapis.com/auth/documents.readonly');
-      console.log('[LoginPage] Calling signInWithRedirect for Google');
-      await signInWithRedirect(auth, provider);
-      // The user is redirected, so the code below this line won't execute until they return.
-      // Firebase automatically handles the redirect result on page load.
-    } catch (error: any) {
-      console.error('[LoginPage] Error signing in with Google:', error);
+      
+      if (usePopup) {
+        // Use popup sign-in as fallback when redirect fails
+        console.log('[LoginPage] Calling signInWithPopup for Google');
+        const result = await signInWithPopup(auth, provider);
+        
+        if (result.user) {
+          await processGoogleSignInSuccess(result.user);
+        }
+        setIsGoogleLoading(false);
+      } else {
+        // Default: use redirect sign-in
+        console.log('[LoginPage] Calling signInWithRedirect for Google');
+        await signInWithRedirect(auth, provider);
+        // The user is redirected, so the code below this line won't execute until they return.
+        // Firebase automatically handles the redirect result on page load.
+      }
+    } catch (error: unknown) {
+      const err = error as Error & { code?: string };
+      console.error('[LoginPage] Error signing in with Google:', err);
       
       // Provide more helpful error messages for common issues
       let errorTitle = 'Google Sign-In Error';
-      let errorDescription = error.message || 'An unexpected error occurred.';
+      let errorDescription = err.message || 'An unexpected error occurred.';
+      let showExtensionWarning = false;
+      let suggestPopupFallback = false;
       
-      // Check for 403/authorization errors
-      if (error.code === 'auth/unauthorized-domain' || 
-          error.message?.includes('403') || 
-          error.message?.includes('unauthorized')) {
+      const errorCode = err.code || '';
+      const errorMessage = err.message || '';
+      
+      // Check for CSP or extension-related errors
+      if (isCSPOrExtensionError(err)) {
+        errorTitle = 'Sign-In Blocked by Browser Policy';
+        errorDescription = 'The sign-in was blocked, possibly due to browser security settings or extensions. Try disabling ad blockers or other extensions, or use the popup sign-in option.';
+        showExtensionWarning = true;
+        suggestPopupFallback = !usePopup;
+      } else if (errorCode === 'auth/unauthorized-domain' || 
+          errorMessage.includes('403') || 
+          errorMessage.includes('unauthorized')) {
         errorTitle = 'Domain Not Authorized';
         errorDescription = 'Your domain is not authorized for Google Sign-In. Please add your domain (e.g., localhost or your workspace domain) to the authorized domains list in Firebase Console under Authentication > Sign-in method > Authorized domains.';
-      } else if (error.code === 'auth/operation-not-allowed') {
+      } else if (errorCode === 'auth/operation-not-allowed') {
         errorTitle = 'Google Sign-In Not Enabled';
         errorDescription = 'Google sign-in is not enabled in your Firebase project. Please enable it in Firebase Console under Authentication > Sign-in method.';
-      } else if (error.code === 'auth/popup-blocked') {
-        errorTitle = 'Redirect Blocked';
-        errorDescription = 'Your browser blocked the sign-in redirect. Please allow redirects for this site and try again.';
+      } else if (errorCode === 'auth/popup-blocked') {
+        errorTitle = 'Popup Blocked';
+        errorDescription = 'Your browser blocked the sign-in popup. Please allow popups for this site and try again, or use the redirect sign-in option.';
+      } else if (errorCode === 'auth/popup-closed-by-user' || errorCode === 'auth/cancelled-popup-request') {
+        errorTitle = 'Sign-In Cancelled';
+        errorDescription = 'The sign-in process was cancelled. Please try again.';
+      } else if (errorCode === 'auth/network-request-failed') {
+        errorTitle = 'Network Error';
+        errorDescription = 'Unable to connect to authentication service. Please check your internet connection and try again.';
       }
       
       toast({
@@ -342,6 +425,27 @@ function LoginCard() {
         title: errorTitle,
         description: errorDescription,
       });
+
+      // Show additional warning about extensions if applicable
+      if (showExtensionWarning) {
+        setTimeout(() => {
+          toast({
+            title: 'Troubleshooting Tip',
+            description: 'Browser extensions like ad blockers, Dark Reader, or BetterTTV can interfere with Google Sign-In. Try disabling them or using an incognito window.',
+          });
+        }, 500);
+      }
+
+      // Suggest popup fallback if redirect failed due to CSP/extensions
+      if (suggestPopupFallback) {
+        setTimeout(() => {
+          toast({
+            title: 'Try Popup Sign-In',
+            description: 'Click the "Try Popup Sign-In" link below the Google button to use an alternative sign-in method.',
+          });
+        }, 1000);
+      }
+
       setIsGoogleLoading(false);
     }
   };
@@ -465,7 +569,7 @@ function LoginCard() {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2">
-              <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+              <Button variant="outline" onClick={() => handleGoogleSignIn(false)} disabled={isLoading || isGoogleLoading}>
                 {isGoogleLoading ? (
                   'Redirecting to Google...'
                 ) : (
@@ -475,6 +579,32 @@ function LoginCard() {
                   </>
                 )}
               </Button>
+              <button
+                type="button"
+                onClick={() => handleGoogleSignIn(true)}
+                disabled={isLoading || isGoogleLoading}
+                className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Having trouble? Try Popup Sign-In
+              </button>
+            </div>
+            {/* Extension compatibility notice */}
+            <div className="mt-4 p-3 bg-muted/50 rounded-md">
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <p>
+                  If sign-in fails, try disabling browser extensions (ad blockers, Dark Reader, etc.) 
+                  or use an incognito window. For detailed troubleshooting, check the{' '}
+                  <a 
+                    href="https://github.com/Kiyoshiakira/TheScribbler/blob/main/docs/EXTENSION_COMPATIBILITY.md" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-primary"
+                  >
+                    extension compatibility guide
+                  </a>.
+                </p>
+              </div>
             </div>
           </CardContent>
         </>

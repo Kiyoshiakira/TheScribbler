@@ -49,3 +49,10 @@ Your final authorized domains list in Firebase should look something like this:
 -   `your-custom-domain.com` (once you set it up)
 
 By authorizing these domains, you ensure that Firebase Authentication can securely handle sign-in requests from your app, whether you're developing locally, in the cloud, or on your live production site.
+
+## Troubleshooting
+
+If you're experiencing sign-in issues even with all domains authorized, see:
+
+- [TROUBLESHOOTING_403_ERRORS.md](./TROUBLESHOOTING_403_ERRORS.md) - Comprehensive guide for 403 authentication errors
+- [EXTENSION_COMPATIBILITY.md](./EXTENSION_COMPATIBILITY.md) - Browser extension conflicts and solutions
