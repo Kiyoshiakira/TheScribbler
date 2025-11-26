@@ -24,6 +24,9 @@
  * List of admin email addresses.
  * Users with these emails will have unlimited access to all features.
  * Email matching is case-insensitive.
+ * 
+ * SECURITY NOTE: This list is kept private and only the isAdmin function
+ * is exported to prevent leaking admin email addresses.
  */
 const ADMIN_EMAILS: string[] = [
   'shaunessy24@gmail.com',
@@ -55,12 +58,4 @@ export function isAdmin(email: string | null | undefined): boolean {
   return ADMIN_EMAILS.some(
     (adminEmail) => adminEmail.toLowerCase().trim() === normalizedEmail
   );
-}
-
-/**
- * Get the list of admin emails (for debugging/display purposes only).
- * Do not use this for security checks - use isAdmin() instead.
- */
-export function getAdminEmails(): readonly string[] {
-  return Object.freeze([...ADMIN_EMAILS]);
 }

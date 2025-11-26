@@ -78,7 +78,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Admin users get the highest tier with unlimited access
-        if (checkIsAdmin(user.email)) {
+        if (checkIsAdmin(user?.email)) {
           setSubscription(createAdminSubscription());
           return;
         }
