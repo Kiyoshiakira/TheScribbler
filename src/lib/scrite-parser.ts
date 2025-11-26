@@ -203,7 +203,7 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     throw new Error('Invalid Scrite JSON structure: structure not found.');
   }
 
-  const screenplay = jsonObj.screenplay as ScriteTitlePage || {};
+  const screenplay = (jsonObj.screenplay as ScriteTitlePage) || {};
   const title = screenplay.title || 'Untitled Scrite Import';
   const scriptLines: string[] = [];
   const scenes: ParsedScene[] = [];
@@ -245,7 +245,7 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
   
   for (const spElement of screenplayElements) {
     // Handle act/episode breaks (these are structural markers, not scenes)
-    if (spElement.elementType === 'BreakElementType' || spElement.breakType !== undefined && spElement.breakType >= 0) {
+    if (spElement.elementType === 'BreakElementType' || (spElement.breakType !== undefined && spElement.breakType >= 0)) {
       if (spElement.breakTitle || spElement.breakSubtitle) {
         scriptLines.push('');
         const breakText = [spElement.breakTitle, spElement.breakSubtitle].filter(Boolean).join(' - ');
@@ -259,11 +259,12 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     if (!scene) continue;
     
     // Handle omitted scenes - add a comment in the script
+    // Use the userSceneNumber from the screenplay element for accurate numbering
     if (spElement.omitted) {
       if (scene.heading && scene.heading.location) {
         const heading = `${scene.heading.locationType || 'INT.'} ${scene.heading.location} - ${scene.heading.moment || 'DAY'}`;
         scriptLines.push('');
-        scriptLines.push(`/* OMITTED: ${heading.toUpperCase()} #${spElement.userSceneNumber || sceneCounter + 1}# */`);
+        scriptLines.push(`/* OMITTED: ${heading.toUpperCase()} #${spElement.userSceneNumber || 'X'}# */`);
       }
       continue;
     }
