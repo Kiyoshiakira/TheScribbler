@@ -22,9 +22,14 @@ export function useRedirectResult(auth: Auth | null): RedirectResultState {
 
   useEffect(() => {
     if (!auth) {
-      setState({ isProcessing: false, userCredential: null, error: null });
+      // Auth not yet available - keep isProcessing true to show loading state
+      // until auth is initialized and we can check for redirect results
       return;
     }
+
+    // Set isProcessing to true when starting to check for redirect results
+    // This ensures the loading state is shown while getRedirectResult is pending
+    setState({ isProcessing: true, userCredential: null, error: null });
 
     const handleRedirectResult = async () => {
       try {
