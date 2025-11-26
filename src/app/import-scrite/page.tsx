@@ -43,35 +43,46 @@ export default function ImportScritePage() {
       reader.onload = async (e) => {
         const base64Content = e.target?.result as string;
 
-        // Call API
-        const response = await fetch('/api/import-scrite', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            filename: file.name,
-            content: base64Content,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          setResult({
-            success: true,
-            header: data.header,
-            fountain: data.fountain,
-            filename: file.name.replace('.scrite', '.fountain'),
+        try {
+          // Call API
+          const response = await fetch('/api/import-scrite', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              filename: file.name,
+              content: base64Content,
+            }),
           });
-        } else {
+
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+
+          if (data && data.success) {
+            setResult({
+              success: true,
+              header: data.header,
+              fountain: data.fountain,
+              filename: file.name.replace('.scrite', '.fountain'),
+            });
+          } else {
+            setResult({
+              success: false,
+              error: data?.error || 'Unknown error occurred',
+            });
+          }
+        } catch (error) {
           setResult({
             success: false,
-            error: data.error || 'Unknown error occurred',
+            error: error instanceof Error ? error.message : 'Failed to process file',
           });
+        } finally {
+          setIsProcessing(false);
         }
-
-        setIsProcessing(false);
       };
 
       reader.onerror = () => {

@@ -32,10 +32,15 @@ const placeholderNotifications = [
 ];
 
 
-export default function CollabHub() {
+export default function CollabHub({ 
+  sessionType, 
+  roomId 
+}: { 
+  sessionType: 'persistent' | 'live'; 
+  roomId: string; 
+}) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(placeholderMessages);
   const [chatInput, setChatInput] = useState('');
-  const [isChatLoading, setIsChatLoading] = useState(false);
   const [isVoiceConnected, setIsVoiceConnected] = useState(false);
   const [isManuallyTyping, setIsManuallyTyping] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -74,7 +79,7 @@ export default function CollabHub() {
         behavior: 'smooth',
       });
     }
-  }, [chatHistory, isChatLoading]);
+  }, [chatHistory]);
 
   const handleSendChat = async () => {
     if (!chatInput.trim()) return;
@@ -157,7 +162,6 @@ export default function CollabHub() {
             }
           }}
           onKeyDown={e => e.key === 'Enter' && handleSendChat()}
-          disabled={isChatLoading}
           className="text-sm h-10 border-2 focus-visible:ring-2"
         />
         {browserSupportsSpeechRecognition && (
@@ -165,7 +169,6 @@ export default function CollabHub() {
             variant="outline"
             size="icon"
             onClick={handleVoiceToggle}
-            disabled={isChatLoading}
             className="h-10 w-10 border-2"
           >
             {listening ? (
@@ -177,7 +180,7 @@ export default function CollabHub() {
         )}
         <Button
           onClick={handleSendChat}
-          disabled={isChatLoading || !chatInput.trim()}
+          disabled={!chatInput.trim()}
           size="default"
           className="h-10 px-4 shadow-md"
         >
@@ -210,6 +213,20 @@ export default function CollabHub() {
 
   return (
     <div className="h-full flex flex-col bg-muted/30 rounded-lg border-2 border-border p-3">
+      {/* Session Info Header */}
+      <div className="mb-2 px-2 py-1.5 bg-muted/50 rounded-md border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Session:</span>
+            <span className="text-xs font-mono font-semibold">{roomId}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs text-muted-foreground">{sessionType}</span>
+          </div>
+        </div>
+      </div>
+      
       <Tabs defaultValue="chat" className="flex-1 flex flex-col min-h-0">
         <div className='flex items-center justify-between pr-1.5 gap-2'>
             <TabsList className="h-8">

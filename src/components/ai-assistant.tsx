@@ -17,6 +17,7 @@ import { useScript } from '@/context/script-context';
 import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 
 interface ChatMessage {
@@ -115,14 +116,14 @@ export default function AiAssistant({ openProofreadDialog }: AiAssistantProps) {
 
       if (result.data.toolResult?.type === 'character' && user && currentScriptId && firestore) {
         const charData = result.data.toolResult.data;
-        const characterToSave = {
+        const characterToSave = sanitizeFirestorePayload({
           name: charData.name,
           profile: charData.profile,
           description: charData.profile.split('\n')[0],
           scenes: 0,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        };
+        });
 
         const charactersCollectionRef = collection(firestore, `users/${user.uid}/scripts/${currentScriptId}/characters`);
         

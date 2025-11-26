@@ -1,8 +1,6 @@
 'use client';
 
-import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
-import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 
 // Internal state for user authentication

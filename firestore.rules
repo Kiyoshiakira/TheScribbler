@@ -17,7 +17,7 @@
  * - User profiles (`/users/{userId}`) are world-readable to facilitate future social features,
  *   but only the owner can write to their own profile.
  * - All script-related data is nested under the user path, making ownership checks straightforward.
- * - Users can write to the `error-reports` collection but cannot read from it, protecting privacy.
+ * - Users can write to the `error-reports` collection but cannot read or list them, protecting privacy.
  * - Users cannot list all other users in the system.
  */
 rules_version = '2';
@@ -38,81 +38,16 @@ service cloud.firestore {
       allow list: if false; // Prevent listing all users
 
       allow create, update, delete: if isOwner();
-    }
 
-    /**
-     * @description Controls access to script documents. Scripts are publicly readable
-     * to allow sharing, but only the owner can write.
-     * @path /users/{userId}/scripts/{scriptId}
-     */
-    match /users/{userId}/scripts/{scriptId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
+      /**
+       * @description Catch-all rule for all script-related subcollections.
+       * This ensures that all current and future subcollections are accessible
+       * by the owner, even if specific rules aren't defined above.
+       * @path /users/{userId}/** (all subcollections)
+       */
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      allow read: if request.auth != null; // Any authenticated user can read scripts
-      allow write: if isOwner();
-    }
-
-    /**
-     * @description Controls access to script versions. Publicly readable but only owner can write.
-     * @path /users/{userId}/scripts/{scriptId}/versions/{versionId}
-     */
-    match /users/{userId}/scripts/{scriptId}/versions/{versionId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow read: if request.auth != null; // Any authenticated user can read versions
-      allow write: if isOwner();
-    }
-
-    /**
-     * @description Controls access to characters within a script. Publicly readable but only owner can write.
-     * @path /users/{userId}/scripts/{scriptId}/characters/{characterId}
-     */
-    match /users/{userId}/scripts/{scriptId}/characters/{characterId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow read: if request.auth != null; // Any authenticated user can read characters
-      allow write: if isOwner();
-    }
-
-    /**
-     * @description Controls access to notes within a script. Publicly readable but only owner can write.
-     * @path /users/{userId}/scripts/{scriptId}/notes/{noteId}
-     */
-    match /users/{userId}/scripts/{scriptId}/notes/{noteId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow read: if request.auth != null; // Any authenticated user can read notes
-      allow write: if isOwner();
-    }
-
-    /**
-     * @description Controls access to scenes within a script. Publicly readable but only owner can write.
-     * @path /users/{userId}/scripts/{scriptId}/scenes/{sceneId}
-     */
-    match /users/{userId}/scripts/{scriptId}/scenes/{sceneId} {
-      function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow read: if request.auth != null; // Any authenticated user can read scenes
-      allow write: if isOwner();
-    }
-    
-    /**
-     * @description Controls access to comments within a script. Publicly readable but only owner can write.
-     * @path /users/{userId}/scripts/{scriptId}/comments/{commentId}
-     */
-    match /users/{userId}/scripts/{scriptId}/comments/{commentId} {
-        function isOwner() {
-          return request.auth != null && request.auth.uid == userId;
-        }
-
-        // Any authenticated user can read comments, but only owner can write
-        allow read: if request.auth != null;
-        allow write: if isOwner();
     }
 
     /**
@@ -122,11 +57,7 @@ service cloud.firestore {
      * @path /error-reports/{reportId}
      */
     match /error-reports/{reportId} {
-        function isSignedIn() {
-            return request.auth != null;
-        }
-
-        allow create: if isSignedIn();
+        allow create: if request.auth != null;
         allow read, list, update, delete: if false;
     }
   }

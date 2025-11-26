@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { FirestorePermissionError, useFirestore, useUser, FirebaseClientProvider } from '@/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 function GlobalErrorContent({
     error,
@@ -27,7 +28,7 @@ function GlobalErrorContent({
     if (error instanceof FirestorePermissionError && firestore && user) {
         try {
             const errorReportsCollection = collection(firestore, 'error-reports');
-            await addDoc(errorReportsCollection, {
+            const errorReportData = sanitizeFirestorePayload({
                 error: {
                     name: error.name,
                     message: error.message,
@@ -38,6 +39,7 @@ function GlobalErrorContent({
                 url: window.location.href,
                 reportedAt: serverTimestamp(),
             });
+            await addDoc(errorReportsCollection, errorReportData);
             toast({
                 title: "Error Report Sent",
                 description: "Thank you for helping us improve the application.",

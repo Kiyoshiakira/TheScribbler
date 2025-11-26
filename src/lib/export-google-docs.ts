@@ -58,15 +58,15 @@ export async function exportToGoogleDocs(
     throw new Error('Google access token is required');
   }
 
-  // Step 1: Create a new Google Doc
-  const createResponse = await fetch('https://docs.googleapis.com/v1/documents', {
+  // Step 1: Create a new Google Doc via server-side API to avoid CORS issues
+  const createResponse = await fetch('/api/google-docs/create', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       title: title || 'Untitled Screenplay',
+      accessToken,
     }),
   });
 
@@ -76,27 +76,35 @@ export async function exportToGoogleDocs(
   }
 
   const createData = await createResponse.json();
+  if (!createData.success) {
+    throw new Error(createData.error || 'Failed to create Google Doc');
+  }
   const documentId = createData.documentId;
 
   // Step 2: Build the content and formatting requests
   const requests = buildGoogleDocsRequests(scriptDoc, title);
 
-  // Step 3: Update the document with screenplay content
-  const updateResponse = await fetch(
-    `https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ requests }),
-    }
-  );
+  // Step 3: Update the document with screenplay content via server-side API
+  const updateResponse = await fetch('/api/google-docs/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      documentId,
+      requests,
+      accessToken,
+    }),
+  });
 
   if (!updateResponse.ok) {
     const errorText = await updateResponse.text();
     throw new Error(`Failed to update Google Doc: ${errorText}`);
+  }
+
+  const updateData = await updateResponse.json();
+  if (!updateData.success) {
+    throw new Error(updateData.error || 'Failed to update Google Doc');
   }
 
   return documentId;

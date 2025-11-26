@@ -10,6 +10,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
+import { getWritingAssistPrompt } from '@/lib/ai-system-prompts';
 
 const ScriptBlockSchema = z.object({
   id: z.string(),
@@ -47,12 +48,13 @@ const prompt = ai.definePrompt({
   model: googleAI.model('gemini-2.5-flash'),
   config: {
     temperature: 0.7,
+    systemInstruction: {
+      parts: [{ text: getWritingAssistPrompt(false) }], // Set to true if working with Skylantia
+    },
   },
   input: { schema: AiWritingAssistInputSchema },
   output: { schema: AiWritingAssistOutputSchema },
-  prompt: `You are an expert screenwriting co-writer providing intelligent writing assistance.
-
-**Context (Previous Blocks):**
+  prompt: `**Context (Previous Blocks):**
 {{{json precedingBlocks}}}
 
 **Current Block:**
@@ -85,7 +87,6 @@ Based on the context and current editing position, provide intelligent writing s
 **Guidelines:**
 - Be concise and relevant
 - Match the writer's style and tone
-- Follow industry-standard screenplay formatting
 - Assign higher confidence (0.8-1.0) to obvious continuations
 - Assign medium confidence (0.5-0.7) to creative suggestions
 - Assign lower confidence (0.3-0.5) to speculative ideas

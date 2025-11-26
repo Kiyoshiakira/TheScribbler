@@ -11,6 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
+import { generateSystemPrompt } from '@/lib/ai-system-prompts';
 import {
   aiGenerateCharacterProfile,
 } from './ai-generate-character-profile';
@@ -23,6 +24,9 @@ import {
 import {
   aiEditScript,
 } from './ai-edit-script';
+import {
+  aiAdvancedEdit,
+} from './ai-advanced-edit';
 
 
 const ScriptBlockSchema = z.object({
@@ -80,6 +84,30 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
 
     // For now, we'll use a simpler approach that doesn't rely on tool calling
     // which has API changes in newer Genkit versions
+    
+    // Check if user wants advanced editing with tools
+    const advancedEditKeywords = [
+      'uppercase all', 'format all', 'fix all formatting',
+      'create act structure', 'generate structure', 'add plot points',
+      'apply style', 'standardize', 'consistent formatting'
+    ];
+    
+    if (advancedEditKeywords.some(keyword => input.request.toLowerCase().includes(keyword))) {
+      const advancedResult = await aiAdvancedEdit({
+        instruction: input.request,
+        document: input.document,
+        useRAG: input.document.blocks.length > 50,
+      });
+      
+      return {
+        response: advancedResult.response,
+        modifiedDocument: advancedResult.modifiedDocument,
+        toolResult: {
+          type: 'advanced-edit',
+          data: advancedResult,
+        },
+      };
+    }
     
     // Check if user wants to create a character
     if (input.request.toLowerCase().includes('create') && 
@@ -173,10 +201,22 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
       };
     }
     
-    // For general questions, use a simple prompt
+    // For general questions, use a simple prompt with enhanced system instructions
     const generalPrompt = ai.definePrompt({
       name: 'generalQuestionPrompt',
       model: googleAI.model('gemini-2.5-flash'),
+      config: {
+        temperature: 0.3,
+        systemInstruction: {
+          parts: [{
+            text: generateSystemPrompt({
+              includeScreenplayFormat: true,
+              includeSkylantia: false,
+              customInstructions: 'You are a helpful assistant for a screenwriting application. Provide clear, actionable advice.',
+            }),
+          }],
+        },
+      },
       input: { 
         schema: z.object({
           request: z.string(),
@@ -188,9 +228,7 @@ const aiAgentOrchestratorFlow = ai.defineFlow(
           response: z.string(),
         })
       },
-      prompt: `You are an expert AI assistant for a screenwriting application.
-
-The user asked: {{{request}}}
+      prompt: `The user asked: {{{request}}}
 
 Current screenplay document:
 {{{json document}}}
@@ -201,11 +239,10 @@ Available Features in the Application:
 - Edit Scene: After a scene is ended, users can click "Edit Scene" to modify scene details (setting, description, time)
 - Scene Editing Dialog: Available in the Scenes tab for detailed scene management
 - Scene Grouping: Scenes are automatically grouped by SCENE_HEADING blocks in the editor
+- Advanced Editing: Use commands like "uppercase all scene headings" or "create act structure"
+- Style Rules: Apply formatting rules to ensure consistency
 
 Provide a helpful, conversational answer to their question.`,
-      config: {
-        temperature: 0.3,
-      }
     });
     
     const { output } = await generalPrompt(input);

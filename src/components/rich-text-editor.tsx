@@ -3,6 +3,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuill } from 'react-quilljs';
 import 'quill/dist/quill.snow.css';
+import { useFullscreen } from '@/hooks/use-fullscreen';
+import { Maximize2, Minimize2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * RichTextEditor
@@ -38,19 +42,21 @@ interface Props {
   debounceMs?: number;
 }
 
-function useDebouncedCallback<T extends (...args: any[]) => void>(cb: T, delay = 300) {
+function useDebouncedCallback<T extends (...args: unknown[]) => void>(cb: T, delay = 300) {
   const cbRef = useRef(cb);
   useEffect(() => {
     cbRef.current = cb;
   }, [cb]);
 
   const timeoutRef = useRef<number | undefined>(undefined);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return useRef((...args: any[]) => {
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = window.setTimeout(() => {
-      cbRef.current(...args);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cbRef.current(...(args as any));
     }, delay);
   }).current as (...args: Parameters<T>) => void;
 }
@@ -63,9 +69,12 @@ export default function RichTextEditor({
   largeContentThreshold = 500_000,
   debounceMs = 400,
 }: Props) {
+  const { toast } = useToast();
   // If content is extremely large, use a plain textarea fallback to keep editing snappy.
   const isHuge = (value?.length || 0) > largeContentThreshold;
   const [usePlain, setUsePlain] = useState<boolean>(isHuge);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const { isFullscreen, toggleFullscreen } = useFullscreen(editorContainerRef);
 
   // react-quilljs hook
   const modules = useMemo(
@@ -116,7 +125,7 @@ export default function RichTextEditor({
   const { quill, quillRef } = useQuill({ modules, formats, theme: 'snow' });
 
   // Debounced parent callback so parent state isn't updated on every keystroke.
-  const debouncedOnChange = useDebouncedCallback<(html: string) => void>(onChange, debounceMs);
+  const debouncedOnChange = useDebouncedCallback(onChange as (...args: unknown[]) => void, debounceMs);
 
   // Track whether we initialized quill content
   const initializedRef = useRef(false);
@@ -128,6 +137,7 @@ export default function RichTextEditor({
       // set initial HTML (preserve existing formatting)
       try {
         quill.clipboard.dangerouslyPasteHTML(value || '');
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         // Fall back: insert plain text if HTML is malformed
         quill.setText(value || '');
@@ -146,8 +156,8 @@ export default function RichTextEditor({
     quill.on('text-change', handleTextChange);
 
     // Setup image handler (uploads image via uploadImage callback if provided)
-    const toolbar = quill.getModule('toolbar');
-    if (toolbar) {
+    const toolbar = quill.getModule('toolbar') as { addHandler?: (name: string, handler: () => void) => void } | null;
+    if (toolbar && toolbar.addHandler) {
       toolbar.addHandler('image', async () => {
         // open file picker
         const input = document.createElement('input');
@@ -176,6 +186,11 @@ export default function RichTextEditor({
             }
           } catch (err) {
             console.error('Image upload/insert failed', err);
+            toast({
+              variant: 'destructive',
+              title: 'Image Upload Failed',
+              description: 'Failed to insert the image. Please try again or use a smaller image.',
+            });
           }
         };
       });
@@ -215,17 +230,44 @@ export default function RichTextEditor({
   };
 
   return (
-    <div className={className}>
+    <div 
+      ref={editorContainerRef}
+      className={cn(
+        className,
+        "relative",
+        isFullscreen && "bg-background p-4"
+      )}
+    >
+      {/* Fullscreen toggle button */}
+      <button
+        type="button"
+        onClick={toggleFullscreen}
+        className="absolute top-2 right-2 z-10 p-2 rounded hover:bg-muted transition-colors"
+        title={isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
+      >
+        {isFullscreen ? (
+          <Minimize2 className="h-4 w-4" />
+        ) : (
+          <Maximize2 className="h-4 w-4" />
+        )}
+      </button>
+      
       {usePlain ? (
         <textarea
           value={value}
           onChange={handlePlainChange}
-          className="w-full min-h-[30rem] p-3 border rounded resize-vertical"
+          className={cn(
+            "w-full p-3 border rounded resize-vertical",
+            isFullscreen ? "min-h-[90vh]" : "min-h-[30rem]"
+          )}
           placeholder="Plain note (rich editor disabled for very large content)"
         />
       ) : (
         // quillRef is attached to a div and Quill mounts into it
-        <div ref={quillRef} />
+        <div 
+          ref={quillRef} 
+          className={cn(isFullscreen && "min-h-[80vh]")}
+        />
       )}
     </div>
   );

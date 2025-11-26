@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, User } from 'lucide-react';
 import { Logo } from '@/components/layout/app-sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 export default function OnboardingPage() {
   const { user, isUserLoading } = useUser();
@@ -73,7 +74,7 @@ export default function OnboardingPage() {
 
       // Create user profile in Firestore
       const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
+      await setDoc(userDocRef, sanitizeFirestorePayload({
         displayName: trimmedDisplayName,
         email: user.email,
         photoURL: user.photoURL || '',
@@ -81,11 +82,11 @@ export default function OnboardingPage() {
         coverImageUrl: '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      }));
 
       toast({
         title: 'Profile Created',
-        description: 'Welcome to ScriptScribbler! Redirecting to dashboard...',
+        description: 'Welcome to The Scribbler! Redirecting to dashboard...',
       });
 
       // Redirect to home page
@@ -121,7 +122,7 @@ export default function OnboardingPage() {
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center gap-2">
             <Logo />
-            <h1 className="text-2xl font-bold font-headline">ScriptScribbler</h1>
+            <h1 className="text-2xl font-bold font-headline">The Scribbler</h1>
           </div>
           <CardTitle className="font-headline text-2xl">Complete Your Profile</CardTitle>
           <CardDescription>

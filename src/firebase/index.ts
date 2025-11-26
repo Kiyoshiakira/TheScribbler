@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, User } from 'firebase/auth';
 import { getFirestore, Firestore, initializeFirestore, persistentLocalCache } from 'firebase/firestore';
 import { FirebaseContext, FirebaseContextState } from './provider';
-import React, { useMemo, type DependencyList, useContext } from 'react';
+import { useMemo, type DependencyList, useContext } from 'react';
 
 // Store the initialized services in a module-level variable to act as a singleton.
 let firebaseServices: { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore; } | null = null;

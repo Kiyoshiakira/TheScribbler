@@ -90,7 +90,7 @@ const parseQuillDelta = (delta: any): string => {
             }
         }
         return text.replace(/(\n\s*)+/g, '\n').trim();
-    } catch (e) {
+    } catch {
         return '';
     }
 };
@@ -145,8 +145,8 @@ export const parseScriteFile = async (fileData: ArrayBuffer): Promise<ParsedScri
     const sceneElements = getAsArray(scene.elements) as ScriteSceneElement[];
     let previousElementType: string | null = null;
     
-    sceneElements.forEach((element, index) => {
-        let text = parseQuillDelta(element.text || '');
+    sceneElements.forEach((element) => {
+        const text = parseQuillDelta(element.text || '');
         if (!text && element.type !== 'Action') return;
 
         // Add spacing based on Fountain rules

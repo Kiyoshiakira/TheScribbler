@@ -76,6 +76,9 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  // Security note: This uses dangerouslySetInnerHTML for CSS generation from typed config
+  // The content is generated from typed ChartConfig objects, not user input
+  // CSS variable names are prefixed and values are from controlled config
   return (
     <style
       dangerouslySetInnerHTML={{

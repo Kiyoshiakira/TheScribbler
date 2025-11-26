@@ -88,6 +88,11 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     );
   }
 
+  // Safety check - should never happen due to above conditionals
+  if (!firebaseServices) {
+    throw new Error('Firebase services failed to initialize');
+  }
+
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices.firebaseApp}

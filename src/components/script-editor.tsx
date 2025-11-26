@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useScript } from '@/context/script-context';
+import { useSettings } from '@/context/settings-context';
 import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
 import ScriptBlockComponent from './script-block';
@@ -17,6 +18,10 @@ interface ScriptEditorProps {
 
 export default function ScriptEditor({ isStandalone = false, onEditScene }: ScriptEditorProps) {
   const { document, setBlocks, isScriptLoading, activeMatch, scenes, deleteScene, insertBlockAfter } = useScript();
+  const { settings } = useSettings();
+  
+  // Apply editor font size setting (default 16px if not set)
+  const editorFontSize = settings.editorFontSize || 16;
 
   const handleBlockChange = (blockId: string, newText: string) => {
     if (document) {
@@ -80,6 +85,7 @@ export default function ScriptEditor({ isStandalone = false, onEditScene }: Scri
         'relative w-full font-code max-w-3xl mx-auto',
         isStandalone ? 'p-4' : 'bg-card shadow-sm rounded-lg border'
       )}
+      style={{ fontSize: `${editorFontSize}px` }}
     >
       <div className={cn(isStandalone ? '' : 'p-8 md:p-12')}>
         {groupedScenes.length > 0 ? (

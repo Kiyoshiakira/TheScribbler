@@ -15,28 +15,47 @@ import {
   Users,
   NotebookPen,
   LayoutDashboard,
+  ChevronDown,
+  ListTree,
+  FileText,
+  MapPin,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { View } from './AppLayout';
 import { useCurrentScript } from '@/context/current-script-context';
+import { useTool, type ToolType } from '@/context/tool-context';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import Image from 'next/image';
 
-export const Logo = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-8 w-8 text-primary"
-  >
-    <path d="M4 6h16" />
-    <path d="M4 12h16" />
-    <path d="M4 18h16" />
-    <path d="M12 4v16" />
-  </svg>
-);
+/**
+ * Logo component that displays the appropriate transparent PNG logo based on the current tool.
+ * Uses transparent background RGBA PNG images from /public/images/
+ * - ScriptScribbler: scriptscribbler.png
+ * - StoryScribbler: storyscribbler.png
+ * - Default: logo.png
+ */
+export const Logo = ({ variant = 'default' }: { variant?: 'default' | ToolType }) => {
+  const logoSrc = 
+    variant === 'ScriptScribbler' ? '/images/scriptscribbler.png' :
+    variant === 'StoryScribbler' ? '/images/storyscribbler.png' :
+    '/images/logo.png';
+  
+  return (
+    <Image 
+      src={logoSrc} 
+      alt="The Scribbler Logo" 
+      width={120} 
+      height={120} 
+      className="object-contain w-full h-auto max-w-[120px]"
+    />
+  );
+};
 
 interface AppSidebarProps {
   activeView: View;
@@ -46,6 +65,7 @@ interface AppSidebarProps {
 export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
   const { currentScriptId } = useCurrentScript();
   const { isMobile, setOpenMobile } = useSidebar();
+  const { currentTool, setCurrentTool } = useTool();
   const noScriptLoaded = !currentScriptId;
 
   const handleViewChange = (view: View | 'profile-edit') => {
@@ -64,20 +84,47 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
     { view: 'notes', label: 'Notes', icon: StickyNote },
   ] as const;
 
+  const storyMenuItems = [
+    { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { view: 'outline', label: 'Outline', icon: ListTree },
+    { view: 'chapters', label: 'Chapters', icon: FileText },
+    { view: 'characters', label: 'Characters', icon: Users },
+    { view: 'world', label: 'World', icon: MapPin },
+    { view: 'timeline', label: 'Timeline', icon: Clock },
+    { view: 'story-notes', label: 'Notes', icon: StickyNote },
+  ] as const;
+
+  const menuItems = currentTool === 'StoryScribbler' ? storyMenuItems : scriptMenuItems;
+
   return (
     <Sidebar collapsible="icon" side="left">
       <SidebarHeader>
-        <button className="flex flex-col items-center justify-center gap-1 p-2 w-full" onClick={() => handleViewChange('dashboard')}>
-          <Logo />
-          <div className="flex flex-col items-center leading-tight">
-            <span className="text-sm font-bold font-headline">Script</span>
-            <span className="text-sm font-bold font-headline">Scribbler</span>
-          </div>
-        </button>
+        <div className="flex flex-col items-center justify-center gap-1 p-2 w-full">
+          <button onClick={() => handleViewChange('dashboard')} aria-label="Go to dashboard">
+            <Logo variant={currentTool} />
+          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded hover:bg-accent transition-colors" aria-label="Switch between ScriptScribbler and StoryScribbler">
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem onClick={() => setCurrentTool('ScriptScribbler')}>
+                <span className={cn('font-medium', currentTool === 'ScriptScribbler' && 'text-primary')}>
+                  ScriptScribbler
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCurrentTool('StoryScribbler')}>
+                <span className={cn('font-medium', currentTool === 'StoryScribbler' && 'text-primary')}>
+                  StoryScribbler
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu className="flex-1 overflow-y-auto p-2">
-          {scriptMenuItems.map(item => (
+          {menuItems.map(item => (
             <SidebarMenuItem key={item.view}>
               <SidebarMenuButton
                 onClick={() => handleViewChange(item.view)}

@@ -4,7 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/firebase';
 import { useToast } from './use-toast';
 import { getAuth, onIdTokenChanged } from 'firebase/auth';
-import { importFromGoogleDocs, scriptDocumentToText } from '@/lib/import-google-docs';
+import { importFromGoogleDocs, scriptDocumentToText, extractPlainTextFromGoogleDocs } from '@/lib/import-google-docs';
+
+// Extend window type for Google API
+declare global {
+  interface Window {
+    gapi: typeof gapi;
+    google: typeof google;
+  }
+}
 
 const DEVELOPER_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const APP_ID = process.env.NEXT_PUBLIC_GOOGLE_APP_ID;
@@ -27,12 +35,24 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
     script.async = true;
     script.defer = true;
     script.onload = () => setGapiLoaded(true);
+    script.onerror = () => {
+      console.error('Failed to load Google API script');
+      setGapiLoaded(false);
+      toast({
+        variant: 'destructive',
+        title: 'Google API Error',
+        description: 'Failed to load Google Drive integration. Please check your internet connection and try again.',
+      });
+    };
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      // Only remove if the script exists in the DOM
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
-  }, []);
+  }, [toast]);
 
   // 2. Get the OAuth token from the currently signed-in user
   useEffect(() => {
@@ -56,10 +76,22 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
 
   // 3. Load the Picker API once gapi is ready
   useEffect(() => {
-    if (gapiLoaded) {
-      window.gapi.load('picker', { 'callback': () => setPickerApiLoaded(true) });
+    if (gapiLoaded && window.gapi) {
+      try {
+        window.gapi.load('picker', { 
+          'callback': () => setPickerApiLoaded(true)
+        });
+      } catch (error) {
+        console.error('Error loading Google Picker API:', error);
+        setPickerApiLoaded(false);
+        toast({
+          variant: 'destructive',
+          title: 'Google Picker Error',
+          description: 'Failed to initialize Google Drive picker. Please refresh the page and try again.',
+        });
+      }
     }
-  }, [gapiLoaded]);
+  }, [gapiLoaded, toast]);
 
   // The main function to open the picker
   const openPicker = useCallback(() => {
@@ -74,53 +106,84 @@ export function useGooglePicker({ onFilePicked }: GooglePickerOptions) {
             return;
         }
 
-        const docsView = new window.google.picker.View(window.google.picker.ViewId.DOCS)
+        // Ensure window.google and window.google.picker are available
+        if (!window.google || !window.google.picker) {
+            toast({ variant: 'destructive', title: 'Google Picker Error', description: 'Google Picker API is not loaded. Please refresh the page and try again.' });
+            return;
+        }
+
+        const docsView = new (window.google.picker as any).View((window.google.picker as any).ViewId.DOCS)
             .setMimeTypes("application/vnd.google-apps.document");
             
-        const picker = new window.google.picker.PickerBuilder()
+        const picker = new (window.google.picker as any).PickerBuilder()
         .setAppId(APP_ID!)
         .setDeveloperKey(DEVELOPER_KEY!)
         .setOAuthToken(oauthToken)
         .addView(docsView)
         .setCallback(async (data: google.picker.ResponseObject) => {
-            if (data.action === window.google.picker.Action.PICKED) {
+            if (data.action === (window.google.picker as any).Action.PICKED) {
+                // Safely check if docs array exists and has items
+                if (!data.docs || !Array.isArray(data.docs) || data.docs.length === 0) {
+                    toast({ 
+                        variant: 'destructive', 
+                        title: 'Import Failed', 
+                        description: 'No document was selected or document data is missing.' 
+                    });
+                    return;
+                }
                 const doc = data.docs[0];
-                if (!doc) return;
+                if (!doc || !doc.id || !doc.name) {
+                    toast({ 
+                        variant: 'destructive', 
+                        title: 'Import Failed', 
+                        description: 'Selected document is missing required information.' 
+                    });
+                    return;
+                }
 
                 toast({ title: "Importing Document", description: `Fetching '${doc.name}' from Google Drive...`});
                 
                 try {
-                    await window.gapi.client.load('https://docs.googleapis.com/$discovery/rest?version=v1');
-                    const response = await window.gapi.client.docs.documents.get({
-                        documentId: doc.id
+                    // Use server-side API to avoid CORS issues
+                    const response = await fetch('/api/google-docs/get', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            documentId: doc.id,
+                            accessToken: oauthToken,
+                        }),
                     });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch document from server');
+                    }
+
+                    const data = await response.json();
+                    if (!data || !data.success) {
+                        throw new Error(data?.error || 'Failed to fetch document');
+                    }
+                    
+                    // Ensure document exists with valid structure
+                    if (!data.document || typeof data.document !== 'object') {
+                        throw new Error('Document data is missing or invalid');
+                    }
                     
                     // Use the new import functionality to preserve formatting
                     try {
-                        const scriptDoc = importFromGoogleDocs(response.result);
+                        const scriptDoc = importFromGoogleDocs(data.document);
                         const formattedText = scriptDocumentToText(scriptDoc);
                         onFilePicked(doc.name, formattedText);
                     } catch (importError) {
                         // Fallback to plain text extraction if structured import fails
                         console.warn('Structured import failed, falling back to plain text:', importError);
-                        const content = response.result.body.content;
-                        let text = '';
-                        if(content){
-                            content.forEach(p => {
-                                if (p.paragraph && p.paragraph.elements) {
-                                    p.paragraph.elements.forEach(elem => {
-                                        if(elem.textRun && elem.textRun.content){
-                                            text += elem.textRun.content;
-                                        }
-                                    })
-                                }
-                            })
-                        }
+                        const text = extractPlainTextFromGoogleDocs(data.document?.body?.content);
                         onFilePicked(doc.name, text);
                     }
                 } catch (error: any) {
                     console.error("Error fetching document content:", error);
-                    const errorMessage = error.result?.error?.message || 'Could not fetch document content. This may be due to incorrect API permissions in your Google Cloud project.';
+                    const errorMessage = error.message || 'Could not fetch document content. This may be due to incorrect API permissions in your Google Cloud project.';
                     toast({
                         variant: 'destructive',
                         title: 'Import Failed',

@@ -90,7 +90,7 @@ const SceneBlock: React.FC<SceneBlockProps> = ({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Replace confirm() with accessible dialog component for better UX
+              // Note: Using browser confirm() for now. Could be enhanced with a custom dialog component in the future.
               if (confirm(`Delete Scene ${sceneNumber} and all its ${blocks.length} block(s)?`)) {
                 onDeleteScene();
               }

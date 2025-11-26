@@ -2,17 +2,26 @@
 
 Common issues and solutions for ScriptScribbler. If you're experiencing problems, check here first!
 
+## 🚨 Quick Links for Common Issues
+
+- **[403 Errors & Sign-In Issues →](../docs/TROUBLESHOOTING_403_ERRORS.md)** - Comprehensive guide for authentication problems
+- **[Getting Started Guide →](Getting-Started.md)** - Initial setup instructions
+
+---
+
 ## Login & Authentication Issues
 
-### Cannot Sign In / Login Fails
+### Cannot Sign In / Login Fails / 403 Errors
 
-**Symptoms:**
+**⚠️ IMPORTANT: For detailed, step-by-step solutions to 403 errors and sign-in issues, see the [Complete 403 Troubleshooting Guide](../docs/TROUBLESHOOTING_403_ERRORS.md)**
+
+**Quick Symptoms:**
 - Login button doesn't work
-- Error: `(auth/invalid-credential)`
-- Error: `(auth/operation-not-allowed)`
-- Google 403 error page
+- Error: `(auth/invalid-credential)` or `(auth/operation-not-allowed)`
+- Google shows "403 That's an error" page
+- "access_denied" or "unauthorized_client" errors
 
-**Common Causes & Solutions:**
+**Quick Solutions:**
 
 #### 1. Sign-in Methods Not Enabled in Firebase
 

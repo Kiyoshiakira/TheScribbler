@@ -2,17 +2,19 @@
 
 ## Overview
 
-ScriptScribbler now supports multiple intelligent export formats for screenplays. Each format is optimized for different use cases and maintains proper screenplay formatting standards.
+The Scribbler now supports multiple intelligent export formats for both screenplays and stories. Each format is optimized for different use cases and maintains proper formatting standards.
 
 ## Supported Export Formats
 
-### 1. .scribbler (Native Format)
-- **Description**: Complete project export including script, characters, scenes, and notes
-- **Format**: ZIP archive containing JSON files
-- **Use Case**: Backup, sharing, or transferring projects between devices
-- **Features**: Preserves all project data including metadata
+### Script Scribbler Formats
 
-### 2. Fountain (.fountain)
+#### 1. .scribbler (Native Format)
+- **Description**: Complete script project export including script, characters, scenes, and notes
+- **Format**: ZIP archive containing JSON files
+- **Use Case**: Backup, sharing, or transferring script projects between devices
+- **Features**: Preserves all script project data including metadata
+
+#### 2. Fountain (.fountain)
 - **Description**: Industry-standard plain text markup language for screenwriting
 - **Format**: Plain text with Fountain syntax
 - **Use Case**: Maximum compatibility with screenwriting software (Final Draft, Fade In, Highland, etc.)
@@ -22,7 +24,7 @@ ScriptScribbler now supports multiple intelligent export formats for screenplays
   - Supports all screenplay elements (scenes, dialogue, action, transitions, etc.)
   - Includes sections, synopsis, and centered text
 
-### 3. Plain Text (.txt)
+#### 3. Plain Text (.txt)
 - **Description**: Formatted screenplay with industry-standard indentation
 - **Format**: Plain text with spacing and indentation
 - **Use Case**: Reading, printing, or importing into word processors
@@ -34,7 +36,7 @@ ScriptScribbler now supports multiple intelligent export formats for screenplays
   - Transitions: Right-aligned, uppercase
   - Centered text: Center-aligned
 
-### 4. Final Draft (.fdx)
+#### 4. Final Draft (.fdx)
 - **Description**: Final Draft XML format
 - **Format**: XML (FDX version 5)
 - **Use Case**: Opening in Final Draft or compatible software
@@ -44,7 +46,7 @@ ScriptScribbler now supports multiple intelligent export formats for screenplays
   - Compatible with Final Draft 8 and later
   - Includes title page and element settings
 
-### 5. PDF
+#### 5. PDF
 - **Description**: Print-ready screenplay PDF
 - **Format**: PDF via browser print dialog
 - **Use Case**: Sharing, printing, or submission
@@ -55,11 +57,33 @@ ScriptScribbler now supports multiple intelligent export formats for screenplays
   - Industry-standard margins (1" top/bottom, 1.5" left, 1" right)
   - Automatic page breaks
 
-### 6. Google Docs (Alternative Method)
+#### 6. Google Docs (Alternative Method)
 - **Description**: Export guidance for Google Docs workflow
 - **Current Implementation**: Provides instructions to use Fountain or PDF export
 - **Use Case**: Cloud-based editing and collaboration
 - **Note**: Direct Google Docs export requires OAuth 2.0 setup (code is ready for when OAuth is configured)
+
+### Story Scribbler Formats
+
+#### 1. .story (Native Story Format)
+- **Description**: Complete story project export including all story elements
+- **Format**: ZIP archive containing JSON files
+- **Use Case**: Backup, sharing, or transferring story projects between devices
+- **Features**: 
+  - Preserves all story project data
+  - Includes outline, chapters, story characters, world building, timeline, and story notes
+  - Separate from screenplay data for clean organization
+  - Can be imported back into any Story Scribbler project
+
+**Story File Contents**:
+- `project.json`: Story title, logline, and content
+- `outline.json`: Hierarchical story structure
+- `chapters.json`: Chapter content with word counts
+- `storyCharacters.json`: Character profiles with roles and descriptions
+- `worldBuilding.json`: Locations, cultures, technologies, and world elements
+- `timeline.json`: Story timeline with events and categories
+- `storyNotes.json`: Organized notes with categories and tags
+- `meta.json`: Export metadata and version information
 
 ## Implementation Details
 
@@ -115,11 +139,47 @@ All export formats support the following screenplay elements:
 
 ## Usage in the Application
 
+### Script Scribbler Export
+
 Users can export their screenplay by:
 
-1. Click the **Export** button in the app header
-2. Select desired format from the dropdown menu
-3. File is automatically downloaded or print dialog opens (for PDF)
+1. Switch to **Script Scribbler** mode (if not already in it)
+2. Click the **Export** button in the app header
+3. Select desired format from the dropdown menu:
+   - Export as .scribbler (native format)
+   - Export as Fountain
+   - Export as Plain Text (.txt)
+   - Export as Final Draft (.fdx)
+   - Export as PDF
+   - Export to Google Docs (Alternative)
+4. File is automatically downloaded or print dialog opens (for PDF)
+
+### Story Scribbler Export
+
+Users can export their story by:
+
+1. Switch to **Story Scribbler** mode using the tool selector
+2. Click the **Export** button in the app header
+3. Select "Export as .story"
+4. Story file is automatically downloaded with all story data
+
+### Importing Files
+
+**For Scripts**:
+- File types: `.scrite`, `.scribbler`
+- Contains: Script content, characters, scenes, notes
+
+**For Stories**:
+- File type: `.story`
+- Contains: Story content, outline, chapters, story characters, world building, timeline, story notes
+
+### Switching Between Tools
+
+The application supports working on the same project in both tools:
+- Each project can have both screenplay data AND story data
+- Switch between Script Scribbler and Story Scribbler using the tool selector
+- Dashboard shows relevant data based on current tool
+- Export the appropriate data using the context-aware export options
 
 ## Technical Notes
 

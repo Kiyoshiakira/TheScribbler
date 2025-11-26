@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -21,7 +21,7 @@ import {
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = '11rem';
+const SIDEBAR_WIDTH = '10rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3.5rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
@@ -212,6 +212,9 @@ const Sidebar = React.forwardRef<
           >
             <SheetHeader className="p-2">
                 <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                <SheetDescription className="sr-only">
+                  Navigation menu for The Scribbler application
+                </SheetDescription>
             </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
@@ -569,9 +572,12 @@ const SidebarMenuButton = React.forwardRef<
       >
         {React.Children.map(children, (child, index) => {
           if (index === 0 && React.isValidElement(child)) {
+            const childClassName = typeof child.props === 'object' && child.props !== null && 'className' in child.props 
+              ? child.props.className 
+              : undefined;
             return React.cloneElement(child, {
-              className: cn('shrink-0 size-4', child.props.className),
-            });
+              className: cn('shrink-0 size-4', childClassName),
+            } as Partial<unknown>);
           }
           if (index === 1) {
             return (

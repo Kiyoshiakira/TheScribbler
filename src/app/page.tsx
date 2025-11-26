@@ -48,7 +48,9 @@ export default function Home() {
     };
 
     checkUserAndProfile();
-  }, [user, isUserLoading, firestore, router, isCheckingProfile]);
+  // Note: isCheckingProfile is intentionally excluded from dependencies to prevent infinite loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isUserLoading, firestore, router]);
 
   // While the initial user check is happening, show a simplified loading screen.
   // AppLayout will handle its own more detailed loading once the user is confirmed.

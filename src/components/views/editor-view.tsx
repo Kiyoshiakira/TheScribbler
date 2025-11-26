@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import AiFab from '@/components/ai-fab';
 import ScriptEditor from '@/components/script-editor';
 import { Button } from '../ui/button';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Maximize2, Minimize2, FileCode } from 'lucide-react';
 import { FindReplaceDialog } from '../find-replace-dialog';
 import { FindReplaceProvider } from '@/hooks/use-find-replace';
 import EditorStatusBar from '../editor-status-bar';
 import { useScript } from '@/context/script-context';
+import { useSettings } from '@/context/settings-context';
 import { ScriptBlockType } from '@/lib/editor-types';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { ScrollArea } from '../ui/scroll-area';
@@ -19,7 +20,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, useMemoFirebase, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { useCurrentScript } from '@/context/current-script-context';
 import { collection, doc, setDoc } from 'firebase/firestore';
-import type { Scene } from './scenes-view';
+import { useFullscreen } from '@/hooks/use-fullscreen';
+import { cn } from '@/lib/utils';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
+import { SnippetManager } from '@/components/Snippets';
 
 function EditorViewContent() {
   const [isFindOpen, setIsFindOpen] = useState(false);
@@ -27,12 +31,19 @@ function EditorViewContent() {
   const [editingSceneNumber, setEditingSceneNumber] = useState<number | null>(null);
   const [sceneSettings, setSceneSettings] = useState({ setting: '', description: '', time: 5 });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSnippetManagerOpen, setIsSnippetManagerOpen] = useState(false);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   
-  const { document, insertBlockAfter, scenes } = useScript();
+  const { document, insertBlockAfter, scenes, script, setBlocks } = useScript();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
   const { currentScriptId } = useCurrentScript();
+  const { isFullscreen, toggleFullscreen } = useFullscreen(editorContainerRef);
+  
+  // Check if AI features are enabled (default to true for backwards compatibility)
+  const aiEnabled = settings.aiFeatureEnabled !== false;
 
   const scenesCollection = useMemoFirebase(
     () => (user && firestore && currentScriptId ? collection(firestore, 'users', user.uid, 'scripts', currentScriptId, 'scenes') : null),
@@ -72,15 +83,17 @@ function EditorViewContent() {
       
       if (scene?.id) {
         const sceneDocRef = doc(scenesCollection, scene.id);
-        await setDoc(sceneDocRef, {
+        const sceneData = sanitizeFirestorePayload({
           setting: sceneSettings.setting,
           description: sceneSettings.description,
           time: sceneSettings.time,
-        }, { merge: true }).catch((serverError) => {
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        await setDoc(sceneDocRef, sceneData, { merge: true }).catch((serverError) => {
           const permissionError = new FirestorePermissionError({
             path: sceneDocRef.path,
             operation: 'update',
-            requestResourceData: sceneSettings,
+            requestResourceData: sceneData,
           });
           errorEmitter.emit('permission-error', permissionError);
           throw permissionError;
@@ -106,12 +119,57 @@ function EditorViewContent() {
     }
   };
 
+  const handleSnippetInsert = useCallback((content: string) => {
+    if (!script || !document) return;
+    
+    // Insert snippet at the end of the current content
+    if (document.blocks.length === 0) {
+      // Handle empty document - create a first block
+      setBlocks([{
+        id: `block-${Date.now()}`,
+        type: ScriptBlockType.ACTION,
+        text: content,
+      }]);
+    } else {
+      const lastBlock = document.blocks[document.blocks.length - 1];
+      insertBlockAfter(lastBlock.id, content, ScriptBlockType.ACTION);
+    }
+  }, [script, document, insertBlockAfter, setBlocks]);
+
   return (
-      <div className="relative h-full w-full flex flex-col">
-        <div className="flex-shrink-0 flex justify-end p-2">
+      <div 
+        ref={editorContainerRef}
+        className={cn(
+          "relative h-full w-full flex flex-col",
+          isFullscreen && "bg-background"
+        )}
+      >
+        <div className="flex-shrink-0 flex justify-end gap-2 p-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen (Esc)" : "Enter fullscreen"}
+            >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="mr-2 h-4 w-4" />
+                    Exit Fullscreen
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="mr-2 h-4 w-4" />
+                    Fullscreen
+                  </>
+                )}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setIsFindOpen(true)}>
                 <Search className="mr-2 h-4 w-4" />
                 Find & Replace
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsSnippetManagerOpen(true)}>
+                <FileCode className="mr-2 h-4 w-4" />
+                Snippets
             </Button>
         </div>
         <div className="flex-1 overflow-y-auto pb-24">
@@ -131,8 +189,13 @@ function EditorViewContent() {
           </div>
         </div>
         <EditorStatusBar />
-        <AiFab />
+        {aiEnabled && <AiFab />}
         <FindReplaceDialog open={isFindOpen} onOpenChange={setIsFindOpen} />
+        <SnippetManager 
+          open={isSnippetManagerOpen} 
+          onOpenChange={setIsSnippetManagerOpen}
+          onSnippetInsert={handleSnippetInsert}
+        />
         
         {/* Scene Edit Dialog */}
         <Dialog open={isSceneEditOpen} onOpenChange={setIsSceneEditOpen}>

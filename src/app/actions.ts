@@ -45,6 +45,10 @@ import {
   aiDiagnoseAppHealth,
   type AiDiagnoseAppHealthInput,
 } from '@/ai/flows/ai-diagnose-app-health';
+import {
+  aiAdvancedEdit,
+  type AiAdvancedEditInput,
+} from '@/ai/flows/ai-advanced-edit';
 import { isAiAvailable } from '@/ai/genkit';
 
 
@@ -252,3 +256,21 @@ export async function runAiWritingAssist(input: AiWritingAssistInput) {
         };
     }
 }
+
+export async function runAiAdvancedEdit(input: AiAdvancedEditInput) {
+    if (!isAiAvailable) {
+        return { data: null, error: 'AI features are disabled. Please set your GEMINI_API_KEY.' };
+    }
+    try {
+        const result = await aiAdvancedEdit(input);
+        return { data: result, error: null };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+            data: null,
+            error: `An error occurred during advanced editing: ${errorMessage}`,
+        };
+    }
+}
+

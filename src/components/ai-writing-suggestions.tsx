@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { runAiWritingAssist } from '@/app/actions';
 import { ScriptBlock } from '@/lib/editor-types';
+import { useToast } from '@/hooks/use-toast';
 
 interface AiWritingSuggestionsProps {
   currentBlock: ScriptBlock;
@@ -32,6 +33,7 @@ export default function AiWritingSuggestions({
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
 
   // Check if AI is available by checking the environment variable set in next.config.ts
   const isAiEnabled = process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
@@ -80,6 +82,11 @@ export default function AiWritingSuggestions({
         console.error('Error fetching AI writing suggestions:', error);
         setSuggestions([]);
         setShowSuggestions(false);
+        toast({
+          variant: 'destructive',
+          title: 'AI Suggestions Failed',
+          description: 'Failed to fetch writing suggestions. Please try again.',
+        });
       } finally {
         setIsLoading(false);
       }

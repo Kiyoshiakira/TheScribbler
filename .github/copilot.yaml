@@ -1,0 +1,13 @@
+agents:
+  - name: default
+    tasks:
+      - name: Test all
+        run: npm test
+      - name: Lint code
+        run: npm run lint
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Build project
+        run: npm run build
+      - name: Start dev server
+        run: npm run dev

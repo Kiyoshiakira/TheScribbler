@@ -31,6 +31,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, errorEmitter, Fi
 import { collection, doc, addDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useCurrentScript } from '@/context/current-script-context';
 import AiFab from '../ai-fab';
+import { sanitizeFirestorePayload } from '@/lib/firestore-utils';
 
 export interface Character {
   id?: string;
@@ -253,7 +254,7 @@ export default function CharactersView() {
   
     try {
         if (isNew) {
-            const docData = { ...plainCharData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+            const docData = sanitizeFirestorePayload({ ...plainCharData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
             const docRef = await addDoc(charactersCollection, docData).catch((serverError) => {
                 const permissionError = new FirestorePermissionError({
                     path: charactersCollection.path,
@@ -265,7 +266,7 @@ export default function CharactersView() {
             });
         } else {
             const charDocRef = doc(charactersCollection, id);
-            const updateData = { ...plainCharData, updatedAt: serverTimestamp() };
+            const updateData = sanitizeFirestorePayload({ ...plainCharData, updatedAt: serverTimestamp() });
             await setDoc(charDocRef, updateData, { merge: true }).catch((serverError) => {
                 const permissionError = new FirestorePermissionError({
                     path: charDocRef.path,
