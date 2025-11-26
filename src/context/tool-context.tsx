@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-export type ToolType = 'ScriptScribbler' | 'StoryScribbler';
+export type ToolType = 'ScriptScribbler' | 'StoryScribbler' | 'SonnetScribbler';
 
 interface ToolContextType {
   currentTool: ToolType;
