@@ -17,12 +17,16 @@ import {
   canStartTrial,
   getAvailableTrialTools,
 } from '@/lib/features/feature-flags';
+import { isAdmin as checkIsAdmin } from '@/lib/admin';
 
 interface PlanContextType {
   // Subscription state
   subscription: UserSubscription;
   isLoading: boolean;
   error: Error | null;
+
+  // Admin status - admins have unlimited access to all features
+  isAdmin: boolean;
   
   // Feature access checks
   hasFeatureAccess: (featureId: FeatureId) => FeatureAccessResult;
@@ -55,6 +59,9 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
 
+  // Check if user is an admin - admins get unlimited access to all features
+  const isAdmin = React.useMemo(() => checkIsAdmin(user?.email), [user?.email]);
+
   // Load subscription data when user changes
   React.useEffect(() => {
     async function loadSubscription() {
@@ -67,6 +74,12 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
         if (!user) {
           // No user logged in - use default free subscription
           setSubscription(createDefaultSubscription());
+          return;
+        }
+
+        // Admin users get the highest tier with unlimited access
+        if (checkIsAdmin(user.email)) {
+          setSubscription(createAdminSubscription());
           return;
         }
 
@@ -224,6 +237,7 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
     subscription,
     isLoading: isLoading || isUserLoading,
     error,
+    isAdmin,
     hasFeatureAccess,
     hasToolAccess,
     canStartTrialFor,
@@ -260,4 +274,25 @@ async function loadMockSubscription(
   // Return default free subscription for now
   // In production, this would query Firestore for the user's subscription data
   return createDefaultSubscription();
+}
+
+/**
+ * Creates a subscription with unlimited access for admin users.
+ * Admins receive the highest tier with all features enabled and no limits.
+ */
+function createAdminSubscription(): UserSubscription {
+  return {
+    plan: {
+      tier: 'highest',
+      isActive: true,
+      startDate: new Date(),
+      renewalDate: null, // Admins don't need renewal
+      hasAiCollabAddon: true,
+      aiCollabHoursRemaining: -1, // -1 indicates unlimited
+      collabHoursUsed: 0,
+      collabHoursLimit: -1, // -1 indicates unlimited
+    },
+    toolTrials: [], // No trials needed - admin has full access
+    activeTools: ['ScriptScribbler', 'StoryScribbler', 'SonnetScribbler'], // All tools active
+  };
 }

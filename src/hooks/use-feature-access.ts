@@ -117,12 +117,13 @@ export function useTrialManagement() {
  * @example
  * ```tsx
  * function AccountInfo() {
- *   const { tier, isActive, renewalDate } = useSubscriptionInfo();
+ *   const { tier, isActive, renewalDate, isAdmin } = useSubscriptionInfo();
  *   
  *   return (
  *     <div>
  *       <p>Plan: {tier}</p>
  *       <p>Status: {isActive ? 'Active' : 'Inactive'}</p>
+ *       {isAdmin && <p>Admin privileges active</p>}
  *       {renewalDate && <p>Renews: {renewalDate.toLocaleDateString()}</p>}
  *     </div>
  *   );
@@ -130,7 +131,7 @@ export function useTrialManagement() {
  * ```
  */
 export function useSubscriptionInfo() {
-  const { subscription, isLoading, error, upgradeToPlan, refreshSubscription } = usePlan();
+  const { subscription, isLoading, error, upgradeToPlan, refreshSubscription, isAdmin } = usePlan();
 
   return {
     tier: subscription.plan.tier,
@@ -146,5 +147,6 @@ export function useSubscriptionInfo() {
     error,
     upgradeToPlan,
     refreshSubscription,
+    isAdmin,
   };
 }
