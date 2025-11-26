@@ -512,14 +512,24 @@ export default function ScenesView() {
         </div>
       </div>
 
-      {viewMode === 'list' ? <ScenesListView scenes={scenes} onEdit={handleOpenDialog} onDuplicate={handleDuplicateScene} onDelete={handleDeleteScene} /> : <BeatboardView scenes={scenes} onEdit={handleOpenDialog} />}
-
-      {!areScenesLoading && scenes && scenes.length === 0 && (
+      {!currentScriptId ? (
+        <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
+            <Clapperboard className="mx-auto h-12 w-12" />
+            <h3 className="mt-4 text-lg font-medium">No Project Selected</h3>
+            <p className="mt-1 text-sm">Please select or create a project from the Dashboard to view scenes.</p>
+        </div>
+      ) : scenes && scenes.length === 0 ? (
         <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
             <Clapperboard className="mx-auto h-12 w-12" />
             <h3 className="mt-4 text-lg font-medium">No Scenes Found</h3>
-            <p className="mt-1 text-sm">Import a script or create a new scene to get started.</p>
+            <p className="mt-1 text-sm mb-4">Import a script or create a new scene to get started.</p>
+            <Button onClick={() => handleOpenDialog(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your First Scene
+            </Button>
         </div>
+      ) : (
+        viewMode === 'list' ? <ScenesListView scenes={scenes} onEdit={handleOpenDialog} onDuplicate={handleDuplicateScene} onDelete={handleDeleteScene} /> : <BeatboardView scenes={scenes} onEdit={handleOpenDialog} />
       )}
 
        <AiFab

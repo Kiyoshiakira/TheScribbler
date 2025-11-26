@@ -136,6 +136,21 @@ function EditorViewContent() {
     }
   }, [script, document, insertBlockAfter, setBlocks]);
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <FileCode className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-bold font-headline mb-2">No Project Selected</h2>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to start writing your script.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
       <div 
         ref={editorContainerRef}

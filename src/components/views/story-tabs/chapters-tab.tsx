@@ -180,6 +180,24 @@ export default function ChaptersTab() {
     );
   }
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold font-headline">Chapters</h2>
+        </div>
+        <Card className="p-8 text-center">
+          <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to manage chapters.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const sortedChapters = [...(chapters || [])].sort((a, b) => a.order - b.order);
   const totalWords = sortedChapters.reduce((sum, ch) => sum + (ch.wordCount || 0), 0);
 
@@ -201,9 +219,14 @@ export default function ChaptersTab() {
       {sortedChapters.length === 0 ? (
         <Card className="p-8 text-center">
           <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">
-            No chapters yet. Create your first chapter to start writing your story.
+          <h3 className="text-lg font-medium mb-2">No Chapters Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first chapter to start writing your story.
           </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Chapter
+          </Button>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -183,28 +183,51 @@ export default function TimelineTab() {
     );
   }
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold font-headline">Timeline</h2>
+        </div>
+        <Card className="p-8 text-center">
+          <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to manage your story timeline.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const filteredEvents = timelineEvents?.filter(
     (event) => filterCategory === 'all' || event.category === filterCategory
   ).sort((a, b) => a.order - b.order) || [];
+
+  // Check if there are any timeline events at all
+  const hasNoEvents = !timelineEvents || timelineEvents.length === 0;
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold font-headline">Timeline</h2>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {EVENT_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!hasNoEvents && (
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {EVENT_CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="mr-2 h-4 w-4" />
@@ -212,13 +235,23 @@ export default function TimelineTab() {
         </Button>
       </div>
 
-      {filteredEvents.length === 0 ? (
+      {hasNoEvents ? (
+        <Card className="p-8 text-center">
+          <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Timeline Events Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first event to track your story chronology.
+          </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Event
+          </Button>
+        </Card>
+      ) : filteredEvents.length === 0 ? (
         <Card className="p-8 text-center">
           <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            {filterCategory === 'all'
-              ? 'No timeline events yet. Create your first event to track your story chronology.'
-              : `No ${filterCategory} events found. Try a different filter or create a new event.`}
+            No {filterCategory} events found. Try a different filter or create a new event.
           </p>
         </Card>
       ) : (

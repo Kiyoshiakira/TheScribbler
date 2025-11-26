@@ -422,81 +422,92 @@ export default function CharactersView() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-        {characters && characters.map((character) => {
-          return (
-            <Card
-              key={character.id}
-              className="overflow-hidden shadow-md hover:shadow-xl transition-all duration-200 border-2 hover:border-primary/50 relative group cursor-pointer"
-            >
-              <div className="absolute top-2 right-2 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => handleOpenDialog(character)}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-destructive" 
-                      onSelect={() => handleDeleteCharacter(character)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="cursor-pointer" onClick={() => handleOpenDialog(character)}>
-                <CardHeader className="p-0">
-                  <div className="aspect-square w-full bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
-                    {character.imageUrl ? (
-                      <Image
-                        src={character.imageUrl}
-                        alt={`Portrait of ${character.name}`}
-                        width={200}
-                        height={200}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                        data-ai-hint={'character portrait'}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-colors"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3">
-                  <CardTitle className="font-headline text-base truncate">{character.name}</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1 truncate">{character.description}</p>
-                </CardContent>
-                <CardFooter className="p-3 bg-muted/50 flex justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <User className="h-3 w-3" />
-                    <span>Profile</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <FileText className="h-3 w-3 text-primary" />
-                    <span className="font-medium">{character.scenes} Scenes</span>
-                  </div>
-                </CardFooter>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-      {!areCharactersLoading && characters && characters.length === 0 && (
+      {!currentScriptId ? (
+        <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
+           <Users className="mx-auto h-12 w-12" />
+           <h3 className="mt-4 text-lg font-medium">No Project Selected</h3>
+           <p className="mt-1 text-sm">Please select or create a project from the Dashboard to view characters.</p>
+        </div>
+      ) : characters && characters.length === 0 ? (
          <div className="text-center text-muted-foreground py-16 border-2 border-dashed rounded-lg">
             <Users className="mx-auto h-12 w-12" />
             <h3 className="mt-4 text-lg font-medium">No Characters Yet</h3>
-            <p className="mt-1 text-sm">Add a character to get started, or import a script.</p>
+            <p className="mt-1 text-sm mb-4">Add a character to get started, or import a script.</p>
+            <Button onClick={() => handleOpenDialog(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your First Character
+            </Button>
          </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          {characters && characters.map((character) => {
+            return (
+              <Card
+                key={character.id}
+                className="overflow-hidden shadow-md hover:shadow-xl transition-all duration-200 border-2 hover:border-primary/50 relative group cursor-pointer"
+              >
+                <div className="absolute top-2 right-2 z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => handleOpenDialog(character)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive" 
+                        onSelect={() => handleDeleteCharacter(character)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="cursor-pointer" onClick={() => handleOpenDialog(character)}>
+                  <CardHeader className="p-0">
+                    <div className="aspect-square w-full bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
+                      {character.imageUrl ? (
+                        <Image
+                          src={character.imageUrl}
+                          alt={`Portrait of ${character.name}`}
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          data-ai-hint={'character portrait'}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center group-hover:from-primary/10 group-hover:to-primary/5 transition-colors"><User className="w-1/2 h-1/2 text-muted-foreground" /></div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-3">
+                    <CardTitle className="font-headline text-base truncate">{character.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{character.description}</p>
+                  </CardContent>
+                  <CardFooter className="p-3 bg-muted/50 flex justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      <span>Profile</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="h-3 w-3 text-primary" />
+                      <span className="font-medium">{character.scenes} Scenes</span>
+                    </div>
+                  </CardFooter>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       )}
       <AiFab
         actions={['openChat']}

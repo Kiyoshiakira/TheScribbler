@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Loader2, Sparkles } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Loader2, Sparkles, ListTree } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -243,6 +243,24 @@ export default function OutlineTab() {
     );
   }
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold font-headline">Story Outline</h2>
+        </div>
+        <Card className="p-8 text-center">
+          <ListTree className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to manage your story outline.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const topLevelItems = outlineItems?.filter(item => !item.parentId).sort((a, b) => a.order - b.order) || [];
 
   return (
@@ -257,9 +275,15 @@ export default function OutlineTab() {
 
       {topLevelItems.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-muted-foreground">
-            No outline items yet. Create your first outline item to structure your story.
+          <ListTree className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Outline Items Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first outline item to structure your story.
           </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Outline Item
+          </Button>
         </Card>
       ) : (
         <div className="space-y-2">

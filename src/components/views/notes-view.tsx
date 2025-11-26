@@ -337,6 +337,26 @@ export default function NotesView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-64" />)}
         </div>
+      ) : !currentScriptId ? (
+        <Card className="p-8 text-center">
+          <StickyNote className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to add notes.
+          </p>
+        </Card>
+      ) : notes && notes.length === 0 ? (
+        <Card className="p-8 text-center">
+          <StickyNote className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Notes Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first note to organize your ideas, research, and plot points.
+          </p>
+          <Button onClick={handleStartCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Note
+          </Button>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {notes && notes.map((note) => {

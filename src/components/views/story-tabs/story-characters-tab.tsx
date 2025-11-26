@@ -188,6 +188,24 @@ export default function StoryCharactersTab() {
     );
   }
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold font-headline">Characters</h2>
+        </div>
+        <Card className="p-8 text-center">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to manage characters.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
@@ -201,9 +219,14 @@ export default function StoryCharactersTab() {
       {characters && characters.length === 0 ? (
         <Card className="p-8 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">
-            No characters yet. Create your first character to populate your story.
+          <h3 className="text-lg font-medium mb-2">No Characters Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first character to populate your story.
           </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Character
+          </Button>
         </Card>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">

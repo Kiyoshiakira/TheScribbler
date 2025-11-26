@@ -185,28 +185,51 @@ export default function WorldBuildingTab() {
     );
   }
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold font-headline">World Building</h2>
+        </div>
+        <Card className="p-8 text-center">
+          <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to build your world.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const filteredElements = worldElements?.filter(
     (element) => filterType === 'all' || element.type === filterType
   ) || [];
+
+  // Check if there are any world elements at all
+  const hasNoElements = !worldElements || worldElements.length === 0;
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold font-headline">World Building</h2>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {WORLD_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!hasNoElements && (
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {WORLD_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="mr-2 h-4 w-4" />
@@ -214,13 +237,23 @@ export default function WorldBuildingTab() {
         </Button>
       </div>
 
-      {filteredElements.length === 0 ? (
+      {hasNoElements ? (
+        <Card className="p-8 text-center">
+          <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No World Elements Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first world element to build your story universe.
+          </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First World Element
+          </Button>
+        </Card>
+      ) : filteredElements.length === 0 ? (
         <Card className="p-8 text-center">
           <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            {filterType === 'all'
-              ? 'No world elements yet. Create your first world element to build your story universe.'
-              : `No ${filterType} elements found. Try a different filter or create a new element.`}
+            No {filterType} elements found. Try a different filter or create a new element.
           </p>
         </Card>
       ) : (

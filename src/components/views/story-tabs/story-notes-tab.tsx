@@ -183,28 +183,51 @@ export default function StoryNotesTab() {
     );
   }
 
+  // Handle case when no project is selected
+  if (!currentScriptId) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold font-headline">Story Notes</h2>
+        </div>
+        <Card className="p-8 text-center">
+          <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">
+            Please select or create a project from the Dashboard to manage story notes.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const filteredNotes = notes?.filter(
     (note) => filterCategory === 'all' || note.category === filterCategory
   ) || [];
+
+  // Check if there are any notes at all
+  const hasNoNotes = !notes || notes.length === 0;
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold font-headline">Story Notes</h2>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {NOTE_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!hasNoNotes && (
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {NOTE_CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="mr-2 h-4 w-4" />
@@ -212,13 +235,23 @@ export default function StoryNotesTab() {
         </Button>
       </div>
 
-      {filteredNotes.length === 0 ? (
+      {hasNoNotes ? (
+        <Card className="p-8 text-center">
+          <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Story Notes Yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Create your first note to capture ideas and information.
+          </p>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Your First Note
+          </Button>
+        </Card>
+      ) : filteredNotes.length === 0 ? (
         <Card className="p-8 text-center">
           <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
-            {filterCategory === 'all'
-              ? 'No story notes yet. Create your first note to capture ideas and information.'
-              : `No ${filterCategory} notes found. Try a different filter or create a new note.`}
+            No {filterCategory} notes found. Try a different filter or create a new note.
           </p>
         </Card>
       ) : (

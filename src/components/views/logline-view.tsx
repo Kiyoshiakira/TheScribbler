@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useScript } from "@/context/script-context";
+import { useCurrentScript } from "@/context/current-script-context";
 import { runAiGenerateLogline } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 
 export default function LoglineView() {
     const { script, setScriptLogline, isScriptLoading } = useScript();
+    const { currentScriptId } = useCurrentScript();
     const [logline, setLogline] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const { toast } = useToast();
@@ -59,6 +61,28 @@ export default function LoglineView() {
             title: "Logline Saved",
             description: "Your script's logline has been updated.",
         });
+    }
+
+    // Handle case when no project is selected
+    if (!currentScriptId) {
+        return (
+            <div className="max-w-4xl mx-auto space-y-6">
+                <div className="space-y-2">
+                    <h1 className="text-3xl font-bold font-headline">Logline</h1>
+                    <p className="text-muted-foreground">
+                        A logline is a one-sentence summary of your story. Use the AI to generate one based on your script, or write your own.
+                    </p>
+                </div>
+                
+                <Card className="p-8 text-center">
+                    <NotebookPen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+                    <p className="text-muted-foreground">
+                        Please select or create a project from the Dashboard to work on your logline.
+                    </p>
+                </Card>
+            </div>
+        );
     }
 
     return (
