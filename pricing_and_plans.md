@@ -1,101 +1,77 @@
 # Pricing & Plans — The Scribbler
 
-## Philosophy
-Affordable plans encourage creativity and community. Free tiers enable creativity, paid tiers unlock collaboration, advanced AI, and let expert writers monetize skills. No excessive pricing—always accessible.
+### Philosophy
+Affordable, accessible, and creative. Free users should be able to experience every tool before deciding to upgrade!
 
 ---
 
-## **Free Tier — “Solo Writing”**
-- Free forever.
-- **Features:**
-  - Unlimited personal writing (script, story, notes).
-  - Export to PDF, DOCX, EPUB, Markdown, HTML, etc.
-  - Minimal AI tools (basic suggestions, short summaries, grammar check).
-  - Personal workspace, device sync.
-  - Access to writing prompts and templates.
-- **Limitations:**
-  - No collaborative writing.
-  - Limited advanced AI.
-  - No paid author/mentor interactions.
-  - Standard support.
+## **Free Tier — Solo Writing + 30-Day Tool Trials**
+- **Always free**
+- Unlimited personal writing (solo).
+- Export: PDF, DOCX, EPUB, Markdown, HTML, etc.
+- Minimal AI (short suggestions, basic grammar check).
+- **Try any premium Scribbler tool for a free 30-day trial!**
+  - Choose Script, Story, Sonnet, or future Scribblers to activate a trial.
+  - When trial ends, select another tool to try for 30 days.
+  - No payment or card required for trials.
+- **Upgrade benefits** clearly shown during trial.
 
 ---
 
-## **Medium Tier — “Collaborate & Create”** ($10/month)
-- Best for teams, hobbyists, small writing circles.
-- **Features:**
-  - Everything in Free
-  - **Person-to-person collaborative writing** (invite others, real-time editing)
-  - 5 hours/month included (more can be purchased)
-  - Enhanced AI (longer suggestions, text generation)
-  - Priority support.
-- **Add-ons:**
-  - **AI Collaboration**: +$5/month for 5 hours, or $6/hour pay-as-you-go (can be added anytime)
-  - Purchase more hours for either collab type.
+## **Medium Tier — Collaborate & Create** ($10/month)
+- All Free Tier features.
+- **Access any TWO Scribbler tools anytime.**
+- 5 hours/month of person-to-person collaboration included.
+- Enhanced AI (longer suggestions, text generation).
+- Priority support.
+- **Add-on:** AI Collaboration ($5/month for 5 hours, or $6/hour pay-as-you-go).
 
 ---
 
-## **High Tier — “Pro Writer”** ($15/month)
-- Ideal for regular collaborators, advanced creators.
-- **Features:**
-  - Everything in Medium
-  - Unlimited person-to-person collaboration
-  - Advanced AI (multi-turn generation, style matching)
-  - Early access to new features.
-- **Add-ons:**
-  - AI Collaboration: +$5/month for 10 hours, or pay-as-you-go
+## **High Tier — Pro Writer** ($15/month)
+- All Medium Tier features.
+- **Access all Scribbler tools.**
+- Unlimited person-to-person collaboration.
+- Advanced AI (multi-turn, style matching).
+- Early access to new features.
+- AI Collaboration: $5/month for 10 hours, or pay-as-you-go.
 
 ---
 
-## **Highest Tier — “Mentor & Monetize”** ($20/month)
-- For professional writers & mentors.
-- **Features:**
-  - Everything in High
-  - Eligible to become paid experts/mentors on the platform:
-    - Set rates for coaching, feedback, live writing, collaboration
-    - Revenue sharing on paid author sessions
-  - Featured profile/portfolio
-  - Beta access, direct feature suggestions
-- **Add-ons:**
-  - Unlimited AI Collaboration by request/account vetting
-  - Additional team features
+## **Highest Tier — Mentor & Monetize** ($20/month)
+- All Pro features.
+- Eligible to become a paid writing mentor/expert.
+  - Set rates, earn revenue from coaching/collaboration.
+- Featured on Mentor Marketplace.
+- Unlimited AI Collaboration (with reasonable fair use).
+- Advanced team and workspace features.
 
 ---
 
-## **Pay As You Go / Add-Ons**
-- **Extra collaboration hours:** $4/hour (person-to-person), $6/hour (AI collab)
-- Buy credits at any time, roll over month-to-month.
-- AI collab offered as a toggle per project/session for any paid user with credits or subscription.
+## **Trials, Add-Ons & Poetry**
+- **Every user gets a 30-day trial for any premium tool (Script, Story, Sonnet, etc).**
+- Trials rotate: after one ends, select another, or upgrade for full access.
+- First-time paid users get a 30-day trial for add-ons (AI collab, mentorship).
+- **Sonnet Scribbler**: Dedicated poetry/verse tab.
+    - Shows up as an option for trial and paid tiers.
+- Extra trial benefits for:
+    - Referrals
+    - Challenges and featured events
 
 ---
 
-## **Feature Table**
+## Tool Tabs
 
-| Feature                                      | Free       | Medium ($10)      | High ($15)     | Highest ($20)   | AI Collab Add-on |
-|-----------------------------------------------|------------|-------------------|----------------|-----------------|------------------|
-| Personal Writing & Editing                    | ✓          | ✓                 | ✓              | ✓               |                  |
-| All Export Formats                            | ✓          | ✓                 | ✓              | ✓               |                  |
-| Minimal AI                                   | ✓          | ✓                 | ✓              | ✓               |                  |
-| Enhanced AI                                  |            | ✓                 | ✓              | ✓               |                  |
-| Unlimited AI                                 |            |                   | ✓              | ✓               |                  |
-| Person-to-person Collaboration                |            | 5 hrs/mo          | Unlimited      | Unlimited       |                  |
-| Pay-as-you-go Person Collab                   |            | ✓                 | ✓              | ✓               |                  |
-| **AI Collaboration (Add-on)**                 |            | $5/5hr, $6/hr     | $5/10hr, $6/hr | Unlimited opt-in | ✓                |
-| Priority Support                             |            | ✓                 | ✓              | ✓               |                  |
-| Eligible for Mentor/Pro Author Earnings      |            |                   |                | ✓               |                  |
-| Revenue Share / Paid Coaching                |            |                   |                | ✓               |                  |
-| Featured Profile, Beta Access                |            |                   |                | ✓               |                  |
+| Tab Name           | Description                           | Access Level (w/trial)     |
+|--------------------|---------------------------------------|----------------------------|
+| Script Scribbler   | Scripts, screenplays, stage plays     | Free trial / Paid tiers    |
+| Story Scribbler    | Stories, fiction, non-fiction         | Free trial / Paid tiers    |
+| Sonnet Scribbler   | Poetry, structured verse, rhyme tools | Free trial / Paid tiers    |
+| [Future tools...]  | e.g. Memoir, Legal, Lyrics, etc.      | Free trial / Paid tiers    |
 
 ---
 
-## **Why Lower Pricing is Better**
-> "Expensive tools fail because they exclude creators. We believe more writers means more creativity and a stronger community—so we keep prices fair and accessible."
-
----
-
-## **Coming Soon**
-- Author marketplace for paid feedback/coaching
-- Custom workspace tools for paid tiers
-- Premium AI add-ons purchasable in $2 increments
+## Why Trials?
+> “We want you to discover the tools you love. Try any Scribbler creation mode for 30 days. Experiment with screenplays, stories, poetry—no credit card, no surprise fees. Upgrade only if and when you want more.”
 
 ---
