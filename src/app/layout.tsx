@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { CurrentScriptProvider } from '@/context/current-script-context';
+import { PlanProvider } from '@/context/plan-context';
 import { SettingsProvider } from '@/context/settings-context';
 import { ThemeProvider } from '@/context/theme-provider';
 import { ToolProvider } from '@/context/tool-context';
@@ -33,17 +34,19 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased')}>
         <FirebaseClientProvider>
-          <SettingsProvider>
-            <ThemeProvider>
-              <ToolProvider>
-                <CurrentScriptProvider>
-                  <ServiceWorkerInitializer />
-                  {children}
-                  <Toaster />
-                </CurrentScriptProvider>
-              </ToolProvider>
-            </ThemeProvider>
-          </SettingsProvider>
+          <PlanProvider>
+            <SettingsProvider>
+              <ThemeProvider>
+                <ToolProvider>
+                  <CurrentScriptProvider>
+                    <ServiceWorkerInitializer />
+                    {children}
+                    <Toaster />
+                  </CurrentScriptProvider>
+                </ToolProvider>
+              </ThemeProvider>
+            </SettingsProvider>
+          </PlanProvider>
         </FirebaseClientProvider>
       </body>
     </html>
