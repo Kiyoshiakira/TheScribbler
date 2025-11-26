@@ -89,7 +89,7 @@ Affordable plans encourage creativity and community. Free tiers enable creativit
 ---
 
 ## **Why Lower Pricing is Better**
-> "Expensive tools fail because they exclude creators. We believe more writers means more creativity and a stronger community—so we keep prices fair and accessible. No $60/month plans."
+> "Expensive tools fail because they exclude creators. We believe more writers means more creativity and a stronger community—so we keep prices fair and accessible."
 
 ---
 
