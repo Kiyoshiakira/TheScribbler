@@ -27,11 +27,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '../ui/sidebar';
 import { GoogleDocIcon } from '../ui/icons';
+import { AdminBadge } from '../ui/admin-badge';
 import { useAuth, useUser, useFirestore, FirestorePermissionError, errorEmitter, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { Skeleton } from '../ui/skeleton';
 import { useScript } from '@/context/script-context';
 import { useSettings } from '@/context/settings-context';
+import { usePlan } from '@/context/plan-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRef } from 'react';
 import { parseScriteFile, ParsedScriteData } from '@/lib/scrite-parser';
@@ -122,6 +124,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
   const router = useRouter();
   const { script, characters, scenes, notes, setScriptTitle, isScriptLoading, saveStatus } = useScript();
   const { settings } = useSettings();
+  const { isAdmin } = usePlan();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { currentScriptId, setCurrentScriptId } = useCurrentScript();
@@ -1369,6 +1372,7 @@ export default function AppHeader({ activeView, setView }: AppHeaderProps) {
             <span className="hidden md:inline">History</span>
           </Button>
         )}
+        {isAdmin && <AdminBadge />}
         <UserMenu />
       </div>
     </header>
