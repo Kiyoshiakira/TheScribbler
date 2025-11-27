@@ -9,7 +9,8 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "electron:dev": "cross-env NODE_ENV=development electron ."
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
@@ -84,6 +85,8 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-speech-recognition": "^3.9.5",
+    "cross-env": "^7.0.3",
+    "electron": "^26.0.0",
     "eslint-config-next": "^14.2.5",
     "genkit-cli": "^1.20.0",
     "postcss": "^8",

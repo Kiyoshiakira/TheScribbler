@@ -342,6 +342,27 @@ Customize your writing experience with extensive preferences:
 - `npm run lint`: Runs ESLint to check for code quality and style issues.
 - `npm run typecheck`: Runs the TypeScript compiler to check for type errors.
 - `npm run genkit:dev`: Starts the Genkit development UI for inspecting AI flows.
+- `npm run electron:dev`: Opens the dev server in an Electron window (see below).
+
+## Development: Double-Click Helpers
+
+For contributors who prefer a quick double-click start without using the terminal:
+
+### Windows
+Double-click `start-dev.bat` in the repository root to start the dev server in a console window.
+
+### macOS / Linux
+Double-click `start-dev.command` (or run `./start-dev.command` in a terminal) to start the dev server.
+
+> **Note:** On macOS, you may need to right-click and select "Open" the first time, or mark the file as executable with `chmod +x start-dev.command`.
+
+### Electron Window (Native App Wrapper)
+Run `npm run electron:dev` to launch the dev server inside an Electron window. This spawns `npm run dev` internally and opens a native window pointed at [http://localhost:9002](http://localhost:9002).
+
+If your dev server uses a different port, set the `DEV_URL` environment variable:
+```bash
+DEV_URL=http://localhost:3001 npm run electron:dev
+```
 
 ## Troubleshooting
 
