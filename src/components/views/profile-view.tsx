@@ -80,7 +80,7 @@ export default function ProfileView({ setView }: ProfileViewProps) {
         setCurrentScriptId(script.id);
         const projectType = normalizeProjectType(script);
         const defaultView = getDefaultViewForProjectType(projectType);
-        setView(defaultView as View);
+        setView(defaultView);
     };
     
     const handleSelectiveDelete = async (scriptId: string) => {

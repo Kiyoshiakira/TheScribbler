@@ -43,12 +43,17 @@ export function normalizeProjectType(doc: { projectType?: string } | null | unde
 }
 
 /**
+ * Default view type for project navigation
+ */
+export type DefaultProjectView = 'outline' | 'editor';
+
+/**
  * Returns the default view for a project type
  * 
  * @param projectType - The project type ('script' or 'story')
- * @returns The default view to navigate to
+ * @returns The default view to navigate to ('outline' for story, 'editor' for script)
  */
-export function getDefaultViewForProjectType(projectType: ProjectType): string {
+export function getDefaultViewForProjectType(projectType: ProjectType): DefaultProjectView {
   return projectType === 'story' ? 'outline' : 'editor';
 }
 
