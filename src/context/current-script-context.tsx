@@ -112,91 +112,67 @@ export const CurrentScriptProvider = ({ children }: { children: ReactNode }) => 
     }
   }, [isLoadedFromStorage, scriptScribblerScriptId, storyScribblerScriptId, isUserLoading, areScriptsLoading, latestScripts, isSharedMode, isSettingsLoading]);
 
+  // Helper function to sync a project ID to localStorage
+  const syncToLocalStorage = useCallback((key: string, id: string | null) => {
+    if (id) {
+      window.localStorage.setItem(key, id);
+    } else {
+      window.localStorage.removeItem(key);
+    }
+  }, []);
+
   const setCurrentScriptId = useCallback((id: string | null) => {
     try {
       if (isSharedMode) {
-        // In shared mode, update scriptScribblerScriptId and sync to localStorage
-        if (id) {
-          window.localStorage.setItem(SCRIPT_STORAGE_KEY, id);
-        } else {
-          window.localStorage.removeItem(SCRIPT_STORAGE_KEY);
-        }
+        // In shared mode, update both scriptScribblerScriptId and storyScribblerScriptId
+        syncToLocalStorage(SCRIPT_STORAGE_KEY, id);
         setScriptScribblerScriptId(id);
-        // In shared mode, story scribbler uses the same ID
-        if (id) {
-          window.localStorage.setItem(STORY_STORAGE_KEY, id);
-        } else {
-          window.localStorage.removeItem(STORY_STORAGE_KEY);
-        }
+        syncToLocalStorage(STORY_STORAGE_KEY, id);
         setStoryScribblerScriptId(id);
       } else {
         // In separate mode, update the appropriate ID based on current tool
         if (currentTool === 'ScriptScribbler') {
-          if (id) {
-            window.localStorage.setItem(SCRIPT_STORAGE_KEY, id);
-          } else {
-            window.localStorage.removeItem(SCRIPT_STORAGE_KEY);
-          }
+          syncToLocalStorage(SCRIPT_STORAGE_KEY, id);
           setScriptScribblerScriptId(id);
         } else {
-          if (id) {
-            window.localStorage.setItem(STORY_STORAGE_KEY, id);
-          } else {
-            window.localStorage.removeItem(STORY_STORAGE_KEY);
-          }
+          syncToLocalStorage(STORY_STORAGE_KEY, id);
           setStoryScribblerScriptId(id);
         }
       }
     } catch (error) {
       console.warn(`[CurrentScriptContext] Error setting localStorage:`, error);
     }
-  }, [isSharedMode, currentTool]);
+  }, [isSharedMode, currentTool, syncToLocalStorage]);
 
   // Direct setter for scriptScribblerScriptId with localStorage sync
   const handleSetScriptScribblerScriptId = useCallback((id: string | null) => {
     try {
-      if (id) {
-        window.localStorage.setItem(SCRIPT_STORAGE_KEY, id);
-      } else {
-        window.localStorage.removeItem(SCRIPT_STORAGE_KEY);
-      }
+      syncToLocalStorage(SCRIPT_STORAGE_KEY, id);
       setScriptScribblerScriptId(id);
       // In shared mode, also update storyScribblerScriptId
       if (isSharedMode) {
-        if (id) {
-          window.localStorage.setItem(STORY_STORAGE_KEY, id);
-        } else {
-          window.localStorage.removeItem(STORY_STORAGE_KEY);
-        }
+        syncToLocalStorage(STORY_STORAGE_KEY, id);
         setStoryScribblerScriptId(id);
       }
     } catch (error) {
       console.warn(`[CurrentScriptContext] Error setting scriptScribblerScriptId:`, error);
     }
-  }, [isSharedMode]);
+  }, [isSharedMode, syncToLocalStorage]);
 
   // Direct setter for storyScribblerScriptId with localStorage sync
   const handleSetStoryScribblerScriptId = useCallback((id: string | null) => {
     try {
-      if (id) {
-        window.localStorage.setItem(STORY_STORAGE_KEY, id);
-      } else {
-        window.localStorage.removeItem(STORY_STORAGE_KEY);
-      }
+      syncToLocalStorage(STORY_STORAGE_KEY, id);
       setStoryScribblerScriptId(id);
       // In shared mode, also update scriptScribblerScriptId
       if (isSharedMode) {
-        if (id) {
-          window.localStorage.setItem(SCRIPT_STORAGE_KEY, id);
-        } else {
-          window.localStorage.removeItem(SCRIPT_STORAGE_KEY);
-        }
+        syncToLocalStorage(SCRIPT_STORAGE_KEY, id);
         setScriptScribblerScriptId(id);
       }
     } catch (error) {
       console.warn(`[CurrentScriptContext] Error setting storyScribblerScriptId:`, error);
     }
-  }, [isSharedMode]);
+  }, [isSharedMode, syncToLocalStorage]);
   
   const isCurrentScriptLoading = !isLoadedFromStorage || isUserLoading || areScriptsLoading || isSettingsLoading;
   
