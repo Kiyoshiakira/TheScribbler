@@ -26,6 +26,9 @@ export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 
 
 export type DashboardPanelType = 'script' | 'story';
 
+// Views that are valid when using ScriptScribbler
+const ALLOWED_SCRIPT_VIEWS: View[] = ['dashboard', 'editor', 'scenes', 'characters', 'notes', 'logline', 'profile'];
+
 /**
  * This is the internal component that renders the main app layout.
  * It's wrapped by providers and handles all the core logic for views and data.
@@ -71,8 +74,7 @@ function AppLayoutInternal() {
         return 'outline';
       } else {
         // For ScriptScribbler, preserve allowed script views; otherwise default to dashboard
-        const allowedScriptViews: View[] = ['dashboard', 'editor', 'scenes', 'characters', 'notes', 'logline', 'profile'];
-        if (allowedScriptViews.includes(prevView)) return prevView;
+        if (ALLOWED_SCRIPT_VIEWS.includes(prevView)) return prevView;
         return 'dashboard';
       }
     });
