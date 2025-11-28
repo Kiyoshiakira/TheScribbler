@@ -88,3 +88,43 @@ export function getDefaultProjectContent(projectType: ProjectType): string {
     ? 'Chapter 1\n\nYour story begins here...'
     : 'SCENE 1\n\nINT. ROOM - DAY\n\nThe scene begins.';
 }
+
+/**
+ * Options for creating a new project
+ */
+export interface CreateProjectOptions {
+  type: ProjectType;
+  title?: string;
+  content?: string;
+  logline?: string;
+  aiAssisted?: boolean;
+}
+
+/**
+ * Returns the toast title for a newly created project
+ * 
+ * @param projectType - The project type ('script' or 'story')
+ * @param aiAssisted - Whether the project is AI-assisted
+ * @returns Toast title string
+ */
+export function getProjectCreatedToastTitle(projectType: ProjectType, aiAssisted?: boolean): string {
+  const typeLabel = getProjectTypeLabel(projectType);
+  return aiAssisted ? `AI-Assisted ${typeLabel} Created` : `${typeLabel} Created`;
+}
+
+/**
+ * Returns the toast description for a newly created project
+ * 
+ * @param projectType - The project type ('script' or 'story')
+ * @param aiAssisted - Whether the project is AI-assisted
+ * @returns Toast description string
+ */
+export function getProjectCreatedToastDescription(projectType: ProjectType, aiAssisted?: boolean): string {
+  const typeLabel = getProjectTypeLabel(projectType).toLowerCase();
+  if (aiAssisted) {
+    return `Open the AI assistant to start creating your ${typeLabel}.`;
+  }
+  return projectType === 'story'
+    ? 'A new untitled story has been added to your collection.'
+    : 'A new untitled script has been added to your collection.';
+}
