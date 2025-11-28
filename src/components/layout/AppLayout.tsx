@@ -60,23 +60,23 @@ function AppLayoutInternal() {
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
-  // When the tool changes, switch to an appropriate default view
+  // When the tool changes, switch to an appropriate default view.
+  // Only run when the tool changes. Do not re-run on view changes —
+  // that would overwrite user tab navigation (causing the "flash" bug).
   React.useEffect(() => {
-    if (currentTool === 'StoryScribbler') {
-      // When switching to Story Scribbler, switch to outline view
-      // unless we're on dashboard or profile
-      if (view !== 'dashboard' && view !== 'profile') {
-        setView('outline');
+    setView(prevView => {
+      if (currentTool === 'StoryScribbler') {
+        // If the user was on dashboard or profile, keep it; otherwise default to outline
+        if (prevView === 'dashboard' || prevView === 'profile') return prevView;
+        return 'outline';
+      } else {
+        // For ScriptScribbler, preserve allowed script views; otherwise default to dashboard
+        const allowedScriptViews: View[] = ['dashboard', 'editor', 'scenes', 'characters', 'notes', 'logline', 'profile'];
+        if (allowedScriptViews.includes(prevView)) return prevView;
+        return 'dashboard';
       }
-    } else {
-      // When switching to Script Scribbler, switch to dashboard or editor
-      // unless we're already on a valid script view
-      const scriptViews: View[] = ['dashboard', 'editor', 'scenes', 'characters', 'notes', 'logline', 'profile'];
-      if (!scriptViews.includes(view)) {
-        setView('dashboard');
-      }
-    }
-  }, [currentTool, view]);
+    });
+  }, [currentTool]);
 
   // This effect handles the initial view logic once all data is loaded.
   React.useEffect(() => {
