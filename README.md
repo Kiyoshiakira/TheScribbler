@@ -87,13 +87,24 @@ The Scribbler is a **single-page application (SPA)** with a **tabbed sidebar int
 
 ### Main Application Structure
 
-**Left Sidebar Tabs:**
-- **Dashboard** - Script management and quick access
-- **Editor** - Screenplay/story writing interface
-- **Logline** - Story summary and loglines
-- **Scenes** - Scene organization and management
-- **Characters** - Character profiles and tracking
-- **Notes** - Ideas, research, and production notes
+**Left Sidebar:**
+
+The sidebar is organized into two main sections with a visual separator:
+
+- **Project Section:**
+  - **Dashboard** - Unified project management with tool-specific panels
+
+- **Tool Section (Script Tools or Story Tools):**
+  - Tool-specific navigation items (Editor, Scenes, Outline, Chapters, etc.)
+  - Items are disabled when no project is loaded
+
+**Dashboard Behavior:**
+- Automatically shows the Script Dashboard when ScriptScribbler is active
+- Automatically shows the Story Dashboard when StoryScribbler is active
+- A segmented control (Script/Story) allows viewing the other panel without switching the global tool
+- Creating a project from Dashboard uses the currently selected panel type (not necessarily the global tool)
+- Scripts are created with `projectType: 'script'`, Stories with `projectType: 'story'`
+- After creation: Scripts navigate to Editor view, Stories navigate to Outline view
 
 **Top-Right User Menu:**
 - **Profile** - User profile and script portfolio management

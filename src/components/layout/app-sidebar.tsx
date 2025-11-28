@@ -6,6 +6,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -31,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 
 /**
@@ -76,26 +79,27 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
     }
   };
 
-  const scriptMenuItems = [
-    { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { view: 'editor', label: 'Editor', icon: BookText },
-    { view: 'logline', label: 'Logline', icon: NotebookPen },
-    { view: 'scenes', label: 'Scenes', icon: Clapperboard },
-    { view: 'characters', label: 'Characters', icon: Users },
-    { view: 'notes', label: 'Notes', icon: StickyNote },
-  ] as const;
+  // Separate dashboard from tool-specific items
+  const dashboardItem = { view: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard };
 
-  const storyMenuItems = [
-    { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { view: 'outline', label: 'Outline', icon: ListTree },
-    { view: 'chapters', label: 'Chapters', icon: FileText },
-    { view: 'characters', label: 'Characters', icon: Users },
-    { view: 'world', label: 'World', icon: MapPin },
-    { view: 'timeline', label: 'Timeline', icon: Clock },
-    { view: 'story-notes', label: 'Notes', icon: StickyNote },
-  ] as const;
+  const scriptToolItems = [
+    { view: 'editor' as const, label: 'Editor', icon: BookText },
+    { view: 'logline' as const, label: 'Logline', icon: NotebookPen },
+    { view: 'scenes' as const, label: 'Scenes', icon: Clapperboard },
+    { view: 'characters' as const, label: 'Characters', icon: Users },
+    { view: 'notes' as const, label: 'Notes', icon: StickyNote },
+  ];
 
-  const menuItems = currentTool === 'StoryScribbler' ? storyMenuItems : scriptMenuItems;
+  const storyToolItems = [
+    { view: 'outline' as const, label: 'Outline', icon: ListTree },
+    { view: 'chapters' as const, label: 'Chapters', icon: FileText },
+    { view: 'characters' as const, label: 'Characters', icon: Users },
+    { view: 'world' as const, label: 'World', icon: MapPin },
+    { view: 'timeline' as const, label: 'Timeline', icon: Clock },
+    { view: 'story-notes' as const, label: 'Notes', icon: StickyNote },
+  ];
+
+  const toolItems = currentTool === 'StoryScribbler' ? storyToolItems : scriptToolItems;
 
   return (
     <Sidebar collapsible="icon" side="left">
@@ -124,22 +128,52 @@ export default function AppSidebar({ activeView, setView }: AppSidebarProps) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu className="flex-1 overflow-y-auto p-2">
-          {menuItems.map(item => (
-            <SidebarMenuItem key={item.view}>
+        {/* Project / Dashboard Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">
+            Project
+          </SidebarGroupLabel>
+          <SidebarMenu className="p-2">
+            <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={() => handleViewChange(item.view)}
-                isActive={activeView === item.view}
-                tooltip={item.label}
-                aria-disabled={noScriptLoaded && item.view !== 'dashboard'}
-                className={cn(noScriptLoaded && item.view !== 'dashboard' && 'opacity-50 cursor-not-allowed')}
+                onClick={() => handleViewChange(dashboardItem.view)}
+                isActive={activeView === dashboardItem.view}
+                tooltip={dashboardItem.label}
               >
-                <item.icon />
-                <span>{item.label}</span>
+                <dashboardItem.icon />
+                <span>{dashboardItem.label}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* Visual Separator */}
+        <div className="px-4 py-2">
+          <Separator className="bg-border/60 h-[2px]" />
+        </div>
+
+        {/* Tool-specific Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">
+            {currentTool === 'StoryScribbler' ? 'Story Tools' : 'Script Tools'}
+          </SidebarGroupLabel>
+          <SidebarMenu className="flex-1 overflow-y-auto p-2">
+            {toolItems.map(item => (
+              <SidebarMenuItem key={item.view}>
+                <SidebarMenuButton
+                  onClick={() => handleViewChange(item.view)}
+                  isActive={activeView === item.view}
+                  tooltip={item.label}
+                  aria-disabled={noScriptLoaded}
+                  className={cn(noScriptLoaded && 'opacity-50 cursor-not-allowed')}
+                >
+                  <item.icon />
+                  <span>{item.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );

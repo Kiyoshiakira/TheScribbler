@@ -24,6 +24,8 @@ import { useTool } from '@/context/tool-context';
 
 export type View = 'dashboard' | 'editor' | 'scenes' | 'characters' | 'notes' | 'logline' | 'profile' | 'outline' | 'chapters' | 'world' | 'timeline' | 'story-notes';
 
+export type DashboardPanelType = 'script' | 'story';
+
 /**
  * This is the internal component that renders the main app layout.
  * It's wrapped by providers and handles all the core logic for views and data.
@@ -37,6 +39,16 @@ function AppLayoutInternal() {
   const [view, setView] = React.useState<View>('dashboard');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [profileOpen, setProfileOpen] = React.useState(false);
+  
+  // Dashboard panel state - defaults from currentTool but can be overridden
+  const [dashboardPanel, setDashboardPanel] = React.useState<DashboardPanelType>(
+    currentTool === 'StoryScribbler' ? 'story' : 'script'
+  );
+
+  // Sync dashboard panel with currentTool when tool changes
+  React.useEffect(() => {
+    setDashboardPanel(currentTool === 'StoryScribbler' ? 'story' : 'script');
+  }, [currentTool]);
 
   // Fetch user profile data from Firestore
   const userProfileRef = useMemoFirebase(() => {
@@ -106,7 +118,13 @@ function AppLayoutInternal() {
       if (view === 'profile') {
         return <ProfileView setView={handleSetView} />;
       } else if (view === 'dashboard') {
-        return <DashboardView setView={handleSetView} />;
+        return (
+          <DashboardView 
+            setView={handleSetView} 
+            activePanel={dashboardPanel}
+            setActivePanel={setDashboardPanel}
+          />
+        );
       }
       
       // Story Scribbler specific views - use the unified StoryScribblerView
@@ -120,14 +138,26 @@ function AppLayoutInternal() {
     const viewToRender = (currentScriptId || view === 'dashboard' || view === 'profile') ? view : 'dashboard';
 
     switch(viewToRender) {
-      case 'dashboard': return <DashboardView setView={handleSetView} />;
+      case 'dashboard': return (
+        <DashboardView 
+          setView={handleSetView} 
+          activePanel={dashboardPanel}
+          setActivePanel={setDashboardPanel}
+        />
+      );
       case 'editor': return <EditorView />;
       case 'logline': return <LoglineView />;
       case 'scenes': return <ScenesView />;
       case 'characters': return <CharactersView />;
       case 'notes': return <NotesView />;
       case 'profile': return <ProfileView setView={handleSetView} />;
-      default: return <DashboardView setView={handleSetView} />;
+      default: return (
+        <DashboardView 
+          setView={handleSetView} 
+          activePanel={dashboardPanel}
+          setActivePanel={setDashboardPanel}
+        />
+      );
     }
   };
   
