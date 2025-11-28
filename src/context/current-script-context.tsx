@@ -162,3 +162,16 @@ export const useCurrentScript = () => {
     }
     return context;
 }
+
+// Dedicated hook for StoryScribbler - provides clean separation from ScriptScribbler
+export const useCurrentStory = () => {
+    const context = useContext(CurrentScriptContext);
+    if (!context) {
+        throw new Error('useCurrentStory must be used within a CurrentScriptProvider');
+    }
+    return {
+        currentStoryId: context.currentStoryId,
+        setCurrentStoryId: context.setCurrentStoryId,
+        isCurrentStoryLoading: context.isCurrentScriptLoading,
+    };
+}

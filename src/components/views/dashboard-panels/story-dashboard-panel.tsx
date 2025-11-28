@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ListTree, FileText, Users, MapPin, Clock, StickyNote, Plus, Book } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { useCurrentScript } from '@/context/current-script-context';
+import { useCurrentStory } from '@/context/current-script-context';
 import { collection } from 'firebase/firestore';
 import type { View } from '@/components/layout/AppLayout';
 
@@ -82,7 +82,7 @@ function StatCard({ title, value, icon, isLoading }: { title: string; value: num
 export default function StoryDashboardPanel({ setView, onCreate }: StoryDashboardPanelProps) {
   const { user } = useUser();
   const firestore = useFirestore();
-  const { currentStoryId } = useCurrentScript();
+  const { currentStoryId } = useCurrentStory();
 
   // Story Scribbler collections - use currentStoryId explicitly
   const outlineCollection = useMemoFirebase(
